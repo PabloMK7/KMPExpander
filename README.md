@@ -1,2 +1,2 @@
 # KMPExpander
-Mario Kart 7 KMP editor.
+Mario Kart 7 KMP editor made by Ermelber and PabloMK7.

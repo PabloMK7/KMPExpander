@@ -1,0 +1,35 @@
+<h1>Checkpoints</h1>
+<p>Checkpoints are used for multiple things. They are used to track progress of karts as they drive around the track as well as to control the rendering and culling of&nbsp;<strong>Objects</strong> and geometry.</p>
+<p>Unlike other Mario Kart games, checkpoints also act as death barriers so&nbsp;<strong>going outside checkpoints will cause you to respawn.</strong>&nbsp;</p>
+<p>There are several points you should consider when placing checkpoints, <a href="https://www.dshack.org/forum.php?page=thread&amp;tid=173" target="_blank">check this guide here for more info.</a></p>
+<h3>Group Settings</h3>
+<p>Group settings are displayed in the&nbsp;<strong>Group Settings</strong> view:</p>
+<ul>
+<li><strong>Next</strong><strong>:</strong> Lists all the possible groups that karts can go to after finishing this one. There can be up to 6 next groups, unused entries in the next list should be set to&nbsp;<strong>-1</strong>.</li>
+<li><strong>Previous:</strong> Lists all the possible groups that karts could have come from.&nbsp;<strong>IMPORTANT: if group X has group Y in the next list, group Y has group X in the previous list, otherwise the game may crash.&nbsp;</strong>There can be up to 6 previous groups, unused entries in the previous list should be set to&nbsp;<strong>-1</strong>.</li>
+<li><strong>Unknown:</strong> The purpose of this field is unknown, normally&nbsp;<strong>0</strong>.</li>
+</ul>
+<p>Normally, original tracks only have a single checkpoint group unless there is a bifurcation where a single group would cause problems (such as the shortcut in N64 Koopa Troopa Beach). If that's the case, place your checkpoints considering that <strong>after leaving the current group, the game will determine the next group as soon as you touch the first checkpoint of any of the groups listed in the Next setting. When that happens all the other possible groups in the bifurcation will be discarded until the next lap, when you can choose again.</strong></p>
+<h3>Parameters</h3>
+<p>Parameters are displayed in the <strong>entry list</strong>:</p>
+<ul>
+<li><strong>LeftPointXZ:</strong>&nbsp;Position of the Checkpoint left point.</li>
+<li><strong>RightPointXZ:</strong>&nbsp;Position of the Checkpoint right point.</li>
+</ul>
+<p>Note that&nbsp;<strong>LeftPoint</strong> and&nbsp;<strong>RightPoint</strong> coordinates should be considered relative to the driving direction of the track, so if in the&nbsp;<strong>editor</strong> the direction of the track is down,&nbsp;<strong>LeftPoint</strong> should be on the right and&nbsp;<strong>RightPoint</strong> should be on the left.&nbsp;</p>
+<ul>
+<li><strong>RespawnID:</strong> ID of the&nbsp;<strong>Respawn Point</strong> linked to the checkpoint. After falling, karts will respawn in the latest crossed checkpoint&nbsp;<strong>RespawnID</strong>.</li>
+<li><strong>Key:</strong> Key of the Checkpoint. In order to complete a lap, karts should go through all the key checkpoints in order and then cross Key Checkpoint <strong>0</strong>.&nbsp;<strong>Key 0</strong> is considered as the finish line and should always be set to the first checkpoint of the group after the finish line.&nbsp;<strong>If there is no Key 0 checkpoint, the game will crash or fail to count laps.</strong> Key checkpoints are represented with a different color in the&nbsp;<strong>editor</strong>.</li>
+<li><strong>ClipID:</strong> Used for rendering,&nbsp;<strong>-1</strong> if unused.</li>
+<li><strong>Section</strong><strong>:</strong>&nbsp;Only used in section tracks:&nbsp;<strong>-1</strong> for normal checkpoints;&nbsp;<strong>0&nbsp;</strong>for 2nd section checkpoint;&nbsp;<strong>1</strong> for 3rd section checkpoint.</li>
+<li><strong>Unknown2/3:</strong> The purposes of these parameters are unknown, always&nbsp;<strong>0.</strong></li>
+</ul>
+<h3>Tips</h3>
+<ul>
+<li><strong>Make sure that&nbsp;<strong>if group X has group Y in the next list, group Y has group X in the previous list, otherwise the game may crash.</strong></strong></li>
+<li><strong>Make sure your checkpoints follow the conditions listed <a href="https://www.dshack.org/forum.php?page=thread&amp;tid=173" target="_blank">in this guide</a>.</strong></li>
+<li>Make sure you don't use negative numbers for respawn points, otherwise the game will crash.</li>
+<li>Make sure there is only one&nbsp;<strong>Key 0</strong> checkpoint where laps should count. It is also recommended to have at least another key checkpoint in the track.</li>
+<li>Make sure that if you are not using any rendering optimizations with clip objects,&nbsp;<strong>ClipID</strong> is set to&nbsp;<strong>-1</strong> for all the checkpoints.</li>
+<li>Make sure you set&nbsp;<strong>Section</strong> value to&nbsp;<strong>-1</strong> for 3 lap tracks. In the case of section tracks, make sure there exists two checkpoints with <strong>Section</strong> value&nbsp;<strong>0</strong> and&nbsp;<strong>1</strong>.</li>
+</ul>

@@ -1,0 +1,36 @@
+<h1>Area</h1>
+<p>Areas are zones that cover a certain portion of the track. Like&nbsp;<strong>Routes</strong>, area functionality depends on whatever thing is linked to it.</p>
+<p><strong>NOTE</strong><strong>:</strong> Looks like the AREA section of the MKWII and MK7 kmp are almost the same, so this information can be interchangeable.</p>
+<h3>Parameters</h3>
+<p>Parameters are displayed in the <strong>entry list</strong>:</p>
+<ul>
+<li><strong>Shape:</strong> Defines the shape of an area.
+<ul>
+<li><strong>0 - Box:</strong> Area is a box.</li>
+<li><strong>1 -&nbsp;</strong><strong>Cylinder:</strong>&nbsp;Area is a cylinder.</li>
+</ul>
+</li>
+<li><strong>Type:</strong> Type of the area. Only 4 area types are used unlike MKWII which has 10 different area types:
+<ul>
+<li><strong>0 - Camera:</strong> Defines the&nbsp;<strong>Camera Index</strong> that should be used when the player is inside the area. This type of area doesn't use any special <strong>Settings</strong> nor is linked to any&nbsp;<strong>RouteID</strong>. On the other hand it's the only area type that uses the&nbsp;<strong>CAMEIndex</strong> parameter.</li>
+<li><strong>1 - Particle Effect:</strong>&nbsp;Shows the slot specific particles on screen if the player is inside this area type. The way the particles are shown depend on the area&nbsp;<strong>Settings.</strong> (It is recommended to check original tracks as the settings depend on the slot.)</li>
+<li><strong>3 - Moving Road:&nbsp;</strong>All the geometry using the&nbsp;<strong>Moving Road</strong> kcl type inside the area will push the player in the direction of the route linked by the&nbsp;<strong>RouteID</strong> parameter.</li>
+<li><strong>11 - Sound Effect:</strong> Performs an specific sound effect if the conditions are met, sometimes used along with&nbsp;<strong>Sound Effect</strong> objects. The behaviour of this area type depends of the&nbsp;<strong>Settings1</strong> parameter.&nbsp;<strong>RouteID&nbsp;</strong>can also be used to define the sound effect boundaries depending on the&nbsp;<strong>Settings</strong>.&nbsp;(It is recommended to check original tracks as the settings depend on the slot.)</li>
+</ul>
+</li>
+<li><strong>CAMEIndex:</strong> Used with&nbsp;<strong>Type 0</strong>, defines the&nbsp;<strong>Camera Index</strong> that should be used when the player is inside the area. (Looks like some&nbsp;<strong>Type 1</strong> areas in original nintendo tracks also have this value set, however it is probably a mistake by the developers or a dropped feature).</li>
+<li><strong>Priority:</strong> When two areas intersect, the area with the highest&nbsp;<strong>Priority</strong> will be used (almost never used).</li>
+<li><strong>PositionXYZ:</strong> Position of the center of the area.</li>
+<li><strong>RotationXYZ:</strong> Rotation of the area.</li>
+<li><strong>ScaleXYZ:</strong> Scale of the area, depending on the&nbsp;<strong>shape,</strong> the area will be displayed as a box or cylinder in the&nbsp;<strong>editor.</strong> (<strong>NOTE</strong>: since the editor is only 2D, keep in mind that for boxes, areas extend 1000 * scaleY units&nbsp;<strong>upwards only</strong> and for cylinders, 500 * scaleY units&nbsp;<strong>upwards only</strong>, so to make sure the area covers the entire section, change the <strong>PositionY</strong> to <strong>0</strong> or less.)</li>
+<li><strong>Settings1/2:</strong> The meaning of these parameters depend on the&nbsp;<strong>Type&nbsp;</strong>of the area.&nbsp;(It is recommended to check original tracks as the settings depend on the slot.)</li>
+<li><strong>RouteID:</strong> Route linked to the AREA. How the route is used depends on the&nbsp;area&nbsp;<strong>Type.</strong></li>
+<li><strong>EnemyID:</strong> Leftover parameter for area type 4 in MKWII, never used in MK7 (always&nbsp;<strong>-1</strong>).</li>
+<li><strong>Unknown:</strong> The purpose of this parameter is unknown, probably padding (always&nbsp;<strong>0000</strong>).</li>
+</ul>
+<h3>Tips</h3>
+<ul>
+<li>Make sure there isn't any place on the track outside replay areas, so they are played correctly. It is okay to overlap replay areas as the game only checks for the next area until you leave the current one.</li>
+<li>Since the editor is only 2D, keep in mind that for boxes, areas extend 1000 * scaleY units&nbsp;<strong>upwards only</strong> and for cylinders, 500 * scaleY units&nbsp;<strong>upwards only</strong>, so to make sure the area covers the entire section, change the <strong>PositionY</strong> to <strong>0</strong> or less.</li>
+<li>Some Sound effect and particle effect&nbsp;<strong>Type&nbsp;</strong>areas with certain&nbsp;<strong>Se</strong><strong>ttings</strong> need an specific&nbsp;<strong>Object</strong> to be added to the track or inside the area, otherwise the game may crash.</li>
+</ul>

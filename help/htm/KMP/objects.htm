@@ -1,0 +1,25 @@
+<h1>Objects</h1>
+<p>Objects are entities that can be interacted with. This includes item boxes, coins, moving geometry, start grid, etc.</p>
+<p>Every track needs at least two objects to load:</p>
+<ul>
+<li><strong>Start Grid:</strong> This object represents the start position in normal tracks (the same way&nbsp;<strong>Start Position</strong> points do in battle tracks).&nbsp;<strong>Unknown1</strong> value for this object is&nbsp;<strong>0054</strong>.&nbsp;<strong>IMPORTANT: For some reason the start grid rotation is offset by 180&ordm;, so when setting its RotationY make sure you take this into account.</strong> The center of the start grid is where the player spawns in Time Trials so it should be placed just before the finish line.</li>
+<li><strong>Any Skybox Variant:</strong>&nbsp;This object represents the sky box and should be put in the center of the track and its size can be adjusted.&nbsp;<strong>Some track slots need an specific skybox variant, so try to use the original track skybox if possible.</strong></li>
+</ul>
+<h3>Parameters</h3>
+<p>Parameters are displayed in the <strong>entry list</strong>:</p>
+<ul>
+<li><strong>ObjectType:</strong> The type of the object. When clicking this parameter in the&nbsp;<strong>entry list</strong> a window will appear where you can select any of the 217 MK7 objects.</li>
+<li><strong>Unknown1:</strong> The purpose of this parameter is unknown. Seems to be related to how objects render.&nbsp;<strong>It is recommended to check original tracks and copy this value from existing objects.</strong></li>
+<li><strong>PositionXYZ:</strong> Position of the object.</li>
+<li><strong>RotationXYZ:&nbsp;</strong>Rotation of the object.</li>
+<li><strong>ScaleXYZ:</strong> Depending on the&nbsp;<strong>ObjectType</strong> this can be a multiplier for the object size (example: 1.5 times bigger) or the amount of units the object extends (example: 900 units in the X direction) the second being used in underwater boxes.</li>
+<li><strong>RouteID:</strong> For objects that support routes, the linked Route ID.&nbsp;<strong>-1</strong> if no route is linked to the object.</li>
+<li><strong>Settings1/2/3/4/5/6/7/8:</strong>&nbsp;<strong>ObjectType</strong> specific settings, default value being&nbsp;<strong>0.</strong> Each one of the settings field has an special meaning. It is recommended to check original tracks to see what they mean, most of the cases being a timing/speed value.</li>
+<li><strong>Visibility:</strong> Controls the visibility of objects in different game modes. It is a bitmap of 3 bits, the meaning of each individual bit is unknown. The default value for this field is&nbsp;<strong>7</strong>.</li>
+<li><strong>Unknown2/3:</strong> The purpose of this parameter is unknown.<strong>&nbsp;</strong><strong>Unknown2</strong> default value is&nbsp;<strong>FFFF</strong>;&nbsp;<strong>Unknown3</strong> deafult value is&nbsp;<strong>0000</strong>.</li>
+</ul>
+<h3>Tips</h3>
+<ul>
+<li><strong>Some objects need extra bcmdl and/or kcl files in the szs to load, make sure you have included all of them. You can use <a href="https://www.dshack.org/store.php?page=file&amp;fid=326">this tool</a> to extract all the files from an szs and repack them afterwards.</strong></li>
+<li>Always check original tracks for object specific&nbsp;<strong>Unknown1</strong> and&nbsp;<strong>Settings</strong>.&nbsp;A wrong setting could cause the object to malfunction or crash.</li>
+</ul>

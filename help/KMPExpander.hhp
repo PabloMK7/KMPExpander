@@ -1,0 +1,15 @@
+[OPTIONS]
+Compatibility=1.1 or later
+Compiled file=KMPExpander.chm
+Contents file=Table of Contents.hhc
+Default topic=htm\KMP_expander.htm
+Display compile progress=No
+Language=0x809 Inglés (Reino Unido)
+Title=KMP Expander
+
+
+[FILES]
+htm\KMP_expander.htm
+
+[INFOTYPES]
+

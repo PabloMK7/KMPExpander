@@ -1,0 +1,27 @@
+<h1>Glider Routes</h1>
+<p>Glider routes are used in glide sections. They dictate the path karts should follow when gliding and prevent them from getting too far from the route. Glider routes are applied to CPU racers and the human player.</p>
+<h3>Group Settings</h3>
+<p>Group settings are displayed in the&nbsp;<strong>Group Settings</strong> view:</p>
+<ul>
+<li><strong>Next</strong><strong>:</strong> Lists all the possible groups that gliding karts can go to after finishing this one. One of these groups will be taken randomly. There can be up to 6 next groups, unused entries in the next list should be set to&nbsp;<strong>-1</strong>.</li>
+<li><strong>Previous:</strong> Lists all the possible groups that gliding karts could have come from.&nbsp;<strong>IMPORTANT: if group X has group Y in the next list, group Y has group X in the previous list, otherwise the game may crash.&nbsp;</strong>There can be up to 6 previous groups, unused entries in the previous list should be set to&nbsp;<strong>-1</strong>.</li>
+<li><strong>Unknown2:</strong> The purpose of this field is unknown, normally&nbsp;<strong>0</strong>.</li>
+<li><strong>CannonSection:</strong> The group acts as a cannon route. If this flag is set to&nbsp;<strong>True</strong>,&nbsp;<strong>ForceToRoute</strong> must be also set to&nbsp;<strong>True</strong>.</li>
+<li><strong>ForceToRoute:</strong> Karts are forced to follow the route and can't leave it, they are also forced to land when the route finishes. Otherwise they can continue flying.</li>
+<li><strong>PreventRaising:</strong> Karts can only fly forwards or downwards, so after they have descended they are not able to ascend again.</li>
+</ul>
+<p>Normally&nbsp;<strong>Next</strong> and&nbsp;<strong>Previous</strong> are never used in original tracks as there is only one group per gliding section.</p>
+<h3>Parameters</h3>
+<p>Parameters are displayed in the <strong>entry list</strong>:</p>
+<ul>
+<li><strong>PositionXYZ:</strong>&nbsp;Position of the Glider Point.</li>
+<li><strong>Scale:</strong> Scale of the glider point. This is represented as a circle in the <strong>editor</strong>, karts are able to move within this circle. (Note that ingame, they are not circles but spheres).</li>
+<li><strong>Unknown1/2:</strong>&nbsp;The purpose of these parameters are unknown, normally&nbsp;<strong>0</strong>.</li>
+</ul>
+<h3>Tips</h3>
+<ul>
+<li><strong>Make sure that if group X has group Y in the next list, group Y has group X in the previous list, otherwise the game may crash.</strong></li>
+<li><strong>Make sure all the glider points are inside the checkpoints, otherwise the game will crash.</strong></li>
+<li><strong>Make sure all the glider points are avobe Y=0 (failsafe death barrier), otherwise the game may crash.</strong></li>
+<li>It is recommended to set the&nbsp;<strong>ForceToRoute</strong> flag to&nbsp;<strong>True</strong> so karts will follow the route more&nbsp;precisely.</li>
+</ul>

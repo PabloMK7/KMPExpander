@@ -1,0 +1,59 @@
+<h1>Enemy Routes</h1>
+<p>Enemy routes are used by the CPU racers to know where to go in tracks. Each route is linked to other routes via its&nbsp;<strong>group settings</strong> and each point of the group has its own flags and parameters.</p>
+<h3>Group Settings</h3>
+<p>Group settings are displayed in the&nbsp;<strong>Group Settings</strong> view:</p>
+<ul>
+<li><strong>Next</strong><strong>:</strong> Lists all the possible groups that CPU racers can go to after finishing this one. One of these groups will be taken randomly unless the first point of the group has the <em>Needs Mushroom flag</em> in the&nbsp;<strong>MushSettings</strong>. In that case, the CPU racer will consider taking that group if they have a speed item (50cc: 0% chance; 100cc: 50% chance; 150cc: 100% chance). This is useful for shortcuts that need a mushroom to take. There can be up to 16 next routes, unused entries in the next list should be set to&nbsp;<strong>-1</strong>.</li>
+<li><strong>Previous:</strong> Lists all the possible groups that CPU racers could have come from.&nbsp;<strong>IMPORTANT: if group X has group Y in the next list, group Y has group X in the previous list, otherwise the game may crash.&nbsp;</strong>There can be up to 16 previous routes, unused entries in the previous list should be set to&nbsp;<strong>-1</strong></li>
+<li><strong>Unknown:&nbsp;</strong>The purpose of this field is unknown, it is always 00000000 for normal tracks but not for battle tracks.</li>
+</ul>
+<h3>Parameters</h3>
+<p>Parameters are displayed in the <strong>entry list</strong>:</p>
+<ul>
+<li><strong>PositionXYZ:</strong>&nbsp;Position of the Enemy Point.</li>
+<li><strong>Scale:</strong> Scale of the enemy point. This is represented as a circle in the <strong>editor</strong>, CPU racers will choose a point on each enemy entry within this circle to go to, so make sure that the whole circle is inside the road. (Note that ingame, they are not circles but spheres).</li>
+<li><strong>MushSettings:</strong> Controls mushroom related settings:
+<ul>
+<li><strong>0 - Can Use Mushroom:</strong> CPU racers are allowed to use mushroom items.</li>
+<li><strong>1 - Needs Mushroom:</strong> Only used in the first entry of each group. CPU Racers will take the group only if they have a mushrom item, otherwise they will take another group. Also, CPU racers won't be able to use mushroom items in this entry.</li>
+<li><strong>2 - Cannot Use Mushroom:&nbsp;</strong>CPU racers are not allowed to use mushroom items.</li>
+</ul>
+</li>
+<li><strong>DriftSettings:&nbsp;</strong>Controls drift related settings:<br />
+<ul>
+<li><strong>0 - Allow Drift, Allow Miniturbo:</strong> CPU racers are allowed to automatically drift and release the drift when sparks show up to get a miniturbo.</li>
+<li><strong>1 - Disallow Drift, Allow Miniturbo</strong><strong>:</strong> CPU racers are not able to automatically drift, however they can release a previous drift when sparks show up to get a miniturbo.</li>
+<li><strong>2 - Disallow Drift, Disallow Miniturbo:</strong> CPU racers are not able to automatically drift nor get miniturbos from previous drifts.</li>
+</ul>
+</li>
+<li><strong>Flags:</strong> The following flags can either be enabled or disabled:<br />
+<ul>
+<li><strong>WideTurn:</strong> Marks the turn as a wide turn.</li>
+<li><strong>NormalTurn:</strong> Marks the turn as a normal turn.</li>
+<li><strong>SharpTurn:</strong> Marks the turn as a sharp turn.</li>
+<li><strong>TricksForbidden:</strong> CPU racers won't be able to make tricks using ramps, boost ramps or glider pads. This is used in places where getting more speed from a trick is not convenient (as there is a sharp turn next to the ramp, for example).</li>
+<li><strong>StickToRoute:&nbsp;</strong>CPU racers will try to go as close to the center of the route as possible, they will even be able to turn midair. This flag is used in narrow places where it is very important to follow the route as close as possible.</li>
+<li><strong>BouncyMushSection:</strong> This flag is enabled on sections where the enemy points are above bouncy terrain such as the bouncy mushrooms in mushroom gorge or the bouncy flower in DK Jungle. It is currently unknown how this flag actually affects the enemy AI.</li>
+<li><strong>ForceDefaultSpeed:</strong> Forces the CPU to move at the same speed no matter the mode (50cc, 100cc, 150cc), if they are doing a miniturbo, etc. This is used in sections where it is important to go at a predefined speed, such as some jumps where the CPU racers may go too fast or slow to perform the jump properly.</li>
+<li><strong>UnknownFlag:</strong> As the name suggests, the purpose of this flag is unknown. It is enabled in the gliding section of Mario Circuit when exiting the castle, normally disabled in other places.</li>
+</ul>
+</li>
+<li><strong>Unknown1/2:</strong> The purposes of those values are unknown, normally 0. (May be related to which group CPU may take in some situations.</li>
+</ul>
+<h3>Tips</h3>
+<ul>
+<li><strong>Make sure that if group X has group Y in the next list, group Y has group X in the previous list, otherwise the game may crash.</strong></li>
+<li><strong>Make sure all the enemy points are inside the checkpoints, otherwise the game will crash.</strong></li>
+<li><strong>Make sure all the enemy points are avobe Y=0 (failsafe death barrier), otherwise the game may crash.</strong></li>
+<li>If CPU racers drive in circles around a point, don't drive straight or the game crashes in certain places, make sure the Y coordinates are right.</li>
+<li>Don't make points with small <strong>Size </strong>if it's not neccesary, otherwise all the CPU racers will drive together hitting each other.</li>
+<li>Make sure to set the <strong>Flags </strong>and <strong>DriftSettings</strong> properly:&nbsp;
+<ul>
+<li><strong>DriftSettings</strong>&nbsp;value 2 for straight sections and 0 for turns unless the turn is long and you don't want the CPU to keep drifting the whole time. Value 1 to stop drifting and get the miniturbo.</li>
+<li><strong>WideTurn</strong> in long turns,&nbsp;<strong>NormalTurn</strong> in normal turns and <strong>SharpTurn</strong> in sharp turns (you may leave some turns without any of those flags if you want the CPU racers to decide by themselves).</li>
+<li><strong>SharpTurn</strong> in sharp turns or places where you want the CPU racers to leave the turn with a miniturbo (as taking a turn with a sharp angle will help getting a miniturbo).</li>
+<li><strong>TricksForbidden</strong> in places where tricking off a ramp causes problems.</li>
+<li><strong>ForceDefaultSpeed</strong>&nbsp;and/or <strong>StickToRoute&nbsp;</strong>in places where a perfect jump needs to be performed or it is important to follow the route as close as possible.</li>
+</ul>
+</li>
+</ul>

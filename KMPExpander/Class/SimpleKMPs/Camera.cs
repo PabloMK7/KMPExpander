@@ -220,7 +220,6 @@ namespace KMPExpander.Class.SimpleKMPs
                     Gl.glColor4f((Settings.HighlightPointColor.R / 255f) - 0.1f, (Settings.HighlightPointColor.G / 255f) - 0.1f, (Settings.HighlightPointColor.B / 255f) - 0.1f, Settings.HighlightPointColor.A);
                     Gl.glVertex2d(Viewpoint2X, Viewpoint2Z);
                     Gl.glEnd();
-                    Gl.glBegin(Gl.GL_LINES);
                 }
             }
         }

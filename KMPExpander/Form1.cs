@@ -1247,7 +1247,7 @@ namespace KMPExpander
                 List<Class.SimpleKMPs.Objects.ObjectEntry> objlist = Kayempee.Objects.Entries;
                 foreach (var obj in objlist)
                 {
-                    if (obj.ObjectID != 0x1E || obj.Settings1 != clipID) continue;
+                    if (obj.ObjectID != 0x1E || obj.Settings1 != clipID || Kayempee.Routes.Entries.ElementAtOrDefault(obj.RouteID) == null) continue;
                     if (Kayempee.Routes.Entries[obj.RouteID].Entries.Count == 4)
                     {
                         Kayempee.currentCullingRoutes.Add(obj.RouteID);

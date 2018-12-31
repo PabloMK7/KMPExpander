@@ -253,6 +253,16 @@ namespace KMPExpander.Properties {
         /// <summary>
         ///   Busca un recurso adaptado de tipo System.Drawing.Bitmap.
         /// </summary>
+        internal static System.Drawing.Bitmap stage_1 {
+            get {
+                object obj = ResourceManager.GetObject("stage_1", resourceCulture);
+                return ((System.Drawing.Bitmap)(obj));
+            }
+        }
+        
+        /// <summary>
+        ///   Busca un recurso adaptado de tipo System.Drawing.Bitmap.
+        /// </summary>
         internal static System.Drawing.Bitmap start_1 {
             get {
                 object obj = ResourceManager.GetObject("start_1", resourceCulture);

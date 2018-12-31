@@ -11,6 +11,7 @@ using LibCTR.Collections;
 using System.ComponentModel;
 using System.Windows.Forms;
 using System.Drawing.Imaging;
+using Extensions;
 
 namespace KMPExpander.Class
 {
@@ -298,6 +299,8 @@ namespace KMPExpander.Class
         {
             if (!Visible) return;
 
+            ViewPlaneHandler vph = (Application.OpenForms[0] as Form1).vph;
+
             Gl.glDepthFunc(Gl.GL_LESS);
             Gl.glEnable(Gl.GL_ALPHA_TEST);
             Gl.glAlphaFunc(Gl.GL_GREATER, 0f);
@@ -314,9 +317,9 @@ namespace KMPExpander.Class
                         Color pickingColor = ModelPicking.GetColor(i);
                         Gl.glColor4f(pickingColor.R / 255f, pickingColor.G / 255f, pickingColor.B / 255f, pickingColor.A);
                         Gl.glBegin(Gl.GL_TRIANGLES);
-                        Gl.glVertex3f(obj_data.Vertices[p.VertexIndieces[0]].X, obj_data.Vertices[p.VertexIndieces[0]].Z, obj_data.Vertices[p.VertexIndieces[0]].Y);
-                        Gl.glVertex3f(obj_data.Vertices[p.VertexIndieces[1]].X, obj_data.Vertices[p.VertexIndieces[1]].Z, obj_data.Vertices[p.VertexIndieces[1]].Y);
-                        Gl.glVertex3f(obj_data.Vertices[p.VertexIndieces[2]].X, obj_data.Vertices[p.VertexIndieces[2]].Z, obj_data.Vertices[p.VertexIndieces[2]].Y);
+                        vph.draw3DVertice(obj_data.Vertices[p.VertexIndieces[0]]);
+                        vph.draw3DVertice(obj_data.Vertices[p.VertexIndieces[1]]);
+                        vph.draw3DVertice(obj_data.Vertices[p.VertexIndieces[2]]);
                         Gl.glEnd();
                     }
                     i++;
@@ -331,11 +334,11 @@ namespace KMPExpander.Class
                     GlSetMaterial(GetMaterialByName(p.Material));
                     Gl.glBegin(Gl.GL_TRIANGLES);
                     if (p.TexCoordIndieces.Count > 0) Gl.glTexCoord2f(obj_data.TexCoords[p.TexCoordIndieces[0]].X, obj_data.TexCoords[p.TexCoordIndieces[0]].Z);
-                    Gl.glVertex3f(obj_data.Vertices[p.VertexIndieces[0]].X, obj_data.Vertices[p.VertexIndieces[0]].Z, obj_data.Vertices[p.VertexIndieces[0]].Y);
+                    vph.draw3DVertice(obj_data.Vertices[p.VertexIndieces[0]]);
                     if (p.TexCoordIndieces.Count > 0) Gl.glTexCoord2f(obj_data.TexCoords[p.TexCoordIndieces[1]].X, obj_data.TexCoords[p.TexCoordIndieces[1]].Z);
-                    Gl.glVertex3f(obj_data.Vertices[p.VertexIndieces[1]].X, obj_data.Vertices[p.VertexIndieces[1]].Z, obj_data.Vertices[p.VertexIndieces[1]].Y);
+                    vph.draw3DVertice(obj_data.Vertices[p.VertexIndieces[1]]);
                     if (p.TexCoordIndieces.Count > 0) Gl.glTexCoord2f(obj_data.TexCoords[p.TexCoordIndieces[2]].X, obj_data.TexCoords[p.TexCoordIndieces[2]].Z);
-                    Gl.glVertex3f(obj_data.Vertices[p.VertexIndieces[2]].X, obj_data.Vertices[p.VertexIndieces[2]].Z, obj_data.Vertices[p.VertexIndieces[2]].Y);
+                    vph.draw3DVertice(obj_data.Vertices[p.VertexIndieces[2]]);
                     Gl.glEnd();
                 }
             }

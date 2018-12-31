@@ -124,7 +124,7 @@ namespace KMPExpander
             Gl.glOrtho(
                 r.Left, r.Right,
                 r.Bottom, r.Top,
-                -8192, 8192);
+                -8192 * 2, 8192 * 2);
             Gl.glMatrixMode(Gl.GL_MODELVIEW);
             Gl.glLoadIdentity();
             Gl.glClearColor(1f, 1f, 1f, 1f);

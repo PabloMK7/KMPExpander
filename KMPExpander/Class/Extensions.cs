@@ -5,10 +5,12 @@ using System.ComponentModel;
 using System.ComponentModel.Design;
 using System.Drawing.Design;
 using System.Globalization;
+using LibCTR.Collections;
 using System.Linq;
 using System.Text;
 using System.Threading.Tasks;
 using System.Windows.Forms;
+using Tao.OpenGl;
 
 namespace Extensions
 {
@@ -289,6 +291,175 @@ namespace Extensions
                 return ret;
             }
             else return base.ConvertFrom(context, culture, value);
+        }
+    }
+    public class ViewPlaneHandler
+    {
+        public enum PLANE_MODES
+        {
+            XZ,
+            XY,
+            ZY
+        };
+
+        public enum AXIS
+        {
+            X,
+            Y,
+            Z
+        };
+
+        public PLANE_MODES mode;
+
+        public ViewPlaneHandler()
+        {
+            mode = PLANE_MODES.XZ;
+        }
+
+        public float getViewCoord(Vector3 v, int a)
+        {
+            switch (mode)
+            {
+                case PLANE_MODES.XY:
+                    if (a == 0) return v.X;
+                    else return -v.Y; 
+                case PLANE_MODES.ZY:
+                    if (a == 0) return v.Z;
+                    else return -v.Y;
+                case PLANE_MODES.XZ:
+                default:
+                    if (a == 0) return v.X;
+                    else return v.Z;
+            }
+        }
+
+        public void draw2DVertice(Vector3 v)
+        {
+            switch (mode)
+            {
+                case PLANE_MODES.XY:
+                    Gl.glVertex2f(v.X, -v.Y);
+                    return;
+                case PLANE_MODES.ZY:
+                    Gl.glVertex2f(v.Z, -v.Y);
+                    return;
+                case PLANE_MODES.XZ:
+                default:
+                    Gl.glVertex2f(v.X, v.Z);
+                    return;
+            }
+        }
+
+        /*
+         * NOTE: CODE IS WRONG
+         * public void storeToVector(ref Vector3 dst, Vector3 src, AXIS a)
+        {
+            switch (mode)
+            {
+                case PLANE_MODES.XY:
+                    switch(a)
+                    {
+                        case AXIS.X:
+                            dst.X = src.X;
+                            break;
+                        case AXIS.Y:
+                            dst.Y = src.Z;
+                            break;
+                        case AXIS.Z:
+                            dst.Z = -src.Y;
+                            break;
+                    }
+                    return;
+                case PLANE_MODES.ZY:
+                    switch (a)
+                    {
+                        case AXIS.X:
+                            dst.X = src.Z;
+                            break;
+                        case AXIS.Y:
+                            dst.Y = -src.X;
+                            break;
+                        case AXIS.Z:
+                            dst.Z = -src.Y;
+                            break;
+                    }
+                    return;
+                case PLANE_MODES.XZ:
+                default:
+                    switch (a)
+                    {
+                        case AXIS.X:
+                            dst.X = src.X;
+                            break;
+                        case AXIS.Y:
+                            dst.Y = src.Y;
+                            break;
+                        case AXIS.Z:
+                            dst.Z = src.Z;
+                            break;
+                    }
+                    return;
+            }
+        }*/
+
+        public void storeToVector(ref Vector3 dst, Vector3 src)
+        {
+            switch (mode)
+            {
+                case PLANE_MODES.XY:
+                    dst.X = src.X;
+                    dst.Y = -src.Z;
+                    dst.Z = src.Y;
+                    return;
+                case PLANE_MODES.ZY:
+                    dst.Y = -src.Z;
+                    dst.Z = src.X;
+                    dst.X = -src.Y;
+                    return;
+                case PLANE_MODES.XZ:
+                default:
+                    dst.X = src.X;
+                    dst.Y = src.Y;
+                    dst.Z = src.Z;
+                    return;
+            }
+        }
+
+        public void storePlane(ref Vector3 dst, Vector3 src)
+        {
+            switch (mode)
+            {
+                case PLANE_MODES.XY:
+                    dst.X = src.X;
+                    dst.Y = -src.Z;
+                    return;
+                case PLANE_MODES.ZY:
+                    dst.Y = -src.Z;
+                    dst.Z = src.X;
+                    return;
+                case PLANE_MODES.XZ:
+                default:
+                    dst.X = src.X;
+                    dst.Z = src.Z;
+                    return;
+            }
+        }
+
+        public void draw3DVertice(Vector3 v)
+        {
+            switch (mode)
+            {
+                case PLANE_MODES.XY:
+                    Gl.glVertex3f(v.X, -v.Y, v.Z);
+                    return;
+                case PLANE_MODES.ZY:
+                    Gl.glVertex3f(v.Z, -v.Y, -v.X);
+                    return;
+                case PLANE_MODES.XZ:
+                default:
+                    Gl.glVertex3f(v.X, v.Z, v.Y);
+                    return;
+            }
         }
     }
 }

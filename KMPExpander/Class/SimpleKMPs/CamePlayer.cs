@@ -297,43 +297,47 @@ namespace KMPExpander.Class.SimpleKMPs
             }
             public void RenderCame(VisualSettings Settings, Vector3 pos)
             {
+                ViewPlaneHandler vph = (Application.OpenForms[0] as Form1).vph;
                 Gl.glPointSize(Settings.PointSize * (2f / 3f) + 2f);
                 Gl.glBegin(Gl.GL_POINTS);
                 Gl.glColor4f(Settings.PointborderColor.R / 255f, Settings.PointborderColor.G / 255f, Settings.PointborderColor.B / 255f, Settings.PointborderColor.A);
-                Gl.glVertex2f(pos.X, pos.Z);
+                vph.draw2DVertice(pos);
                 Gl.glEnd();
 
                 Gl.glPointSize(Settings.PointSize * (2f / 3f));
                 Gl.glBegin(Gl.GL_POINTS);
                 Gl.glColor4f(Settings.CameColor.R / 255f, Settings.CameColor.G / 255f, Settings.CameColor.B / 255f, Settings.CameColor.A);
-                Gl.glVertex2f(pos.X, pos.Z);
+                vph.draw2DVertice(pos);
                 Gl.glEnd();
             }
             public void RenderVP(VisualSettings Settings, Vector3 pos, Vector3 lookatpos)
             {
-
+                ViewPlaneHandler vph = (Application.OpenForms[0] as Form1).vph;
+                Vector3 vp1 = new Vector3(entry.Viewpoint1X, entry.Viewpoint1Y, entry.Viewpoint1Z);
+                Vector3 vp2 = new Vector3(entry.Viewpoint2X, entry.Viewpoint2Y, entry.Viewpoint2Z);
                 Gl.glColor4f((Settings.HighlightPointborderColor.R / 255f), (Settings.HighlightPointborderColor.G / 255f), (Settings.HighlightPointborderColor.B / 255f), Settings.HighlightPointborderColor.A);
                 Gl.glLineWidth(Settings.LineWidth / 2f);
                 Gl.glPushAttrib(Gl.GL_ENABLE_BIT);
                 Gl.glLineStipple(3, 0xAAAA);
                 Gl.glEnable(Gl.GL_LINE_STIPPLE);
                 Gl.glBegin(Gl.GL_LINES);
-                Gl.glVertex2d(entry.Viewpoint1X, entry.Viewpoint1Z);
-                Gl.glVertex2d(entry.Viewpoint2X, entry.Viewpoint2Z);
+                vph.draw2DVertice(vp1);
+                vph.draw2DVertice(vp2);
                 Gl.glEnd();
                 Gl.glPopAttrib();
 
                 Gl.glPointSize(Settings.PointSize / 2);
                 Gl.glBegin(Gl.GL_POINTS);
-                Gl.glVertex2d(entry.Viewpoint1X, entry.Viewpoint1Z);
-                Gl.glVertex2d(entry.Viewpoint2X, entry.Viewpoint2Z);
+                vph.draw2DVertice(vp1);
+                vph.draw2DVertice(vp2);
                 Gl.glColor4f(Settings.HighlightPointColor.R / 255f, Settings.HighlightPointColor.G / 255f, Settings.HighlightPointColor.B / 255f, Settings.HighlightPointColor.A);
-                Gl.glVertex2d(lookatpos.X, lookatpos.Z);
+                vph.draw2DVertice(lookatpos);
                 Gl.glEnd();
             }
             public void RenderView(VisualSettings Settings, Vector3 pos, Vector3 lookatpos, float FOV)
             {
-                double angle = Math.Atan2(lookatpos.Z - pos.Z, lookatpos.X - pos.X);
+                ViewPlaneHandler vph = (Application.OpenForms[0] as Form1).vph;
+                double angle = Math.Atan2(vph.getViewCoord(lookatpos, 1) - vph.getViewCoord(pos, 1), vph.getViewCoord(lookatpos, 0) - vph.getViewCoord(pos, 0));
                 double xcenter = Math.Cos(angle) * 1000000000d;
                 double ycenter = Math.Sin(angle) * 1000000000d;
                 double xside1 = Math.Cos(angle + RadianDegree.ToRadiansD((double)FOV / 2)) * 1000000000d;
@@ -342,14 +346,14 @@ namespace KMPExpander.Class.SimpleKMPs
                 double yside2 = Math.Sin(angle - RadianDegree.ToRadiansD((double)FOV / 2)) * 1000000000d;
                 Gl.glColor4f((Settings.HighlightPointColor.R / 255f), (Settings.HighlightPointColor.G / 255f), (Settings.HighlightPointColor.B / 255f), 0.25f);
                 Gl.glBegin(Gl.GL_TRIANGLE_FAN);
-                Gl.glVertex2d(pos.X, pos.Z);
+                vph.draw2DVertice(pos);
                 Gl.glVertex2d(xside1, yside1);
                 Gl.glVertex2d(xside2, yside2);
                 Gl.glEnd();
                 Gl.glColor4f((Settings.CameColor.R / 255f), (Settings.CameColor.G / 255f), (Settings.CameColor.B / 255f), Settings.CameColor.A);
                 Gl.glBegin(Gl.GL_LINE_LOOP);
                 Gl.glVertex2d(xside1, yside1);
-                Gl.glVertex2d(pos.X, pos.Z);
+                vph.draw2DVertice(pos);
                 Gl.glVertex2d(xside2, yside2);
                 Gl.glEnd();
                 Gl.glColor4f((Settings.HighlightPointborderColor.R / 255f), (Settings.HighlightPointborderColor.G / 255f), (Settings.HighlightPointborderColor.B / 255f), Settings.HighlightPointborderColor.A);
@@ -358,7 +362,7 @@ namespace KMPExpander.Class.SimpleKMPs
                 Gl.glLineStipple(3, 0xAAAA);
                 Gl.glEnable(Gl.GL_LINE_STIPPLE);
                 Gl.glBegin(Gl.GL_LINES);
-                Gl.glVertex2d(pos.X, pos.Z);
+                vph.draw2DVertice(pos);
                 Gl.glVertex2d(xcenter, ycenter);
                 Gl.glEnd();
                 Gl.glPopAttrib();

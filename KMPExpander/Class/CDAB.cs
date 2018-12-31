@@ -11,6 +11,7 @@ using System.Threading.Tasks;
 using System.Windows.Forms;
 using System.Diagnostics;
 using Tao.OpenGl;
+using Extensions;
 
 namespace KMPExpander.Class
 {
@@ -262,7 +263,7 @@ namespace KMPExpander.Class
         }
         internal void Render(bool picking = false)
         {
-            if (!isVisible) return;
+            if (!isVisible || (Application.OpenForms[0] as Form1).vph.mode != ViewPlaneHandler.PLANE_MODES.XZ) return;
             Gl.glBindTexture(Gl.GL_TEXTURE_2D, 0);
             if (!picking)
             {
@@ -295,16 +296,16 @@ namespace KMPExpander.Class
         public TreeNode GetTreeNode()
         {
             TreeNode node = new TreeNode("Div Sections");
-            node.ImageIndex = 16;
-            node.SelectedImageIndex = 16;
+            node.ImageIndex = 17;
+            node.SelectedImageIndex = 17;
             node.Tag = this;
             int i = 0;
             foreach (var group in Streams)
             {
                 node.Nodes.Add("Group " + i.ToString());
                 node.Nodes[i].Tag = group;
-                node.Nodes[i].ImageIndex = 17;
-                node.Nodes[i].SelectedImageIndex = 17;
+                node.Nodes[i].ImageIndex = 18;
+                node.Nodes[i].SelectedImageIndex = 18;
                 i++;
             }
             return node;

@@ -82,12 +82,44 @@ namespace KMPExpander.Class.SimpleKMPs
             [XmlAttribute]
             public Byte Priority { get; set; }
             //public Vector3 Position { get; set; }
+            [Browsable(false)]
+            public Vector3 Pos { get; set; } = new Vector3(0, 0, 0);
             [XmlAttribute]
-            public Single PositionX { get; set; }
+            public Single PositionX
+            {
+                get
+                {
+                    return Pos.X;
+                }
+                set
+                {
+                    Pos = new Vector3(value, Pos.Y, Pos.Z);
+                }
+            }
             [XmlAttribute]
-            public Single PositionY { get; set; }
+            public Single PositionY
+            {
+                get
+                {
+                    return Pos.Y;
+                }
+                set
+                {
+                    Pos = new Vector3(Pos.X, value, Pos.Z);
+                }
+            }
             [XmlAttribute]
-            public Single PositionZ { get; set; }
+            public Single PositionZ
+            {
+                get
+                {
+                    return Pos.Z;
+                }
+                set
+                {
+                    Pos = new Vector3(Pos.X, Pos.Y, value);
+                }
+            }
             //public Vector3 Rotation { get; set; }
             [XmlAttribute]
             public Single RotationX { get; set; }
@@ -284,7 +316,8 @@ namespace KMPExpander.Class.SimpleKMPs
 
         public void Render(bool picking)
         {
-            if (!Visible) return;
+            ViewPlaneHandler vph = (Application.OpenForms[0] as Form1).vph;
+            if (!Visible || vph.mode != ViewPlaneHandler.PLANE_MODES.XZ) return;
 
             if (picking)
             {

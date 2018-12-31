@@ -218,6 +218,7 @@ namespace KMPExpander.Class
 
         public void Render(bool picking = false)
         {
+            if ((Application.OpenForms[0] as Form1).vph.mode != Extensions.ViewPlaneHandler.PLANE_MODES.XZ) return;
             Gl.glBindTexture(Gl.GL_TEXTURE_2D, 0);
             if (!picking)
             {

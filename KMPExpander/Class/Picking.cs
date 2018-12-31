@@ -9,7 +9,7 @@ namespace KMPExpander.Class
 {
     public enum Sections
     {
-        None=0, StartPositions = 1,EnemyRoutes = 2,ItemRoutes = 3,GliderRoutes=4,CheckPoints=5,Objects=6,RespawnPoints=7,Routes=8,Area=9,Camera=10,GlobalMap=11,LocalMap
+        None=0, StartPositions = 1,EnemyRoutes = 2,ItemRoutes = 3,GliderRoutes=4,CheckPoints=5,Objects=6,RespawnPoints=7,Routes=8,Area=9,Camera=10,GlobalMap=11,LocalMap=12,StageInformation=13
     }
 
     public enum PointID

@@ -33,6 +33,7 @@ namespace KMPExpander
         public ObjList objlist;
         public ErrorCheck er = null;
         public UInt16 lastObjectID = 5;
+        public ViewPlaneHandler vph = null;
 
         public ISectionBase lastSelectedGroup;
         private ISectionBase lastSelectedSection;
@@ -90,7 +91,8 @@ namespace KMPExpander
             ImageList.Images.Add(Properties.Resources.routes_1);
             ImageList.Images.Add(Properties.Resources.area_1);
             ImageList.Images.Add(Properties.Resources.came_1);
-            ImageList.Images.Add(Properties.Resources.genm);
+            ImageList.Images.Add(Properties.Resources.stage_1);
+            ImageList.Images.Add(Properties.Resources.genm); // 12
             ImageList.Images.Add(Properties.Resources.gitem);
             ImageList.Images.Add(Properties.Resources.gglider);
             ImageList.Images.Add(Properties.Resources.gcheckpoint);
@@ -100,6 +102,7 @@ namespace KMPExpander
             treeView1.ImageList = ImageList;
             treeView1.HideSelection = false;
             objlist = new ObjList();
+            vph = new ViewPlaneHandler();
             //ApplyBlackTheme(this);
         }
 
@@ -472,7 +475,8 @@ namespace KMPExpander
                             treeView1.SelectedNode.Tag.GetType().Equals(typeof(RespawnPoints)) ||
                             treeView1.SelectedNode.Tag.GetType().Equals(typeof(Objects)) ||
                             treeView1.SelectedNode.Tag.GetType().Equals(typeof(Area)) ||
-                            treeView1.SelectedNode.Tag.GetType().Equals(typeof(Camera)))
+                            treeView1.SelectedNode.Tag.GetType().Equals(typeof(Camera)) ||
+                            treeView1.SelectedNode.Tag.GetType().Equals(typeof(StageInformation)))
                 {
                     lastSelectedGroup = (ISectionBase)e.Node.Tag;
                     lastSelectedSection = (ISectionBase)e.Node.Tag;
@@ -640,8 +644,20 @@ namespace KMPExpander
                         e.Cancel = true;
                     }
                 }
+            } else if (SelectedDots[0].GetType() == typeof(StageInformation.StageInformationEntry))
+            {
+                if (e.ColumnIndex == 4)
+                {
+                    colorDialog1.Color = (SelectedDots[0] as StageInformation.StageInformationEntry).FlareColor;
+                    e.Cancel = true;
+                    if (colorDialog1.ShowDialog() == DialogResult.OK)
+                    {
+                        (SelectedDots[0] as StageInformation.StageInformationEntry).FlareColor = colorDialog1.Color;
+                        
+                    }
+                }
             }
-                
+            
         }
 
         private void toolStripButtonPencil_Click(object sender, EventArgs e)
@@ -804,7 +820,6 @@ namespace KMPExpander
             foreach (DataGridViewRow row in (sender as DataGridView).Rows)
                 row.HeaderCell.Value = row.Index.ToString();
             (sender as DataGridView).AutoResizeRowHeadersWidth(DataGridViewRowHeadersWidthSizeMode.AutoSizeToFirstHeader);
-            Render();
             Render();
         }
 
@@ -1053,9 +1068,10 @@ namespace KMPExpander
 
             if (pencil_mode && (lastSelectedGroup != null))
             {
+                if (vph.mode != ViewPlaneHandler.PLANE_MODES.XZ && (lastSelectedGroup.GetType() == typeof(CheckPoints.CheckpointGroup) || lastSelectedGroup.GetType() == typeof(Area))) return;
                 Vector3 Position = GetPosition(e.Location);
                 AddingPencil = AddEntry();
-                if ((OBJModel != null) && (e.Button == MouseButtons.Right))
+                if ((OBJModel != null) && vph.mode == ViewPlaneHandler.PLANE_MODES.XZ && (e.Button == MouseButtons.Right))
                 {
                     PickPoint(e.Location, true);
                     Position.Y = found_height;
@@ -1101,7 +1117,7 @@ namespace KMPExpander
                 start_move = true;
                 if (PickingInfo.Section == Sections.None) return;
 
-                if (PickingInfo.Section == Sections.LocalMap) UIMapPos.MovePoint(PickingInfo, position);
+                if (PickingInfo.Section == Sections.LocalMap && vph.mode == ViewPlaneHandler.PLANE_MODES.XZ) UIMapPos.MovePoint(PickingInfo, position);
                 else Kayempee.MovePoint(PickingInfo, position);
                 Render();
             }
@@ -1121,7 +1137,7 @@ namespace KMPExpander
                 return;
             }
 
-            if (e.Button == MouseButtons.Right)
+            if (e.Button == MouseButtons.Right && vph.mode == ViewPlaneHandler.PLANE_MODES.XZ)
             {
                 PickPoint(e.Location, true);
                 if (OBJModel!=null) Kayempee.MovePointY(PickingInfo, found_height);
@@ -1266,7 +1282,7 @@ namespace KMPExpander
             Gl.glOrtho(
             r.Left, r.Right,
             r.Bottom, r.Top,
-            -8192, 8192);
+            -8192 * 2, 8192 * 2);
             Gl.glMatrixMode(Gl.GL_MODELVIEW);
             Gl.glLoadIdentity();
             
@@ -1351,6 +1367,24 @@ namespace KMPExpander
         private void helpToolStripMenuItem_Click(object sender, EventArgs e)
         {
             Help.ShowHelp(this, Application.StartupPath + @"\KMPExpander.chm");
+        }
+
+        private void viewPlaneComboBox_SelectedIndexChanged(object sender, EventArgs e)
+        {
+            switch((sender as ToolStripComboBox).SelectedIndex)
+            {
+                case 1:
+                    vph.mode = ViewPlaneHandler.PLANE_MODES.XY;
+                    break;
+                case 2:
+                    vph.mode = ViewPlaneHandler.PLANE_MODES.ZY;
+                    break;
+                case 0:
+                default:
+                    vph.mode = ViewPlaneHandler.PLANE_MODES.XZ;
+                    break;
+            }
+            Render();
         }
     }
 }

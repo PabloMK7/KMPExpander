@@ -12,14 +12,13 @@ using System.Windows.Forms;
 using System.Drawing;
 using Tao.OpenGl;
 using LibCTR.Collections;
+using Extensions;
 
 namespace KMPExpander.Class
 {
     [XmlRoot("KMP")]
     public class SimpleKMP
     {
-        [XmlElement("StageSettings")]
-        public SimpleKMPs.Settings Settings;
         public StartPositions StartPositions;
         public EnemyRoutes EnemyRoutes;
         public ItemRoutes ItemRoutes;
@@ -30,6 +29,7 @@ namespace KMPExpander.Class
         public Area Area;
         public Camera Camera;
         public RespawnPoints RespawnPoints;
+        public StageInformation StageInformation;
         public List<int> currentCullingRoutes;
 
         public SimpleKMP()
@@ -43,8 +43,8 @@ namespace KMPExpander.Class
             Area = new Area();
             Camera = new Camera();
             RespawnPoints = new RespawnPoints();
-            Settings = new SimpleKMPs.Settings();
             GliderRoutes = new GliderRoutes();
+            StageInformation = new StageInformation();
             currentCullingRoutes = new List<int>();
         }
 
@@ -62,8 +62,8 @@ namespace KMPExpander.Class
             Area = new Area(kmp_data.Area);
             Camera = new Camera(kmp_data.Camera);
             RespawnPoints = new RespawnPoints(kmp_data.JugemPoint);
-            Settings = new SimpleKMPs.Settings(kmp_data.StageInfo);
             GliderRoutes = new GliderRoutes(kmp_data.GliderPoint, kmp_data.GliderPointPath);
+            StageInformation = new StageInformation(kmp_data.StageInfo);
             currentCullingRoutes = new List<int>();
         }
 
@@ -88,7 +88,7 @@ namespace KMPExpander.Class
             kmp_data.CourseSect = new KMPSections.CORS();
             kmp_data.CannonPoint = new KMPSections.CNPT();
             kmp_data.MissionPoint = new KMPSections.MSPT();
-            kmp_data.StageInfo = Settings.ToSTGI();
+            kmp_data.StageInfo = StageInformation.ToSTGI();
             kmp_data.GliderPoint = GliderRoutes.ToGLPT();
             kmp_data.GliderPointPath = GliderRoutes.ToGLPH();
 
@@ -153,6 +153,9 @@ namespace KMPExpander.Class
             tv.Nodes.Add(Camera.GetTreeNode());
             tv.Nodes[i].Tag = Camera;
             tv.Nodes[i].ImageIndex = i + 1; tv.Nodes[i].SelectedImageIndex = i + 1; i++;
+            tv.Nodes.Add(StageInformation.GetTreeNode());
+            tv.Nodes[i].Tag = StageInformation;
+            tv.Nodes[i].ImageIndex = i + 1; tv.Nodes[i].SelectedImageIndex = i + 1; i++;
 
             foreach (TreeNode node in tv.Nodes)
             {
@@ -209,6 +212,8 @@ namespace KMPExpander.Class
                     return Area;
                 case Sections.Camera:
                     return Camera;
+                case Sections.StageInformation:
+                    return StageInformation;
                 default:
                     return null;
             }
@@ -238,6 +243,8 @@ namespace KMPExpander.Class
                     return Area;
                 case Sections.Camera:
                     return Camera;
+                case Sections.StageInformation:
+                    return StageInformation;
                 default:
                     return null;
             }
@@ -267,6 +274,8 @@ namespace KMPExpander.Class
                     return Area.Entries[pick_info.EntryID];
                 case Sections.Camera:
                     return Camera.Entries[pick_info.EntryID];
+                case Sections.StageInformation:
+                    return StageInformation.Entries[pick_info.EntryID];
                 default:
                     return null;
             }
@@ -308,30 +317,28 @@ namespace KMPExpander.Class
 
         public void MoveAnyPoint(object point, Vector3 position,Boolean left=false)
         {
+            ViewPlaneHandler vph = (Application.OpenForms[0] as Form1).vph;
+            Vector3 res = new Vector3();
             Type type = point.GetType();
             if (type == typeof(StartPositions.StartEntry))
             {
-                ((StartPositions.StartEntry)point).PositionX = position.X;
-                ((StartPositions.StartEntry)point).PositionY = position.Y;
-                ((StartPositions.StartEntry)point).PositionZ = position.Z;
+                vph.storeToVector(ref res, position);
+                ((StartPositions.StartEntry)point).Pos = res;
             }
             else if (type == typeof(EnemyRoutes.EnemyGroup.EnemyEntry))
             {
-                ((EnemyRoutes.EnemyGroup.EnemyEntry)point).PositionX = position.X;
-                ((EnemyRoutes.EnemyGroup.EnemyEntry)point).PositionY = position.Y;
-                ((EnemyRoutes.EnemyGroup.EnemyEntry)point).PositionZ = position.Z;
+                vph.storeToVector(ref res, position);
+                ((EnemyRoutes.EnemyGroup.EnemyEntry)point).Pos = res;
             }
             else if (type == typeof(ItemRoutes.ItemGroup.ItemEntry))
             {
-                ((ItemRoutes.ItemGroup.ItemEntry)point).PositionX = position.X;
-                ((ItemRoutes.ItemGroup.ItemEntry)point).PositionY = position.Y;
-                ((ItemRoutes.ItemGroup.ItemEntry)point).PositionZ = position.Z;
+                vph.storeToVector(ref res, position);
+                ((ItemRoutes.ItemGroup.ItemEntry)point).Pos = res;
             }
             else if (type == typeof(GliderRoutes.GliderGroup.GliderEntry))
             {
-                ((GliderRoutes.GliderGroup.GliderEntry)point).PositionX = position.X;
-                ((GliderRoutes.GliderGroup.GliderEntry)point).PositionY = position.Y;
-                ((GliderRoutes.GliderGroup.GliderEntry)point).PositionZ = position.Z;
+                vph.storeToVector(ref res, position);
+                ((GliderRoutes.GliderGroup.GliderEntry)point).Pos = res;
             }
             else if (type == typeof(CheckPoints.CheckpointGroup.CheckpointEntry))
             {
@@ -346,21 +353,18 @@ namespace KMPExpander.Class
             }
             else if (type == typeof(Routes.RouteGroup.RouteEntry))
             {
-                ((Routes.RouteGroup.RouteEntry)point).PositionX = position.X;
-                ((Routes.RouteGroup.RouteEntry)point).PositionY = position.Y;
-                ((Routes.RouteGroup.RouteEntry)point).PositionZ = position.Z;
+                vph.storeToVector(ref res, position);
+                ((Routes.RouteGroup.RouteEntry)point).Pos = res;
             }
             else if (type == typeof(Objects.ObjectEntry))
             {
-                ((Objects.ObjectEntry)point).PositionX = position.X;
-                ((Objects.ObjectEntry)point).PositionY = position.Y;
-                ((Objects.ObjectEntry)point).PositionZ = position.Z;
+                vph.storeToVector(ref res, position);
+                ((Objects.ObjectEntry)point).Pos = res;
             }
             else if (type == typeof(RespawnPoints.RespawnEntry))
             {
-                ((RespawnPoints.RespawnEntry)point).PositionX = position.X;
-                ((RespawnPoints.RespawnEntry)point).PositionY = position.Y;
-                ((RespawnPoints.RespawnEntry)point).PositionZ = position.Z;
+                vph.storeToVector(ref res, position);
+                ((RespawnPoints.RespawnEntry)point).Pos = res;
             }
             else if (type == typeof(Area.AreaEntry))
             {
@@ -370,37 +374,44 @@ namespace KMPExpander.Class
             }
             else if (type == typeof(Camera.CameraEntry))
             {
-                ((Camera.CameraEntry)point).PositionX = position.X;
-                ((Camera.CameraEntry)point).PositionY = position.Y;
-                ((Camera.CameraEntry)point).PositionZ = position.Z;
+                vph.storeToVector(ref res, position);
+                ((Camera.CameraEntry)point).Pos = res;
             }
         }
 
         public void MovePoint(SectionPicking.PickingInfo pick_info,Vector3 position)
         {
+            ViewPlaneHandler vph = (Application.OpenForms[0] as Form1).vph;
+            Vector3 res;
             switch (pick_info.Section)
             {
                 case Sections.StartPositions:
-                    StartPositions.Entries[pick_info.EntryID].PositionX = position.X;
-                    StartPositions.Entries[pick_info.EntryID].PositionZ = position.Z;
+                    res = StartPositions.Entries[pick_info.EntryID].Pos;
+                    vph.storePlane(ref res, position);
+                    StartPositions.Entries[pick_info.EntryID].Pos = res;
                     break;
                 case Sections.EnemyRoutes:
-                    EnemyRoutes.Entries[pick_info.GroupID].Entries[pick_info.EntryID].PositionX = position.X;
-                    EnemyRoutes.Entries[pick_info.GroupID].Entries[pick_info.EntryID].PositionZ = position.Z;
+                    res = EnemyRoutes.Entries[pick_info.GroupID].Entries[pick_info.EntryID].Pos;
+                    vph.storePlane(ref res, position);
+                    EnemyRoutes.Entries[pick_info.GroupID].Entries[pick_info.EntryID].Pos = res;
                     break;
                 case Sections.ItemRoutes:
-                    ItemRoutes.Entries[pick_info.GroupID].Entries[pick_info.EntryID].PositionX = position.X;
-                    ItemRoutes.Entries[pick_info.GroupID].Entries[pick_info.EntryID].PositionZ = position.Z;
+                    res = ItemRoutes.Entries[pick_info.GroupID].Entries[pick_info.EntryID].Pos;
+                    vph.storePlane(ref res, position);
+                    ItemRoutes.Entries[pick_info.GroupID].Entries[pick_info.EntryID].Pos = res;
                     break;
                 case Sections.GliderRoutes:
-                    GliderRoutes.Entries[pick_info.GroupID].Entries[pick_info.EntryID].PositionX = position.X;
-                    GliderRoutes.Entries[pick_info.GroupID].Entries[pick_info.EntryID].PositionZ = position.Z;
+                    res = GliderRoutes.Entries[pick_info.GroupID].Entries[pick_info.EntryID].Pos;
+                    vph.storePlane(ref res, position);
+                    GliderRoutes.Entries[pick_info.GroupID].Entries[pick_info.EntryID].Pos = res;
                     break;
                 case Sections.Routes:
-                    Routes.Entries[pick_info.GroupID].Entries[pick_info.EntryID].PositionX = position.X;
-                    Routes.Entries[pick_info.GroupID].Entries[pick_info.EntryID].PositionZ = position.Z;
+                    res = Routes.Entries[pick_info.GroupID].Entries[pick_info.EntryID].Pos;
+                    vph.storePlane(ref res, position);
+                    Routes.Entries[pick_info.GroupID].Entries[pick_info.EntryID].Pos = res;
                     break;
                 case Sections.CheckPoints:
+                    if (vph.mode != ViewPlaneHandler.PLANE_MODES.XZ) break;
                     if (pick_info.PointID == PointID.Left)
                     {
                         CheckPoints.Entries[pick_info.GroupID].Entries[pick_info.EntryID].LeftPointX = position.X;
@@ -413,20 +424,24 @@ namespace KMPExpander.Class
                     }
                     break;
                 case Sections.Objects:
-                    Objects.Entries[pick_info.EntryID].PositionX = position.X;
-                    Objects.Entries[pick_info.EntryID].PositionZ = position.Z;
+                    res = Objects.Entries[pick_info.EntryID].Pos;
+                    vph.storePlane(ref res, position);
+                    Objects.Entries[pick_info.EntryID].Pos = res;
                     break;
                 case Sections.RespawnPoints:
-                    RespawnPoints.Entries[pick_info.EntryID].PositionX = position.X;
-                    RespawnPoints.Entries[pick_info.EntryID].PositionZ = position.Z;
+                    res = RespawnPoints.Entries[pick_info.EntryID].Pos;
+                    vph.storePlane(ref res, position);
+                    RespawnPoints.Entries[pick_info.EntryID].Pos = res;
                     break;
                 case Sections.Area:
+                    if (vph.mode != ViewPlaneHandler.PLANE_MODES.XZ) break;
                     Area.Entries[pick_info.EntryID].PositionX = position.X;
                     Area.Entries[pick_info.EntryID].PositionZ = position.Z;
                     break;
                 case Sections.Camera:
-                    Camera.Entries[pick_info.EntryID].PositionX = position.X;
-                    Camera.Entries[pick_info.EntryID].PositionZ = position.Z;
+                    res = Camera.Entries[pick_info.EntryID].Pos;
+                    vph.storePlane(ref res, position);
+                    Camera.Entries[pick_info.EntryID].Pos = res;
                     break;
             }
         }

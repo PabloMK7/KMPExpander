@@ -311,8 +311,8 @@ namespace KMPExpander.Class.SimpleKMPs
             {
                 node.Nodes.Add("Group " + i.ToString());
                 node.Nodes[i].Tag = group;
-                node.Nodes[i].ImageIndex = 14;
-                node.Nodes[i].SelectedImageIndex = 14;
+                node.Nodes[i].ImageIndex = 15;
+                node.Nodes[i].SelectedImageIndex = 15;
                 i++;
             }
             return node;
@@ -320,7 +320,7 @@ namespace KMPExpander.Class.SimpleKMPs
 
         public void Render(bool picking)
         {
-            if (!Visible) return;
+            if (!Visible || (Application.OpenForms[0] as Form1).vph.mode != ViewPlaneHandler.PLANE_MODES.XZ) return;
 
             if (picking)
             {

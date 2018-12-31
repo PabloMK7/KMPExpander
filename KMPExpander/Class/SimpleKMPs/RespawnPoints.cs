@@ -28,12 +28,44 @@ namespace KMPExpander.Class.SimpleKMPs
 
         public class RespawnEntry
         {
+            [Browsable(false)]
+            public Vector3 Pos { get; set; } = new Vector3(0, 0, 0);
             [XmlAttribute]
-            public Single PositionX { get; set; }
+            public Single PositionX
+            {
+                get
+                {
+                    return Pos.X;
+                }
+                set
+                {
+                    Pos = new Vector3(value, Pos.Y, Pos.Z);
+                }
+            }
             [XmlAttribute]
-            public Single PositionY { get; set; }
+            public Single PositionY
+            {
+                get
+                {
+                    return Pos.Y;
+                }
+                set
+                {
+                    Pos = new Vector3(Pos.X, value, Pos.Z);
+                }
+            }
             [XmlAttribute]
-            public Single PositionZ { get; set; }
+            public Single PositionZ
+            {
+                get
+                {
+                    return Pos.Z;
+                }
+                set
+                {
+                    Pos = new Vector3(Pos.X, Pos.Y, value);
+                }
+            }
             //public Vector3 Rotation { get; set; }
             [XmlAttribute]
             public Single RotationX { get; set; }
@@ -69,18 +101,22 @@ namespace KMPExpander.Class.SimpleKMPs
 
             public void RenderPicking(int entry_id)
             {
+                ViewPlaneHandler vph = (Application.OpenForms[0] as Form1).vph;
+
                 VisualSettings Settings = (Application.OpenForms[0] as Form1).Settings;
                 Color pickingColor = SectionPicking.GetColor(Sections.RespawnPoints, 0, entry_id);
 
                 Gl.glPointSize(Settings.PointSize + 2f);
                 Gl.glBegin(Gl.GL_POINTS);
                 Gl.glColor4f(pickingColor.R / 255f, pickingColor.G / 255f, pickingColor.B / 255f, 1f);
-                Gl.glVertex2f(PositionX, PositionZ);
+                vph.draw2DVertice(Pos);
                 Gl.glEnd();
             }
 
             public void RenderPoint(bool picking)
             {
+                ViewPlaneHandler vph = (Application.OpenForms[0] as Form1).vph;
+
                 VisualSettings Settings = (Application.OpenForms[0] as Form1).Settings;
                 List<object> SelectedDots = (Application.OpenForms[0] as Form1).SelectedDots;
 
@@ -88,23 +124,25 @@ namespace KMPExpander.Class.SimpleKMPs
                 Gl.glBegin(Gl.GL_POINTS);
                 if (SelectedDots.Contains(this)) Gl.glColor4f(Settings.HighlightPointborderColor.R / 255f, Settings.HighlightPointborderColor.G / 255f, Settings.HighlightPointborderColor.B / 255f, Settings.HighlightPointborderColor.A);
                 else Gl.glColor4f(Settings.PointborderColor.R / 255f, Settings.PointborderColor.G / 255f, Settings.PointborderColor.B / 255f, Settings.PointborderColor.A);
-                Gl.glVertex2f(PositionX, PositionZ);
+                vph.draw2DVertice(Pos);
                 Gl.glEnd();
-                Gl.glPushMatrix();
-                Gl.glTranslatef(PositionX, PositionZ, 0);
-                Gl.glRotatef(-RotationY, 0, 0, 1);
-                
-                Gl.glBegin(Gl.GL_LINES);
-                Gl.glVertex2f(0, 0);
-                Gl.glVertex2f(0, 150);
-                Gl.glEnd();
-                Gl.glPopMatrix();
+                if (vph.mode == ViewPlaneHandler.PLANE_MODES.XZ)
+                {
+                    Gl.glPushMatrix();
+                    Gl.glTranslatef(PositionX, PositionZ, 0);
+                    Gl.glRotatef(-RotationY, 0, 0, 1);
 
+                    Gl.glBegin(Gl.GL_LINES);
+                    Gl.glVertex2f(0, 0);
+                    Gl.glVertex2f(0, 150);
+                    Gl.glEnd();
+                    Gl.glPopMatrix();
+                }
                 Gl.glPointSize(Settings.PointSize);
                 Gl.glBegin(Gl.GL_POINTS);
                 if (SelectedDots.Contains(this)) Gl.glColor4f(Settings.HighlightPointColor.R / 255f, Settings.HighlightPointColor.G / 255f, Settings.HighlightPointColor.B / 255f, Settings.HighlightPointColor.A);
                 else Gl.glColor4f(Settings.JugemColor.R / 255f, Settings.JugemColor.G / 255f, Settings.JugemColor.B / 255f, Settings.JugemColor.A);
-                Gl.glVertex2f(PositionX, PositionZ);
+                vph.draw2DVertice(Pos);
                 Gl.glEnd();
             }
 

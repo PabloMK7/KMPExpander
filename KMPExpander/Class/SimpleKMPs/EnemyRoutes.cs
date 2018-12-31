@@ -44,12 +44,39 @@ namespace KMPExpander.Class.SimpleKMPs
             public class EnemyEntry
             {
                 //public Vector3 Position { get; set; }
+                [Browsable(false)]
+                public Vector3 Pos { get; set; } = new Vector3(0, 0, 0);
                 [XmlAttribute]
-                public Single PositionX { get; set; }
+                public Single PositionX {
+                    get {
+                        return Pos.X;
+                    }
+                    set {
+                        Pos = new Vector3(value, Pos.Y, Pos.Z);
+                    }
+                }
                 [XmlAttribute]
-                public Single PositionY { get; set; }
+                public Single PositionY {
+                    get
+                    {
+                        return Pos.Y;
+                    }
+                    set
+                    {
+                        Pos = new Vector3(Pos.X, value, Pos.Z);
+                    }
+                }
                 [XmlAttribute]
-                public Single PositionZ { get; set; }
+                public Single PositionZ {
+                    get
+                    {
+                        return Pos.Z;
+                    }
+                    set
+                    {
+                        Pos = new Vector3(Pos.X, Pos.Y, value);
+                    }
+                }
                 [XmlAttribute]
                 public Single Scale { get; set; }
                 [Browsable(false), XmlAttribute]
@@ -268,12 +295,13 @@ namespace KMPExpander.Class.SimpleKMPs
                 {
                     VisualSettings Settings = (Application.OpenForms[0] as Form1).Settings;
                     Color pickingColor = SectionPicking.GetColor(Sections.EnemyRoutes, group_id, entry_id);
+                    ViewPlaneHandler vph = (Application.OpenForms[0] as Form1).vph;
                     float PointScale = 50f * Scale;
 
                     Gl.glPointSize(Settings.PointSize + 2f);
                     Gl.glBegin(Gl.GL_POINTS);
                     Gl.glColor4f(pickingColor.R / 255f, pickingColor.G / 255f, pickingColor.B / 255f, 1f);
-                    Gl.glVertex2f(PositionX, PositionZ);
+                    vph.draw2DVertice(Pos);
                     Gl.glEnd();
                 }
                 public void RenderPoint()
@@ -281,30 +309,33 @@ namespace KMPExpander.Class.SimpleKMPs
                     VisualSettings Settings = (Application.OpenForms[0] as Form1).Settings;
                     List<object> SelectedDots = (Application.OpenForms[0] as Form1).SelectedDots;
                     float PointScale = 50f * Scale;
+                    
+                    ViewPlaneHandler vph = (Application.OpenForms[0] as Form1).vph;
 
                     Gl.glPointSize(Settings.PointSize+2f);
                     Gl.glBegin(Gl.GL_POINTS);
 
                     if (SelectedDots.Contains(this)) Gl.glColor4f(Settings.HighlightPointborderColor.R / 255f, Settings.HighlightPointborderColor.G / 255f, Settings.HighlightPointborderColor.B / 255f, Settings.HighlightPointborderColor.A);
                     else Gl.glColor4f(Settings.PointborderColor.R / 255f, Settings.PointborderColor.G / 255f, Settings.PointborderColor.B / 255f, Settings.PointborderColor.A);
-                    Gl.glVertex2f(PositionX, PositionZ);
+                    vph.draw2DVertice(Pos);
                     Gl.glEnd();
 
                     Gl.glPointSize(Settings.PointSize);
                     Gl.glBegin(Gl.GL_POINTS);
                     if (SelectedDots.Contains(this)) Gl.glColor4f(Settings.HighlightPointColor.R / 255f, Settings.HighlightPointColor.G / 255f, Settings.HighlightPointColor.B / 255f, Settings.HighlightPointColor.A);
                     else Gl.glColor4f(Settings.EnemyColor.R / 255f, Settings.EnemyColor.G / 255f, Settings.EnemyColor.B / 255f, Settings.EnemyColor.A);
-                    Gl.glVertex2f(PositionX,PositionZ);
+                    vph.draw2DVertice(Pos);
                     Gl.glEnd();
 
                     Gl.glLineWidth(Settings.LineWidth);
-                    if (SelectedDots.Contains(this)) DrawFilledCircle(PositionX, PositionZ, PointScale, 24, Settings.HighlightPointborderColor, Settings.HighlightPointColor);
-                    else DrawFilledCircle(PositionX, PositionZ, PointScale, 24, Settings.EnemyColor, Settings.EnemyColor);
+                    if (SelectedDots.Contains(this)) DrawFilledCircle(vph.getViewCoord(Pos, 0), vph.getViewCoord(Pos, 1), PointScale, 24, Settings.HighlightPointborderColor, Settings.HighlightPointColor);
+                    else DrawFilledCircle(vph.getViewCoord(Pos, 0), vph.getViewCoord(Pos, 1), PointScale, 24, Settings.EnemyColor, Settings.EnemyColor);
                 }
 
                 public void RenderLine()
                 {
-                    Gl.glVertex2f(PositionX, PositionZ);
+                    ViewPlaneHandler vph = (Application.OpenForms[0] as Form1).vph;
+                    vph.draw2DVertice(Pos);
                 }
             }
 
@@ -405,8 +436,8 @@ namespace KMPExpander.Class.SimpleKMPs
             {
                 node.Nodes.Add("Group " + i.ToString());
                 node.Nodes[i].Tag = group;
-                node.Nodes[i].ImageIndex = 11;
-                node.Nodes[i].SelectedImageIndex = 11;
+                node.Nodes[i].ImageIndex = 12;
+                node.Nodes[i].SelectedImageIndex = 12;
                 i++;
             }
             return node;

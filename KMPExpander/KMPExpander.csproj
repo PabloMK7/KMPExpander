@@ -125,6 +125,7 @@
     <Compile Include="Class\ObjInfo.cs" />
     <Compile Include="Class\OBJWrapper.cs" />
     <Compile Include="Class\SimpleKMPs\CamePlayer.cs" />
+    <Compile Include="Class\SimpleKMPs\StageInformation.cs" />
     <Compile Include="Class\TreeViewFix.cs">
       <SubType>Component</SubType>
     </Compile>
@@ -144,7 +145,6 @@
     <Compile Include="Class\SimpleKMPs\Objects.cs" />
     <Compile Include="Class\SimpleKMPs\RespawnPoints.cs" />
     <Compile Include="Class\SimpleKMPs\Routes.cs" />
-    <Compile Include="Class\SimpleKMPs\Settings.cs" />
     <Compile Include="Class\SimpleKMPs\StartPositions.cs" />
     <Compile Include="Class\Vector.cs" />
     <Compile Include="ErrorCheck.cs">
@@ -285,6 +285,7 @@
     <Content Include="Icons\KMP_Expander_App_Icon.ico" />
     <Content Include="Icons\KMP_File_Icon.ico" />
     <None Include="Icons\warning.png" />
+    <Content Include="Icons\stgi\1.png" />
     <Content Include="KMP_Expander_App_Icon.ico" />
     <None Include="Resources\div.bmp" />
   </ItemGroup>

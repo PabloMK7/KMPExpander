@@ -48,15 +48,13 @@ namespace KMPSections
                 er.Write(Unknown3);
                 er.Write(Unknown4);
                 er.Write(Unknown5);
-                er.Write(Unknown6);
             }
             public Byte NrLaps { get; set; }
             public Byte Unknown1 { get; set; }
             public Byte Unknown2 { get; set; }
             public Byte Unknown3 { get; set; }
-            public UInt32 Unknown4 { get; set; }
-            public UInt16 Unknown5 { get; set; }
-            public UInt16 Unknown6 { get; set; }
+            public Int32 Unknown4 { get; set; }
+            public Int32 Unknown5 { get; set; }
         }
     }
 }

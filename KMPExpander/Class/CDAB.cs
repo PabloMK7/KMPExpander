@@ -408,7 +408,7 @@ namespace KMPExpander.Class
         public static void SaveBcmdl(string Filename, string saveFileName)
         {
             string parfolder = Directory.GetParent(Filename).FullName;
-            var ext = new List<string> { ".cmdlext", ".ctex", ".cmata", ".cmcla", ".cmtpa", ".cmtsa"};
+            var ext = new List<string> { ".cmdlext", ".ctex", ".cmata", ".cmcla", ".cmtpa", ".cmtsa", ".cenv"};
             List<string> myFiles = Directory.GetFiles(parfolder, "*.*", SearchOption.AllDirectories).Where(s => ext.Contains(Path.GetExtension(s))).ToList();
             string nw4cRoot = Environment.GetEnvironmentVariable("NW4C_ROOT");
             if (nw4cRoot == null) { MessageBox.Show("Cannot export to .bcmdl (NW4C not found)."); return; }

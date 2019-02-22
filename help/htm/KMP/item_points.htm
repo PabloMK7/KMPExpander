@@ -1,24 +1,24 @@
 <h1>Item Routes</h1>
-<p>Item routes are used by red shells, blue shells and bullet bills to know where to go in tracks. Each route group is linked to other groups via its&nbsp;<strong>group settings</strong> and each point of the group has its own flags and parameters.</p>
+<p>Item routes are used by red shells and blue shells to know where to go in tracks. Each route group is linked to other groups via its&nbsp;<strong>group settings</strong> and each point of the group has its own flags and parameters.</p>
 <h3>Group Settings</h3>
 <p>Group settings are displayed in the&nbsp;<strong>Group Settings</strong> view:</p>
 <ul>
-<li><strong>Next</strong><strong>:</strong> Lists all the possible groups that CPU racers can go to after finishing this one. One of these groups will be taken randomly. There can be up to 6 next groups, unused entries in the next list should be set to&nbsp;<strong>-1</strong>.</li>
-<li><strong>Previous:</strong> Lists all the possible groups that CPU racers could have come from.&nbsp;<strong>IMPORTANT: if group X has group Y in the next list, group Y has group X in the previous list, otherwise the game may crash.&nbsp;</strong>There can be up to 6 previous groups, unused entries in the previous list should be set to&nbsp;<strong>-1</strong>.</li>
+<li><strong>Next</strong><strong>:</strong> Lists all the possible groups that items can go to after finishing this one. One of these groups will be taken randomly. There can be up to 6 next groups, unused entries in the next list should be set to&nbsp;<strong>-1</strong>.</li>
+<li><strong>Previous:</strong> Lists all the possible groups that items could have come from.&nbsp;<strong>IMPORTANT: if group X has group Y in the next list, group Y has group X in the previous list, otherwise the game may crash.&nbsp;</strong>There can be up to 6 previous groups, unused entries in the previous list should be set to&nbsp;<strong>-1</strong>.</li>
 </ul>
 <h3>Parameters</h3>
 <p>Parameters are displayed in the <strong>entry list</strong>:</p>
 <ul>
 <li><strong>PositionXYZ:</strong>&nbsp;Position of the Item Point.</li>
-<li><strong>Scale:</strong> Scale of the item point. This is represented as a circle in the <strong>editor</strong>, shells and bullet bills will choose a point on each item entry within this circle to go to, so make sure that the whole circle is inside the road. (Note that ingame, they are not circles but spheres).</li>
-<li><strong>GravityMode:</strong> Controls how gravity affects blue/red shells and bullet bills:
+<li><strong>Scale:</strong> Scale of the item point. This is represented as a circle in the <strong>editor</strong>, shells will choose a point on each item entry within this circle to go to, so make sure that the whole circle is inside the road. (Note that ingame, they are not circles but spheres).</li>
+<li><strong>GravityMode:</strong> Controls how gravity affect shells:
 <ul>
 <li><strong>0 - Affected by Gravity:</strong>&nbsp;Items will fall to the ground. (Default)</li>
 <li><strong>1 - Unaffected By Gravity:</strong> Items will fly to follow the route. (Used in places where there is no ground and items should fly, such as gliding sections or big jumps.)</li>
 <li><strong>2 - Cannon Section:</strong> Same as&nbsp;<strong>Unaffected By Gravity</strong> but items will fly faster. (Used in cannon sections.)</li>
 </ul>
 </li>
-<li><strong>PlayerScanRadius:&nbsp;</strong>Controls the scan radius of red/blue shells to target players. The scan radius is shown in the <strong>editor</strong> as a dashed circle:<br />
+<li><strong>PlayerScanRadius:&nbsp;</strong>Controls the scan radius of shells to target players. The scan radius is shown in the <strong>editor</strong> as a dashed circle:<br />
 <ul>
 <li><strong>0 - Small:</strong> Small radius of 300 units.&nbsp;(Default)</li>
 <li><strong>1 - Big</strong><strong>:</strong>&nbsp;Big radius of 900 units. (Used in wide sections)</li>
@@ -29,7 +29,7 @@
 <ul>
 <li><strong>Make sure that if group X has group Y in the next list, group Y has group X in the previous list, otherwise the game may crash.</strong></li>
 <li><strong>Make sure all the item points are inside the checkpoints, otherwise the game will crash.</strong></li>
-<li><strong>Make sure all the item points are avobe Y=0 (failsafe death barrier), otherwise the game may crash.</strong></li>
-<li>If red/blue shells fall or crash on walls because they can't make a jump, remember to set&nbsp;<strong>GravityMode</strong> to 1. Remember to set the value to 2 in cannon sections.</li>
-<li>Only use the&nbsp;<strong>Big</strong> value of&nbsp;<strong>PlayerScanRadius</strong> if it's needed to scan a larger area, otherwise use&nbsp;<strong>Small</strong>. (This will improve the game performance).</li>
+<li><strong>Make sure all the item points are above Y=0 (failsafe death barrier), otherwise the game may crash.</strong></li>
+<li>If shells fall or crash on walls because they can't make a jump, remember to set&nbsp;<strong>GravityMode</strong> to 1. Remember to set the value to 2 in cannon sections.</li>
+<li>Only use the&nbsp;<strong>Big</strong> value of&nbsp;<strong>PlayerScanRadius</strong> if it's needed to scan a larger area, otherwise use&nbsp;<strong>Small</strong>.</li>
 </ul>

@@ -684,7 +684,12 @@ namespace KMPExpander
 
         private void dataGridView1_CellContentClick(object sender, DataGridViewCellEventArgs e)
         {
-
+            string name = dataGridView1.Columns[e.ColumnIndex].Name;
+            if (name == "WideTurn" || name == "NormalTurn" || name == "SharpTurn")
+            {
+                dataGridView1.EndEdit();
+                Render();
+            }
         }
 
         private void toolStripButtonRemove_Click(object sender, EventArgs e)
@@ -924,10 +929,29 @@ namespace KMPExpander
             Render();
         }
 
+        private void simpleOpenGlControl1_KeyPress(object sender, KeyPressEventArgs e)
+        {
+            if (e.KeyChar == '+')
+            {
+                doScroll(true);
+
+            } else if (e.KeyChar == '-')
+            {
+                doScroll(false);
+            }
+        }
+
         public void simpleOpenGlControl1_MouseWheel(object sender, MouseEventArgs e)
         {
+            bool mode = false;
+            if (e.Delta >= 0) mode = true;
+            doScroll(mode);
+        }
+
+        public void doScroll(bool zoomIn)
+        {
             float Diff = (maximum_viewport - minimum_viewport) / 15f;
-            if (e.Delta >= 0) Viewport -= Diff;
+            if (zoomIn) Viewport -= Diff;
             else Viewport += Diff;
 
             RectangleF disp = getDisplayRectangle(false);

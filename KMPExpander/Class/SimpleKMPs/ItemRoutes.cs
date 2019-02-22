@@ -92,6 +92,8 @@ namespace KMPExpander.Class.SimpleKMPs
                                 return "0 - Affected By Gravity";
                             case 1:
                                 return "1 - Unaffected By Gravity";
+                            case 2:
+                                return "2 - Cannon Section";
                             default:
                                 return FlyModeVal + " - Unknown";
                         }

@@ -1,10 +1,10 @@
 <h1>Enemy Routes</h1>
-<p>Enemy routes are used by the CPU racers to know where to go in tracks. Each route is linked to other routes via its&nbsp;<strong>group settings</strong> and each point of the group has its own flags and parameters.</p>
+<p>Enemy routes are used by the CPU racers and bullet bills (will name them as karts) to know where to go in tracks. Each route is linked to other routes via its&nbsp;<strong>group settings</strong> and each point of the group has its own flags and parameters.</p>
 <h3>Group Settings</h3>
 <p>Group settings are displayed in the&nbsp;<strong>Group Settings</strong> view:</p>
 <ul>
-<li><strong>Next</strong><strong>:</strong> Lists all the possible groups that CPU racers can go to after finishing this one. One of these groups will be taken randomly unless the first point of the group has the <em>Needs Mushroom flag</em> in the&nbsp;<strong>MushSettings</strong>. In that case, the CPU racer will consider taking that group if they have a speed item (50cc: 0% chance; 100cc: 50% chance; 150cc: 100% chance). This is useful for shortcuts that need a mushroom to take. There can be up to 16 next routes, unused entries in the next list should be set to&nbsp;<strong>-1</strong>.</li>
-<li><strong>Previous:</strong> Lists all the possible groups that CPU racers could have come from.&nbsp;<strong>IMPORTANT: if group X has group Y in the next list, group Y has group X in the previous list, otherwise the game may crash.&nbsp;</strong>There can be up to 16 previous routes, unused entries in the previous list should be set to&nbsp;<strong>-1</strong></li>
+<li><strong>Next</strong><strong>:</strong> Lists all the possible groups that karts can go to after finishing this one. One of these groups will be taken randomly unless the first point of the group has the <em>Needs Mushroom flag</em> in the&nbsp;<strong>MushSettings</strong>. In that case, the CPU Racers will consider taking that group if they have a speed item (50cc: 0% chance; 100cc: 50% chance; 150cc: 100% chance). This is useful for shortcuts that need a mushroom to take.&nbsp;There are other flags karts may consider when choosing a route, which will be pointed out later in&nbsp;<strong>PathFindOpts</strong>.&nbsp;There can be up to 16 next routes, unused entries in the next list should be set to&nbsp;<strong>-1</strong>.</li>
+<li><strong>Previous:</strong> Lists all the possible groups that CPU racers could have come from.&nbsp;<strong>IMPORTANT: if group X has group Y in the next list, group Y has group X in the previous list, otherwise the game may crash.&nbsp;</strong>There can be up to 16 previous routes, unused entries in the previous list should be set to&nbsp;<strong>-1.</strong></li>
 <li><strong>Unknown:&nbsp;</strong>The purpose of this field is unknown, it is always 00000000 for normal tracks but not for battle tracks.</li>
 </ul>
 <h3>Parameters</h3>
@@ -28,17 +28,25 @@
 </li>
 <li><strong>Flags:</strong> The following flags can either be enabled or disabled:<br />
 <ul>
-<li><strong>WideTurn:</strong> Marks the turn as a wide turn.</li>
-<li><strong>NormalTurn:</strong> Marks the turn as a normal turn.</li>
-<li><strong>SharpTurn:</strong> Marks the turn as a sharp turn.</li>
+<li><strong>WideTurn:</strong> Marks the turn as a wide turn, CPU racers will do a long drift and may take a super mini-turbo.</li>
+<li><strong>NormalTurn:</strong> Marks the turn as a normal turn. (Behaviour in between wide and sharp turn)</li>
+<li><strong>SharpTurn:</strong> Marks the turn as a sharp turn, CPU racers may take a miniturbo by charging it as fast as possible.</li>
 <li><strong>TricksForbidden:</strong> CPU racers won't be able to make tricks using ramps, boost ramps or glider pads. This is used in places where getting more speed from a trick is not convenient (as there is a sharp turn next to the ramp, for example).</li>
-<li><strong>StickToRoute:&nbsp;</strong>CPU racers will try to go as close to the center of the route as possible, they will even be able to turn midair. This flag is used in narrow places where it is very important to follow the route as close as possible.</li>
+<li><strong>StickToRoute:&nbsp;</strong>CPU racers will try to go as close to the center of the route as possible, they will even be able to turn midair. This flag is used in narrow places where it is very important to follow the route as close as possible. Bullet Bills will follow the route exactly ignoring gravity.</li>
 <li><strong>BouncyMushSection:</strong> This flag is enabled on sections where the enemy points are above bouncy terrain such as the bouncy mushrooms in mushroom gorge or the bouncy flower in DK Jungle. It is currently unknown how this flag actually affects the enemy AI.</li>
 <li><strong>ForceDefaultSpeed:</strong> Forces the CPU to move at the same speed no matter the mode (50cc, 100cc, 150cc), if they are doing a miniturbo, etc. This is used in sections where it is important to go at a predefined speed, such as some jumps where the CPU racers may go too fast or slow to perform the jump properly.</li>
 <li><strong>UnknownFlag:</strong> As the name suggests, the purpose of this flag is unknown. It is enabled in the gliding section of Mario Circuit when exiting the castle, normally disabled in other places.</li>
 </ul>
 </li>
-<li><strong>Unknown1/2:</strong> The purposes of those values are unknown, normally 0. (May be related to which group CPU may take in some situations.</li>
+<li><strong>PathFindOpts:</strong> Prevents karts to take this route under certain conditions:
+<ul>
+<li><strong>-4/-3 - Take under unknown flag:</strong> Used in the first enemy point of a route. Depending on an unknown flag in karts, they will take this route instead of others.</li>
+<li><strong>-2 - Bullet bill cannot find:</strong> When using a bullet bill, it will search for the closest enemy point to follow. During this search, it will ignore points with this value.</li>
+<li><strong>-1 - CPU Racer cannot find:</strong>&nbsp;When a CPU racer respawns, it will search for the closest enemy point to follow. During this search, it will ignore points with this value.</li>
+<li><strong>0 - No restrictions:</strong> This point will be able to be found or followed without any restrictions.</li>
+</ul>
+</li>
+<li><strong>MaxSearchYOffset:</strong> Limits the difference in height between the kart and the enemy point when searching for the closest enemy point. If the kart isn't inside enemy point PositionY&nbsp;&plusmn; MaxSearchYOffset then the point will be discarded. Value&nbsp;<strong>0</strong> means no restriction,&nbsp;<strong>negative</strong> value means&nbsp;<strong>75</strong>. This value can be visualized in the&nbsp;<strong>Editor</strong> by selecting the point and changing the&nbsp;<strong>View Plane&nbsp;</strong>to&nbsp;<strong>XY&nbsp;</strong>or&nbsp;<strong>ZY</strong>.</li>
 </ul>
 <h3>Tips</h3>
 <ul>
@@ -54,6 +62,7 @@
 <li><strong>SharpTurn</strong> in sharp turns or places where you want the CPU racers to leave the turn with a miniturbo (as taking a turn with a sharp angle will help getting a miniturbo).</li>
 <li><strong>TricksForbidden</strong> in places where tricking off a ramp causes problems.</li>
 <li><strong>ForceDefaultSpeed</strong>&nbsp;and/or <strong>StickToRoute&nbsp;</strong>in places where a perfect jump needs to be performed or it is important to follow the route as close as possible.</li>
+<li><strong>MaxSearchYOffset:</strong> If there are two routes that cross each other but with different heights, make sure you limit the Y offset so the karts won't mistakenly take the wrong route.</li>
 </ul>
 </li>
 </ul>

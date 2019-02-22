@@ -29,6 +29,41 @@ namespace KMPExpander.Class.SimpleKMPs
             }
         }
         
+        public static Color decideColor(EnemyGroup.EnemyEntry entry)
+        {
+            VisualSettings Settings = (Application.OpenForms[0] as Form1).Settings;
+            byte rmask = 0, gmask = 0, bmask = 0;
+            if (entry.WideTurn)
+            {
+                rmask = 0xEF;
+            }
+            if (entry.NormalTurn)
+            {
+                gmask = 0xEF;
+            }
+            if (entry.SharpTurn)
+            {
+                bmask = 0xEF;
+            }
+            return Color.FromArgb(Settings.EnemyColor.A, (Settings.EnemyColor.R + rmask), (Settings.EnemyColor.G + gmask), (Settings.EnemyColor.B + bmask));
+        }
+
+        public static void decideDrawLineMode(EnemyGroup.EnemyEntry entry)
+        {
+            VisualSettings Settings = (Application.OpenForms[0] as Form1).Settings;
+            if (entry.DriftSettingsVal == 0)
+            {
+                Gl.glLineStipple(3, 0xAAAA);
+                Gl.glEnable(Gl.GL_LINE_STIPPLE);
+            } else if (entry.DriftSettingsVal == 1)
+            {
+                Gl.glLineStipple(3, 0xEEEE);
+                Gl.glEnable(Gl.GL_LINE_STIPPLE);
+            }
+            Color newcolor = decideColor(entry);
+            Gl.glColor4f(newcolor.R / 255f, newcolor.G / 255f, newcolor.B / 255f, newcolor.A / 255f);
+        }
+
         public class EnemyGroup : SectionBase<EnemyGroup.EnemyEntry>
         {
             [XmlAttribute,Category("Enemy Group"),Description("Specifies which previous groups this one is linked to."), Editor(typeof(CustomEditor), typeof(UITypeEditor))]
@@ -226,11 +261,52 @@ namespace KMPExpander.Class.SimpleKMPs
                     }
                 }
                 //
+                [XmlAttribute, Browsable(false)]
+                public Int16 PathFindOptsVal { get; set; }
                 [XmlAttribute]
-                public Int16 Unknown1 { get; set; }
+                public string PathFindOpts
+                {
+                    get
+                    {
+                        switch (PathFindOptsVal)
+                        {
+                            case -4:
+                                return "-4 - Taken under unknown flag";
+                            case -3:
+                                return "-3 - Taken under unknown flag";
+                            case -2:
+                                return "-2 - Bullet cannot find";
+                            case -1:
+                                return "-1 - CPU Racer cannot find";
+                            case 0:
+                                return "0 - No restrictions";
+                            default:
+                                return PathFindOptsVal + " - Unknown";
+                        }
+                    }
+                    set
+                    {
+                        Int16 val = Int16.Parse(value);
+                        PathFindOptsVal = val;
+                    }
+                }
+                [XmlAttribute, Browsable(false)] //Limit height find -1 = 75
+                public Int16 MaxSearchYOffsetVal { get; set; }
                 [XmlAttribute]
-                public Int16 Unknown2 { get; set; }
-
+                public string MaxSearchYOffset
+                {
+                    get
+                    {
+                        if (MaxSearchYOffsetVal < 0) return "-1 (75) - Limited offset";
+                        else if (MaxSearchYOffsetVal > 0) return MaxSearchYOffsetVal + " - Limited offset";
+                        else return "0 - No limited offset";
+                    }
+                    set
+                    {
+                        Int16 val = Int16.Parse(value);
+                        MaxSearchYOffsetVal = val;
+                    }
+                }
                 public EnemyEntry() {
                     Scale = 1;
                 }
@@ -244,8 +320,8 @@ namespace KMPExpander.Class.SimpleKMPs
                     MushSettingsVal = entry.MushSettingsVal;
                     DriftSettingsVal = entry.DriftSettingsVal;
                     Flags = entry.Flags;
-                    Unknown1 = entry.Unknown2;
-                    Unknown2 = entry.Unknown3;
+                    PathFindOptsVal = entry.Unknown2;
+                    MaxSearchYOffsetVal = entry.Unknown3;
                 }
                 public ENPT.ENPTEntry ToENPTEntry()
                 {
@@ -255,8 +331,8 @@ namespace KMPExpander.Class.SimpleKMPs
                     entry.MushSettingsVal = MushSettingsVal;
                     entry.DriftSettingsVal = DriftSettingsVal;
                     entry.Flags = Flags;
-                    entry.Unknown2 = Unknown1;
-                    entry.Unknown3 = Unknown2;
+                    entry.Unknown2 = PathFindOptsVal;
+                    entry.Unknown3 = MaxSearchYOffsetVal;
                     return entry;
                 }
 
@@ -309,27 +385,51 @@ namespace KMPExpander.Class.SimpleKMPs
                     VisualSettings Settings = (Application.OpenForms[0] as Form1).Settings;
                     List<object> SelectedDots = (Application.OpenForms[0] as Form1).SelectedDots;
                     float PointScale = 50f * Scale;
-                    
+                    Color newcolor = decideColor(this);
+
                     ViewPlaneHandler vph = (Application.OpenForms[0] as Form1).vph;
 
                     Gl.glPointSize(Settings.PointSize+2f);
                     Gl.glBegin(Gl.GL_POINTS);
 
                     if (SelectedDots.Contains(this)) Gl.glColor4f(Settings.HighlightPointborderColor.R / 255f, Settings.HighlightPointborderColor.G / 255f, Settings.HighlightPointborderColor.B / 255f, Settings.HighlightPointborderColor.A);
-                    else Gl.glColor4f(Settings.PointborderColor.R / 255f, Settings.PointborderColor.G / 255f, Settings.PointborderColor.B / 255f, Settings.PointborderColor.A);
+                    else Gl.glColor4f(1 - Settings.PointborderColor.R / 255f, 1 - Settings.PointborderColor.G / 255f, 1 - Settings.PointborderColor.B / 255f, Settings.PointborderColor.A);
                     vph.draw2DVertice(Pos);
                     Gl.glEnd();
 
                     Gl.glPointSize(Settings.PointSize);
                     Gl.glBegin(Gl.GL_POINTS);
                     if (SelectedDots.Contains(this)) Gl.glColor4f(Settings.HighlightPointColor.R / 255f, Settings.HighlightPointColor.G / 255f, Settings.HighlightPointColor.B / 255f, Settings.HighlightPointColor.A);
-                    else Gl.glColor4f(Settings.EnemyColor.R / 255f, Settings.EnemyColor.G / 255f, Settings.EnemyColor.B / 255f, Settings.EnemyColor.A);
+                    else Gl.glColor4f(newcolor.R / 255f, newcolor.G / 255f, newcolor.B / 255f, newcolor.A);
                     vph.draw2DVertice(Pos);
                     Gl.glEnd();
 
                     Gl.glLineWidth(Settings.LineWidth);
                     if (SelectedDots.Contains(this)) DrawFilledCircle(vph.getViewCoord(Pos, 0), vph.getViewCoord(Pos, 1), PointScale, 24, Settings.HighlightPointborderColor, Settings.HighlightPointColor);
-                    else DrawFilledCircle(vph.getViewCoord(Pos, 0), vph.getViewCoord(Pos, 1), PointScale, 24, Settings.EnemyColor, Settings.EnemyColor);
+                    else DrawFilledCircle(vph.getViewCoord(Pos, 0), vph.getViewCoord(Pos, 1), PointScale, 24, newcolor, newcolor);
+
+                    if (SelectedDots.Contains(this) && MaxSearchYOffsetVal != 0 && (vph.mode == ViewPlaneHandler.PLANE_MODES.XY || vph.mode == ViewPlaneHandler.PLANE_MODES.ZY))
+                    {
+                        int toDraw = MaxSearchYOffsetVal;
+                        if (toDraw == -1) toDraw = 75;
+                        Gl.glColor4f(Settings.HighlightPointColor.R / 255f, Settings.HighlightPointColor.G / 255f, Settings.HighlightPointColor.B / 255f, Settings.HighlightPointColor.A);
+                        Gl.glPushAttrib(Gl.GL_ENABLE_BIT);
+                        Gl.glLineStipple(3, 0xAAAA);
+                        Gl.glEnable(Gl.GL_LINE_STIPPLE);
+                        Gl.glBegin(Gl.GL_LINES);
+
+                        vph.draw2DVertice(new Vector3(100000, Pos.Y + toDraw, 100000));
+                        vph.draw2DVertice(new Vector3(-100000, Pos.Y + toDraw, -100000));
+
+                        Gl.glEnd();
+                        Gl.glBegin(Gl.GL_LINES);
+
+                        vph.draw2DVertice(new Vector3(100000, Pos.Y - toDraw, 100000));
+                        vph.draw2DVertice(new Vector3(-100000, Pos.Y - toDraw, -100000));
+
+                        Gl.glEnd();
+                        Gl.glPopAttrib();
+                    }
                 }
 
                 public void RenderLine()
@@ -386,13 +486,16 @@ namespace KMPExpander.Class.SimpleKMPs
 
                 if (Settings.LinkPoints)
                 {
-                    Gl.glColor4f(Settings.EnemyLinkColor.R / 255f, Settings.EnemyLinkColor.G / 255f, Settings.EnemyLinkColor.B / 255f, Settings.EnemyLinkColor.A);
-                    for (int i = 0; i < Entries.Count - 1; i++)
+                   for (int i = 0; i < Entries.Count - 1; i++)
                     {
+                        Gl.glColor4f(Settings.EnemyLinkColor.R / 255f, Settings.EnemyLinkColor.G / 255f, Settings.EnemyLinkColor.B / 255f, Settings.EnemyLinkColor.A);
+                        Gl.glPushAttrib(Gl.GL_ENABLE_BIT);
+                        decideDrawLineMode(Entries[i + 1]);
                         Gl.glBegin(Gl.GL_LINES);
                         Entries[i].RenderLine();
                         Entries[i + 1].RenderLine();
                         Gl.glEnd();
+                        Gl.glPopAttrib();
                     }
                 }
                 foreach (EnemyEntry entry in Entries)
@@ -460,16 +563,19 @@ namespace KMPExpander.Class.SimpleKMPs
             {
                 if (Settings.LinkPoints && Settings.LinkPaths && group.Visible)
                 {
-                    Gl.glColor4f(Settings.EnemyLinkColor.R / 255f, Settings.EnemyLinkColor.G / 255f, Settings.EnemyLinkColor.B / 255f, Settings.EnemyLinkColor.A);
                     try
                     {
                         foreach (var next in group.Next)
                             if (next != -1 && Entries[next].Visible)
                             {
+                                Gl.glColor4f(Settings.EnemyLinkColor.R / 255f, Settings.EnemyLinkColor.G / 255f, Settings.EnemyLinkColor.B / 255f, Settings.EnemyLinkColor.A);
+                                Gl.glPushAttrib(Gl.GL_ENABLE_BIT);
+                                decideDrawLineMode(Entries[next].Entries[0]);
                                 Gl.glBegin(Gl.GL_LINES);
                                 group.Entries[group.Entries.Count - 1].RenderLine();
                                 Entries[next].Entries[0].RenderLine();
                                 Gl.glEnd();
+                                Gl.glPopAttrib();
                             }
                     }
                     catch

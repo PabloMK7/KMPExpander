@@ -215,7 +215,7 @@ namespace KMPExpander.Class
             set { sectionckptright_color = ColorTranslator.FromHtml(value); }
         }
 
-        private Color enemy_color = Color.Orange;
+        private Color enemy_color = Color.Black;
         [Category("Section Specific Colors"), XmlIgnore]
         public Color EnemyColor
         {
@@ -229,7 +229,7 @@ namespace KMPExpander.Class
             set { enemy_color = ColorTranslator.FromHtml(value); }
         }
 
-        private Color enemylink_color = Color.Orange;
+        private Color enemylink_color = Color.FromArgb(0xFF, 0x10, 0x10, 0x10);
         [Category("Section Specific Colors"), XmlIgnore]
         public Color EnemyLinkColor
         {

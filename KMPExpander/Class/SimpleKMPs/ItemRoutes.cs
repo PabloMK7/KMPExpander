@@ -41,7 +41,7 @@ namespace KMPExpander.Class.SimpleKMPs
             public class ItemEntry
             {
                 //public Vector3 Position { get; set; }
-                [Browsable(false)]
+                [XmlIgnore, Browsable(false)]
                 public Vector3 Pos { get; set; } = new Vector3(0, 0, 0);
                 [XmlAttribute]
                 public Single PositionX
@@ -83,7 +83,7 @@ namespace KMPExpander.Class.SimpleKMPs
                 public Single Scale { get; set; }
                 [Browsable(false), XmlAttribute]
                 public UInt16 FlyModeVal { get; set; }
-                [XmlAttribute]
+                [XmlIgnore]
                 public string GravityMode {
                     get {
                         switch (FlyModeVal)
@@ -103,7 +103,9 @@ namespace KMPExpander.Class.SimpleKMPs
                         FlyModeVal = val;
                     }
                 }
-                [XmlAttribute]
+                [Browsable(false), XmlAttribute]
+                public UInt16 PlayerScanRadiusVal { get; set; }
+                [XmlIgnore]
                 public string PlayerScanRadius
                 {
                     get
@@ -124,8 +126,6 @@ namespace KMPExpander.Class.SimpleKMPs
                         PlayerScanRadiusVal = val;
                     }
                 }
-                [Browsable(false), XmlAttribute]
-                public UInt16 PlayerScanRadiusVal { get; set; }
 
                 public ItemEntry() {
                     Scale = 1;

@@ -31,7 +31,7 @@ namespace KMPExpander.Class.SimpleKMPs
         {
             [XmlAttribute, Browsable(false)]
             public Byte ShapeMode { get; set; }
-            [XmlAttribute]
+            [XmlIgnore]
             public string Shape
             {
                 get
@@ -53,7 +53,7 @@ namespace KMPExpander.Class.SimpleKMPs
             }
             [XmlAttribute, Browsable(false)]
             public Byte TypeID { get; set; }
-            [XmlAttribute]
+            [XmlIgnore]
             public string Type
             {
                 get
@@ -82,7 +82,7 @@ namespace KMPExpander.Class.SimpleKMPs
             [XmlAttribute]
             public Byte Priority { get; set; }
             //public Vector3 Position { get; set; }
-            [Browsable(false)]
+            [XmlIgnore, Browsable(false)]
             public Vector3 Pos { get; set; } = new Vector3(0, 0, 0);
             [XmlAttribute]
             public Single PositionX

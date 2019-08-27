@@ -28,7 +28,7 @@ namespace KMPExpander.Class.SimpleKMPs
 
         public class RespawnEntry
         {
-            [Browsable(false)]
+            [XmlIgnore, Browsable(false)]
             public Vector3 Pos { get; set; } = new Vector3(0, 0, 0);
             [XmlAttribute]
             public Single PositionX

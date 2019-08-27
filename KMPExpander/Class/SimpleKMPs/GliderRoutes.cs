@@ -37,7 +37,7 @@ namespace KMPExpander.Class.SimpleKMPs
             [XmlAttribute, Category("Glider Group"), Browsable(false)]
             public UInt32 RouteSettings { get; set; }
             //
-            [XmlAttribute, Category("Glider Group Settings"), Description("Prevents karts from leaving the route and are forced to land after finishing it.")]
+            [XmlIgnore, Category("Glider Group Settings"), Description("Prevents karts from leaving the route and are forced to land after finishing it.")]
             public bool ForceToRoute { get
                 {
                     return (RouteSettings & 0xFF) != 0;
@@ -47,7 +47,7 @@ namespace KMPExpander.Class.SimpleKMPs
                     RouteSettings = (RouteSettings & ~0xFFu) | (value ? 1u : 0u);
                 }
             }
-            [XmlAttribute, Category("Glider Group Settings"), Description("Cannon route, karts are launched as shoot from a cannon.")]
+            [XmlIgnore, Category("Glider Group Settings"), Description("Cannon route, karts are launched as shoot from a cannon.")]
             public bool CannonSection
             {
                 get
@@ -59,7 +59,7 @@ namespace KMPExpander.Class.SimpleKMPs
                     RouteSettings = (RouteSettings & ~0xFF00u) | (value ? 1u : 0u) << 8;
                 }
             }
-            [XmlAttribute, Category("Glider Group Settings"), Description("Karts won't be able to raise, only move downwards.")]
+            [XmlIgnore, Category("Glider Group Settings"), Description("Karts won't be able to raise, only move downwards.")]
             public bool PreventRaising
             {
                 get
@@ -80,7 +80,7 @@ namespace KMPExpander.Class.SimpleKMPs
             public class GliderEntry
             {
                 //public Vector3 Position { get; set; }
-                [Browsable(false)]
+                [XmlIgnore, Browsable(false)]
                 public Vector3 Pos { get; set; } = new Vector3(0, 0, 0);
                 [XmlAttribute]
                 public Single PositionX

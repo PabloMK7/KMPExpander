@@ -414,7 +414,7 @@ namespace KMPExpander
                     closeKMPStripMenuItem6.Enabled = true;
                     Render();
                 }
-                catch
+                catch (Exception excep)
                 {
                     MessageBox.Show("Cannot import XML.");
                 }

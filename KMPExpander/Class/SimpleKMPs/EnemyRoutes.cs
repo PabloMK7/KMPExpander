@@ -79,7 +79,7 @@ namespace KMPExpander.Class.SimpleKMPs
             public class EnemyEntry
             {
                 //public Vector3 Position { get; set; }
-                [Browsable(false)]
+                [XmlIgnore, Browsable(false)]
                 public Vector3 Pos { get; set; } = new Vector3(0, 0, 0);
                 [XmlAttribute]
                 public Single PositionX {
@@ -116,7 +116,7 @@ namespace KMPExpander.Class.SimpleKMPs
                 public Single Scale { get; set; }
                 [Browsable(false), XmlAttribute]
                 public UInt16 MushSettingsVal { get; set; }
-                [XmlAttribute]
+                [XmlIgnore]
                 public string MushSettings {
                     get {
                         switch(MushSettingsVal)
@@ -138,7 +138,7 @@ namespace KMPExpander.Class.SimpleKMPs
                 }
                 [Browsable(false), XmlAttribute]
                 public byte DriftSettingsVal { get; set; }
-                [XmlAttribute]
+                [XmlIgnore]
                 public string DriftSettings
                 {
                     get
@@ -161,8 +161,8 @@ namespace KMPExpander.Class.SimpleKMPs
                         DriftSettingsVal = val;
                     }
                 }
-                [XmlAttribute, Browsable(false)]
-                public byte Flags { get; set; }
+                [XmlIgnore, Browsable(false)]
+                public byte Flags { get; set; } = 0;
                 //
                 [XmlAttribute]
                 public bool WideTurn
@@ -263,7 +263,7 @@ namespace KMPExpander.Class.SimpleKMPs
                 //
                 [XmlAttribute, Browsable(false)]
                 public Int16 PathFindOptsVal { get; set; }
-                [XmlAttribute]
+                [XmlIgnore]
                 public string PathFindOpts
                 {
                     get
@@ -292,7 +292,7 @@ namespace KMPExpander.Class.SimpleKMPs
                 }
                 [XmlAttribute, Browsable(false)] //Limit height find -1 = 75
                 public Int16 MaxSearchYOffsetVal { get; set; }
-                [XmlAttribute]
+                [XmlIgnore]
                 public string MaxSearchYOffset
                 {
                     get

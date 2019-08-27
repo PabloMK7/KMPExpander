@@ -30,7 +30,7 @@ namespace KMPExpander.Class.SimpleKMPs
         {
             [XmlAttribute, Browsable(false)]
             public Byte TypeID { get; set; }
-            [XmlAttribute]
+            [XmlIgnore]
             public string Type
             {
                 get
@@ -74,7 +74,7 @@ namespace KMPExpander.Class.SimpleKMPs
             public Byte StartFlag { get; set; }
             [XmlAttribute]
             public Byte VideoFlag { get; set; }
-            [Browsable(false)]
+            [XmlIgnore, Browsable(false)]
             public Vector3 Pos { get; set; } = new Vector3(0, 0, 0);
             [XmlAttribute]
             public Single PositionX
@@ -123,7 +123,7 @@ namespace KMPExpander.Class.SimpleKMPs
             public Single FOVBegin { get; set; }
             [XmlAttribute]
             public Single FOVEnd { get; set; }
-            [Browsable(false)]
+            [XmlIgnore, Browsable(false)]
             public Vector3 VP1 { get; set; } = new Vector3(0, 0, 0);
             [XmlAttribute]
             public Single Viewpoint1X {
@@ -159,7 +159,7 @@ namespace KMPExpander.Class.SimpleKMPs
                 }
             }
             //public Vector3 Viewpoint1 { get; set; }
-            [Browsable(false)]
+            [XmlIgnore, Browsable(false)]
             public Vector3 VP2 { get; set; } = new Vector3(0, 0, 0);
             [XmlAttribute]
             public Single Viewpoint2X
@@ -200,7 +200,7 @@ namespace KMPExpander.Class.SimpleKMPs
             //public Vector3 Viewpoint2 { get; set; }
             [XmlAttribute, Browsable(false)]
             public Single DurationRaw { get; set; }
-            [XmlAttribute]
+            [XmlIgnore]
             public string Duration
             {
                 get

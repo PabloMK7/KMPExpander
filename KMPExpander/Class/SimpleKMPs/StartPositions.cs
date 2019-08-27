@@ -29,7 +29,7 @@ namespace KMPExpander.Class.SimpleKMPs
         public class StartEntry
         {
             //public Vector3 Position { get; set; }
-            [Browsable(false)]
+            [Browsable(false), XmlIgnore]
             public Vector3 Pos { get; set; } = new Vector3(0, 0, 0);
             [XmlAttribute]
             public Single PositionX

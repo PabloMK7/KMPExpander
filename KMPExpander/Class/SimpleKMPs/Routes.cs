@@ -38,7 +38,7 @@ namespace KMPExpander.Class.SimpleKMPs
             public class RouteEntry
             {
                 //public Vector3 Position { get; set; }
-                [Browsable(false)]
+                [XmlIgnore, Browsable(false)]
                 public Vector3 Pos { get; set; } = new Vector3(0, 0, 0);
                 [XmlAttribute]
                 public Single PositionX

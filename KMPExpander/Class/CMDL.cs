@@ -7,7 +7,7 @@ using System.Text;
 using System.Threading.Tasks;
 using LibCTR.Collections;
 using g3;
-
+using System.Globalization;
 
 namespace KMPExpander.Class
 {
@@ -120,7 +120,8 @@ namespace KMPExpander.Class
                     {
                         throw new Exception("Invalid vertex data.");
                     }
-                    Vertices.Add(new Vector3(float.Parse(v[0].Replace('.', ',')), float.Parse(v[1].Replace('.', ',')), float.Parse(v[2].Replace('.', ','))));
+
+                    Vertices.Add(new Vector3(Single.Parse(v[0].Replace(',', '.'), NumberStyles.Any, CultureInfo.InvariantCulture), Single.Parse(v[1].Replace(',', '.'), NumberStyles.Any, CultureInfo.InvariantCulture), Single.Parse(v[2].Replace(',', '.'), NumberStyles.Any, CultureInfo.InvariantCulture)));
                 }
             }
             public void listToStr()

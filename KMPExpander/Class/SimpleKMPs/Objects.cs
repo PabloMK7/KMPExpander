@@ -28,8 +28,9 @@ namespace KMPExpander.Class.SimpleKMPs
 
         public class ObjectEntry
         {
+            [XmlIgnore, Browsable(false)]
             private UInt16 ObjectIDRaw;
-            [Browsable(false), XmlAttribute]
+            [XmlAttribute, Browsable(false)]
             public UInt16 ObjectID
             {
                 get
@@ -55,7 +56,7 @@ namespace KMPExpander.Class.SimpleKMPs
             [XmlAttribute, TypeConverter(typeof(HexTypeConverter))]
             public UInt16 Unknown1 { get; set; }
             //public Vector3 Position { get; set; }
-            [Browsable(false)]
+            [XmlIgnore, Browsable(false)]
             public Vector3 Pos { get; set; } = new Vector3(0, 0, 0);
             [XmlAttribute]
             public Single PositionX

@@ -31,7 +31,7 @@ namespace KMPExpander.Class.SimpleKMPs
             public Byte LapCount { get; set; }
             [XmlAttribute, Browsable(false)]
             public Byte PolePositionRaw { get; set; }
-            [XmlAttribute]
+            [XmlIgnore]
             public string PolePosition
             {
                 get
@@ -58,7 +58,7 @@ namespace KMPExpander.Class.SimpleKMPs
             public Byte Unknown2 { get; set; }
             [XmlAttribute, Browsable(false)]
             public Int32 FlareColorRaw { get; set; }
-            [XmlAttribute]
+            [XmlIgnore]
             public Color FlareColor
             {
                 get
@@ -70,7 +70,10 @@ namespace KMPExpander.Class.SimpleKMPs
                     FlareColorRaw = (value.R << 16) | (value.G << 8) | (value.B);
                 }
             }
-            [XmlAttribute]
+            
+            [XmlAttribute, Browsable(false)]
+            public Int32 FlareAlphaRaw { get; set; }
+            [XmlIgnore]
             public Byte FlareAlpha
             {
                 get
@@ -82,8 +85,6 @@ namespace KMPExpander.Class.SimpleKMPs
                     FlareAlphaRaw = value;
                 }
             }
-            [XmlAttribute, Browsable(false)]
-            public Int32 FlareAlphaRaw { get; set; }
 
             public StageInformationEntry(STGI.STGIEntry entry)
             {

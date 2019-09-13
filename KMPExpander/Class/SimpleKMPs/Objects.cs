@@ -128,8 +128,8 @@ namespace KMPExpander.Class.SimpleKMPs
             public UInt16 Settings8 { get; set; }
             [XmlAttribute]
             public UInt16 Visibility { get; set; }
-            [XmlAttribute, TypeConverter(typeof(HexTypeConverter))]
-            public UInt16 Unknown2 { get; set; }
+            [XmlAttribute]
+            public Int16 EnemyRoute { get; set; }
             [XmlAttribute, TypeConverter(typeof(HexTypeConverter))]
             public UInt16 Unknown3 { get; set; }
 
@@ -156,7 +156,7 @@ namespace KMPExpander.Class.SimpleKMPs
                 Settings7 = entry.Settings7;
                 Settings8 = entry.Settings8;
                 Visibility = entry.Visibility;
-                Unknown2 = entry.Unknown2;
+                EnemyRoute = entry.Unknown2;
                 Unknown3 = entry.Unknown3;
             }
 
@@ -183,7 +183,7 @@ namespace KMPExpander.Class.SimpleKMPs
                 Settings7 = 0;
                 Settings8 = 0;
                 Visibility = 7;
-                Unknown2 = 0xFFFF;
+                EnemyRoute = -1;
                 Unknown3 = 0;
             }
 
@@ -205,7 +205,7 @@ namespace KMPExpander.Class.SimpleKMPs
                 entry.Settings7 = Settings7;
                 entry.Settings8 = Settings8;
                 entry.Visibility = Visibility;
-                entry.Unknown2 = Unknown2;
+                entry.Unknown2 = EnemyRoute;
                 entry.Unknown3 = Unknown3;
                 return entry;
             }

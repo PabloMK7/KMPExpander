@@ -11,7 +11,7 @@
 <p>Parameters are displayed in the <strong>entry list</strong>:</p>
 <ul>
 <li><strong>PositionXYZ:</strong>&nbsp;Position of the Enemy Point.</li>
-<li><strong>Scale:</strong> Scale of the enemy point. This is represented as a circle in the <strong>editor</strong>, CPU racers will choose a point on each enemy entry within this circle to go to, so make sure that the whole circle is inside the road. (Note that ingame, they are not circles but spheres).</li>
+<li><strong>Scale:</strong> Scale of the enemy point. This is represented as a sphere in the <strong>editor</strong>, CPU racers may go to any point within this sphere, so make sure that the whole sphere is inside the road.</li>
 <li><strong>MushSettings:</strong> Controls mushroom related settings:
 <ul>
 <li><strong>0 - Can Use Mushroom:</strong> CPU racers are allowed to use mushroom items.</li>
@@ -21,21 +21,21 @@
 </li>
 <li><strong>DriftSettings:&nbsp;</strong>Controls drift related settings:<br />
 <ul>
-<li><strong>0 - Allow Drift, Allow Miniturbo:</strong> CPU racers are allowed to automatically drift and release the drift when sparks show up to get a miniturbo.</li>
-<li><strong>1 - Disallow Drift, Allow Miniturbo</strong><strong>:</strong> CPU racers are not able to automatically drift, however they can release a previous drift when sparks show up to get a miniturbo.</li>
-<li><strong>2 - Disallow Drift, Disallow Miniturbo:</strong> CPU racers are not able to automatically drift nor get miniturbos from previous drifts.</li>
+<li><strong>0 - Allow Drift Start:</strong> CPU racers are allowed to automatically start drifting and release the drift when sparks show up to get a miniturbo.</li>
+<li><strong>1 - Allow Drift In Progress</strong><strong>:</strong> CPU racers are not able to automatically start drifting, however they can continue a previous drift and release it when sparks show up to get a miniturbo.</li>
+<li><strong>2 - Disallow Drift:</strong> CPU racers are forced to finish drifting and cannot start a new drift.</li>
 </ul>
 </li>
 <li><strong>Flags:</strong> The following flags can either be enabled or disabled:<br />
 <ul>
-<li><strong>WideTurn:</strong> Marks the turn as a wide turn, CPU racers will do a long drift and may take a super mini-turbo.</li>
-<li><strong>NormalTurn:</strong> Marks the turn as a normal turn. (Behaviour in between wide and sharp turn)</li>
-<li><strong>SharpTurn:</strong> Marks the turn as a sharp turn, CPU racers may take a miniturbo by charging it as fast as possible.</li>
-<li><strong>TricksForbidden:</strong> CPU racers won't be able to make tricks using ramps, boost ramps or glider pads. This is used in places where getting more speed from a trick is not convenient (as there is a sharp turn next to the ramp, for example).</li>
-<li><strong>StickToRoute:&nbsp;</strong>CPU racers will try to go as close to the center of the route as possible, they will even be able to turn midair. This flag is used in narrow places where it is very important to follow the route as close as possible. Bullet Bills will follow the route exactly ignoring gravity.</li>
+<li><strong>KeepMiniturbo:</strong> CPU racers will charge a super miniturbo (orange sparks) and keep it charged as long as possible. Without this flag enabled, CPU racers will release the super miniturbo as soon as it is charged. This flag is useful for long turns.</li>
+<li><strong>EncourageMiniturbo:</strong> CPU racers will try to get a miniturbo as fast as possible (the same way a human player would do by pressing the same direction as the drift in the analog stick). This flag is useful for sharp turns.</li>
+<li><strong>IncreasePathPrecision:</strong>&nbsp;Enabling this flag will cause the route generator algorithm to act more precisely by reducing the amount of smoothing between points.</li>
+<li><strong>StickToRoute:&nbsp;</strong>CPU racers will try to go as close to the center of the route as possible, they will even be able to turn midair. This flag is used in narrow places where it is very important to follow the route as close as possible.</li>
+<li><strong>PreventRouteSwitch:</strong> CPU racers won't be able to randomly switch to points in other routes with this flag enabled.</li>
 <li><strong>BouncyMushSection:</strong> This flag is enabled on sections where the enemy points are above bouncy terrain such as the bouncy mushrooms in mushroom gorge or the bouncy flower in DK Jungle. It is currently unknown how this flag actually affects the enemy AI.</li>
 <li><strong>ForceDefaultSpeed:</strong> Forces the CPU to move at the same speed no matter the mode (50cc, 100cc, 150cc), if they are doing a miniturbo, etc. This is used in sections where it is important to go at a predefined speed, such as some jumps where the CPU racers may go too fast or slow to perform the jump properly.</li>
-<li><strong>UnknownFlag:</strong> As the name suggests, the purpose of this flag is unknown. It is enabled in the gliding section of Mario Circuit when exiting the castle, normally disabled in other places.</li>
+<li><strong>TricksForbidden:</strong> CPU racers won't be able to make tricks using ramps, boost ramps or glider pads. This is used in places where getting more speed from a trick is not convenient (as there is a sharp turn next to the ramp, for example).</li>
 </ul>
 </li>
 <li><strong>PathFindOpts:</strong> Prevents karts to take this route under certain conditions:
@@ -58,8 +58,8 @@
 <li>Make sure to set the <strong>Flags </strong>and <strong>DriftSettings</strong> properly:&nbsp;
 <ul>
 <li><strong>DriftSettings</strong>&nbsp;value 2 for straight sections and 0 for turns unless the turn is long and you don't want the CPU to keep drifting the whole time. Value 1 to stop drifting and get the miniturbo.</li>
-<li><strong>WideTurn</strong> in long turns,&nbsp;<strong>NormalTurn</strong> in normal turns and <strong>SharpTurn</strong> in sharp turns (you may leave some turns without any of those flags if you want the CPU racers to decide by themselves).</li>
-<li><strong>SharpTurn</strong> in sharp turns or places where you want the CPU racers to leave the turn with a miniturbo (as taking a turn with a sharp angle will help getting a miniturbo).</li>
+<li><strong>KeepMiniturbo</strong> in long turns and <strong>EncourageMiniturbo</strong>&nbsp;in sharp turns (you may leave some turns without any of those flags if you want the CPU racers to decide by themselves).</li>
+<li><strong>IncreasePathPrecision</strong>&nbsp;in places where the CPU racers fall or hit a wall because the route is smoothed too much.</li>
 <li><strong>TricksForbidden</strong> in places where tricking off a ramp causes problems.</li>
 <li><strong>ForceDefaultSpeed</strong>&nbsp;and/or <strong>StickToRoute&nbsp;</strong>in places where a perfect jump needs to be performed or it is important to follow the route as close as possible.</li>
 <li><strong>MaxSearchYOffset:</strong> If there are two routes that cross each other but with different heights, make sure you limit the Y offset so the karts won't mistakenly take the wrong route.</li>

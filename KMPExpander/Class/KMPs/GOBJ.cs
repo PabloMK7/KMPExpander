@@ -50,7 +50,7 @@ namespace KMPSections
                     Settings7 = 0;
                     Settings8 = 0;
                     Visibility = 7;
-                    Unknown2 = 0xFFFF;
+                    Unknown2 = -1;
                     Unknown3 = 0;
                 }
                 public GOBJEntry(EndianBinaryReaderEx er)
@@ -100,7 +100,7 @@ namespace KMPSections
                 public UInt16 Settings7 { get; set; }
                 public UInt16 Settings8 { get; set; }
                 public UInt16 Visibility { get; set; }
-                public UInt16 Unknown2 { get; set; }
+                public Int16 Unknown2 { get; set; }
                 public UInt16 Unknown3 { get; set; }
 
                 public override string ToString()

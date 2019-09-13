@@ -33,15 +33,12 @@ namespace KMPExpander.Class.SimpleKMPs
         {
             VisualSettings Settings = (Application.OpenForms[0] as Form1).Settings;
             byte rmask = 0, gmask = 0, bmask = 0;
-            if (entry.WideTurn)
+            if (entry.KeepMiniturbo)
             {
-                rmask = 0xEF;
+                rmask += 0xEF;
+                gmask += 0x95;
             }
-            if (entry.NormalTurn)
-            {
-                gmask = 0xEF;
-            }
-            if (entry.SharpTurn)
+            if (entry.EncourageMiniturbo)
             {
                 bmask = 0xEF;
             }
@@ -146,11 +143,11 @@ namespace KMPExpander.Class.SimpleKMPs
                         switch (DriftSettingsVal)
                         {
                             case 0:
-                                return "0 - Allow Drift, Allow Miniturbo";
+                                return "0 - Allow Drift Start";
                             case 1:
-                                return "1 - Disallow Drift, Allow Miniturbo";
+                                return "1 - Allow Drift In Progress";
                             case 2:
-                                return "2 - Disallow Drift, Disallow Miniturbo";
+                                return "2 - Disallow Drift";
                             default:
                                 return DriftSettingsVal + " - Unknown";
                         }
@@ -165,7 +162,7 @@ namespace KMPExpander.Class.SimpleKMPs
                 public byte Flags { get; set; } = 0;
                 //
                 [XmlAttribute]
-                public bool WideTurn
+                public bool KeepMiniturbo
                 {
                     get
                     {
@@ -177,19 +174,7 @@ namespace KMPExpander.Class.SimpleKMPs
                     }
                 }
                 [XmlAttribute]
-                public bool NormalTurn
-                {
-                    get
-                    {
-                        return (Flags & 0x4) != 0;
-                    }
-                    set
-                    {
-                        Flags = (byte)((Flags & ~(1 << 2)) | ((value ? 1 : 0) << 2));
-                    }
-                }
-                [XmlAttribute]
-                public bool SharpTurn
+                public bool EncourageMiniturbo
                 {
                     get
                     {
@@ -200,16 +185,17 @@ namespace KMPExpander.Class.SimpleKMPs
                         Flags = (byte)((Flags & ~(1 << 4)) | ((value ? 1 : 0) << 4));
                     }
                 }
+                
                 [XmlAttribute]
-                public bool TricksForbidden
+                public bool IncreasePathPrecision
                 {
                     get
                     {
-                        return (Flags & 0x8) != 0;
+                        return (Flags & 0x4) != 0;
                     }
                     set
                     {
-                        Flags = (byte)((Flags & ~(1 << 3)) | ((value ? 1 : 0) << 3));
+                        Flags = (byte)((Flags & ~(1 << 2)) | ((value ? 1 : 0) << 2));
                     }
                 }
                 [XmlAttribute]
@@ -222,6 +208,18 @@ namespace KMPExpander.Class.SimpleKMPs
                     set
                     {
                         Flags = (byte)((Flags & ~(1 << 6)) | ((value ? 1 : 0) << 6));
+                    }
+                }
+                [XmlAttribute]
+                public bool PreventRouteSwitch
+                {
+                    get
+                    {
+                        return (Flags & 0x2) != 0;
+                    }
+                    set
+                    {
+                        Flags = (byte)((Flags & ~(1 << 1)) | ((value ? 1 : 0) << 1));
                     }
                 }
                 [XmlAttribute]
@@ -249,17 +247,18 @@ namespace KMPExpander.Class.SimpleKMPs
                     }
                 }
                 [XmlAttribute]
-                public bool UnknownFlag
+                public bool TricksForbidden
                 {
                     get
                     {
-                        return (Flags & 0x2) != 0;
+                        return (Flags & 0x8) != 0;
                     }
                     set
                     {
-                        Flags = (byte)((Flags & ~(1 << 1)) | ((value ? 1 : 0) << 1));
+                        Flags = (byte)((Flags & ~(1 << 3)) | ((value ? 1 : 0) << 3));
                     }
                 }
+                
                 //
                 [XmlAttribute, Browsable(false)]
                 public Int16 PathFindOptsVal { get; set; }

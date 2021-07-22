@@ -223,7 +223,7 @@ namespace KMPExpander.Class.SimpleKMPs
                     }
                 }
                 [XmlAttribute]
-                public bool BouncyMushSection
+                public bool KeepBulletBill
                 {
                     get
                     {

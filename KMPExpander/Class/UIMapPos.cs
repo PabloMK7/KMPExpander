@@ -43,11 +43,11 @@ namespace KMPExpander.Class
             er.Write(TopRightZ);
         }
 
-        public void LoadImage(Bitmap Image)
+        public void LoadImage(Bitmap Image, bool isLocalMap)
         {
             UnloadImage();
             this.Image = Image;
-            UploadTex(Image, 1);
+            UploadTex(Image, isLocalMap ? 1 : 2);
         }
 
         public void UnloadImage()
@@ -59,58 +59,51 @@ namespace KMPExpander.Class
             }
         }
 
-        public void Render()
+        public void Render(bool isLocalMap)
         {
             if (!Visible) return;
             VisualSettings Settings = (Application.OpenForms[0] as Form1).Settings;
+            Color renderColor;
 
-            if (Image==null)
-            {
-                Gl.glBindTexture(Gl.GL_TEXTURE_2D, 0);
-                Gl.glColor3f(0f, 0f, 0f);
-                Gl.glBegin(Gl.GL_POINTS);
-                Gl.glVertex2f(BottomLeftX, BottomLeftZ);
-                Gl.glEnd();
-                Gl.glColor3f(0f, 0f, 0f);
-                Gl.glBegin(Gl.GL_POINTS);
-                Gl.glVertex2f(TopRightX, TopRightZ);
-                Gl.glEnd();
-
-                Gl.glLineWidth(Settings.LineWidth);
-                Gl.glColor3f(0f, 0f, 0f);
-                Gl.glBegin(Gl.GL_LINES);
-
-                Gl.glVertex2f(BottomLeftX, BottomLeftZ);
-                Gl.glVertex2f(TopRightX, BottomLeftZ);
-                Gl.glVertex2f(TopRightX, BottomLeftZ);
-                Gl.glVertex2f(TopRightX, TopRightZ);
-                Gl.glVertex2f(TopRightX, TopRightZ);
-                Gl.glVertex2f(BottomLeftX, TopRightZ);
-                Gl.glVertex2f(BottomLeftX, TopRightZ);
-                Gl.glVertex2f(BottomLeftX, BottomLeftZ);
-
-                Gl.glEnd();
-            }
+            if (isLocalMap)
+                renderColor = Color.FromArgb(0, 0, 0);
             else
+                renderColor = Color.FromArgb(128, 128, 128);
+
+            Gl.glBindTexture(Gl.GL_TEXTURE_2D, 0);
+            Gl.glColor4f(renderColor.R / 255f, renderColor.G / 255f, renderColor.B / 255f, 1f);
+            Gl.glBegin(Gl.GL_POINTS);
+            Gl.glVertex2f(BottomLeftX, BottomLeftZ);
+            Gl.glEnd();
+            Gl.glBegin(Gl.GL_POINTS);
+            Gl.glVertex2f(TopRightX, TopRightZ);
+            Gl.glEnd();
+
+            Gl.glLineWidth(Settings.LineWidth);
+            Gl.glColor4f(renderColor.R / 255f, renderColor.G / 255f, renderColor.B / 255f, 1f);
+            Gl.glBegin(Gl.GL_LINES);
+
+            Gl.glVertex2f(BottomLeftX, BottomLeftZ);
+            Gl.glVertex2f(TopRightX, BottomLeftZ);
+            Gl.glVertex2f(TopRightX, BottomLeftZ);
+            Gl.glVertex2f(TopRightX, TopRightZ);
+            Gl.glVertex2f(TopRightX, TopRightZ);
+            Gl.glVertex2f(BottomLeftX, TopRightZ);
+            Gl.glVertex2f(BottomLeftX, TopRightZ);
+            Gl.glVertex2f(BottomLeftX, BottomLeftZ);
+
+            Gl.glEnd();
+
+            if (Image != null)
             {
-                Gl.glBindTexture(Gl.GL_TEXTURE_2D, 0);
-                Gl.glColor4f(0f,0f,0f,1f);
-
-                Gl.glBegin(Gl.GL_POINTS);
-                Gl.glVertex2f(BottomLeftX, BottomLeftZ);
-                Gl.glEnd();
-                Gl.glBegin(Gl.GL_POINTS);
-                Gl.glVertex2f(TopRightX, TopRightZ);
-                Gl.glEnd();
-
-                Gl.glBindTexture(Gl.GL_TEXTURE_2D, 1);
+                Gl.glBindTexture(Gl.GL_TEXTURE_2D, isLocalMap ? 1 : 2);
                 Gl.glColor3f(1f, 1f, 1f);
                 Gl.glBegin(Gl.GL_QUADS);
-                Gl.glTexCoord2f(0, 0);
+                Gl.glTexCoord2f(0, 1f - (1 / 1.065f));
                 Gl.glVertex2f(BottomLeftX, BottomLeftZ);
-                Gl.glTexCoord2f(1, 0);
+                Gl.glTexCoord2f(1 / 1.295f, 1f - (1 / 1.065f));
                 Gl.glVertex2f(TopRightX, BottomLeftZ);
-                Gl.glTexCoord2f(1, 1);
+                Gl.glTexCoord2f(1 / 1.295f, 1);
                 Gl.glVertex2f(TopRightX, TopRightZ);
                 Gl.glTexCoord2f(0, 1);
                 Gl.glVertex2f(BottomLeftX, TopRightZ);
@@ -161,7 +154,7 @@ namespace KMPExpander.Class
             Gl.glTexParameterf(Gl.GL_TEXTURE_2D, Gl.GL_TEXTURE_WRAP_T, T);
         }
 
-        public void RenderPicking()
+        public void RenderPicking(bool isLocalMap)
         {
             if (!Visible) return;
 
@@ -169,13 +162,13 @@ namespace KMPExpander.Class
 
             Gl.glPointSize(Settings.PointSize + 2f);
 
-            Color pickingColor = SectionPicking.GetColor(Sections.LocalMap, 0, 0, PointID.Left);
+            Color pickingColor = SectionPicking.GetColor(isLocalMap ? Sections.LocalMap : Sections.GlobalMap, 0, 0, PointID.Left);
             Gl.glColor4f(pickingColor.R / 255f, pickingColor.G / 255f, pickingColor.B / 255f, 1f);
             Gl.glBegin(Gl.GL_POINTS);
             Gl.glVertex2f(BottomLeftX, BottomLeftZ);
             Gl.glEnd();
 
-            pickingColor = SectionPicking.GetColor(Sections.LocalMap, 0, 0, PointID.Right);
+            pickingColor = SectionPicking.GetColor(isLocalMap ? Sections.LocalMap : Sections.GlobalMap, 0, 0, PointID.Right);
             Gl.glColor4f(pickingColor.R / 255f, pickingColor.G / 255f, pickingColor.B / 255f, 1f);
             Gl.glBegin(Gl.GL_POINTS);
             Gl.glVertex2f(TopRightX, TopRightZ);
@@ -224,10 +217,15 @@ namespace KMPExpander.Class
             {
                 Gl.glDepthFunc(Gl.GL_ALWAYS);
                 Gl.glLoadIdentity();
-                LocalMap.Render();
+                LocalMap.Render(true);
+                GlobalMap.Render(false);
             }
             else
-                LocalMap.RenderPicking();
+            {
+                LocalMap.RenderPicking(true);
+                GlobalMap.RenderPicking(false);
+            }
+                
         }
 
         public void MovePoint(SectionPicking.PickingInfo pick_info,Vector3 position)
@@ -244,6 +242,18 @@ namespace KMPExpander.Class
                     {
                         LocalMap.TopRightX = position.X;
                         LocalMap.TopRightZ = position.Z;
+                    }
+                    break;
+                case Sections.GlobalMap:
+                    if (pick_info.PointID == PointID.Left)
+                    {
+                        GlobalMap.BottomLeftX = position.X;
+                        GlobalMap.BottomLeftZ = position.Z;
+                    }
+                    else
+                    {
+                        GlobalMap.TopRightX = position.X;
+                        GlobalMap.TopRightZ = position.Z;
                     }
                     break;
             }

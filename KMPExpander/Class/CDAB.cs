@@ -108,7 +108,7 @@ namespace KMPExpander.Class
                 Entries = new List<STRMEntry>();
 				for (int i = 0; i < NrEntries; i++)
 				{
-					Entries.Add(new STRMEntry(er));
+                    Entries.Add(new STRMEntry(er));
 				}
 			}
             public STRM()
@@ -148,14 +148,14 @@ namespace KMPExpander.Class
             }
             public class STRMEntry
             {
-                float area;
+                public float area;
                 public STRMEntry(EndianBinaryReaderEx er)
                 {
                     minX = er.ReadSingle();
                     minZ = er.ReadSingle();
                     maxX = er.ReadSingle();
                     maxZ = er.ReadSingle();
-                    area = (maxX - minX) * (minZ - maxZ);
+                    area = (maxX - minX) * (maxZ - minZ);
                 }
                 public STRMEntry(Single minx, Single minz, Single maxx, Single maxz)
                 {
@@ -163,16 +163,6 @@ namespace KMPExpander.Class
                     minZ = minz;
                     maxX = maxx;
                     maxZ = maxz;
-                    if (Math.Abs(minX -maxX) < 1)
-                    {
-                        minX += 0.5f;
-                        maxX += 0.5f;
-                    }
-                    if (Math.Abs(minZ - maxZ) < 1)
-                    {
-                        minZ += 0.5f;
-                        maxZ += 0.5f;
-                    }
                 }
                 public Single minX;
                 public Single minZ;
@@ -275,7 +265,7 @@ namespace KMPExpander.Class
                 for (int j = 0; j < Streams[i].NrEntries; j++)
                 {
                     if (!Streams[i].GetVisibility()) continue;
-                    Streams[i].Entries[j].Render(j+1, single);
+                    Streams[i].Entries[j].Render(j + 1, single);
                 }
             }
         }

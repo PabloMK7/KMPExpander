@@ -194,6 +194,7 @@ namespace KMPExpander
         private void toggleViewToolStripMenuItem_Click(object sender, EventArgs e)
         {
             UIMapPos.LocalMap.Visible = (UIMapPos.LocalMap.Visible ? false : true);
+            UIMapPos.GlobalMap.Visible = (UIMapPos.GlobalMap.Visible ? false : true);
             Render();
         }
 
@@ -208,15 +209,10 @@ namespace KMPExpander
             {
                 Bitmap LocalMap = new Bitmap(new MemoryStream(File.ReadAllBytes(openFileDialogImage.FileName)));
                 LocalMap.RotateFlip(RotateFlipType.RotateNoneFlipY);
-                UIMapPos.LocalMap.LoadImage(LocalMap);
+                UIMapPos.LocalMap.LoadImage(LocalMap, true);
                 unloadToolStripMenuItem.Enabled = true;
                 Render();
             }
-        }
-
-        private void toolStripMenuItemSaveUIMap_Click(object sender, EventArgs e)
-        {
-            File.WriteAllBytes(uimappos_path, UIMapPos.Write());
         }
 
         private void unloadToolStripMenuItem_Click(object sender, EventArgs e)
@@ -224,6 +220,30 @@ namespace KMPExpander
             UIMapPos.LocalMap.UnloadImage();
             (sender as ToolStripMenuItem).Enabled = false;
             Render();
+        }
+
+        private void loadGlobalMapToolStripMenuItem_Click(object sender, EventArgs e)
+        {
+            if (openFileDialogImage.ShowDialog() == DialogResult.OK)
+            {
+                Bitmap GlobalMap = new Bitmap(new MemoryStream(File.ReadAllBytes(openFileDialogImage.FileName)));
+                GlobalMap.RotateFlip(RotateFlipType.RotateNoneFlipY);
+                UIMapPos.GlobalMap.LoadImage(GlobalMap, false);
+                unloadGlobalMapToolStripMenuItem.Enabled = true;
+                Render();
+            }
+        }
+
+        private void unloadGlobalMapToolStripMenuItem_Click(object sender, EventArgs e)
+        {
+            UIMapPos.GlobalMap.UnloadImage();
+            (sender as ToolStripMenuItem).Enabled = false;
+            Render();
+        }
+
+        private void toolStripMenuItemSaveUIMap_Click(object sender, EventArgs e)
+        {
+            File.WriteAllBytes(uimappos_path, UIMapPos.Write());
         }
 
         private void importImageToolStripMenuItem_Click(object sender, EventArgs e)
@@ -354,9 +374,10 @@ namespace KMPExpander
         {
             UIMapPos.LocalMap.UnloadImage();
             UIMapPos = null;
-            loadToolStripMenuItem.Enabled = false;
+            importImageToolStripMenuItem.Enabled = false;
             toolStripMenuItemSaveUIMap.Enabled = false;
             unloadToolStripMenuItem.Enabled = false;
+            unloadGlobalMapToolStripMenuItem.Enabled = false;
             (sender as ToolStripMenuItem).Enabled = false;
             Render();
         }
@@ -1128,7 +1149,7 @@ namespace KMPExpander
             start_move = true;
             PickPoint(e.Location);
             SelectedDots.Clear();
-            if (PickingInfo.Section!=Sections.None && PickingInfo.Section!=Sections.LocalMap)
+            if (PickingInfo.Section!=Sections.None && PickingInfo.Section != Sections.LocalMap && PickingInfo.Section != Sections.GlobalMap)
                 SelectedDots.Add(Kayempee.GetPoint(PickingInfo));
         }
 
@@ -1141,7 +1162,7 @@ namespace KMPExpander
                 start_move = true;
                 if (PickingInfo.Section == Sections.None) return;
 
-                if (PickingInfo.Section == Sections.LocalMap && vph.mode == ViewPlaneHandler.PLANE_MODES.XZ) UIMapPos.MovePoint(PickingInfo, position);
+                if ((PickingInfo.Section == Sections.LocalMap || PickingInfo.Section == Sections.GlobalMap) && vph.mode == ViewPlaneHandler.PLANE_MODES.XZ) UIMapPos.MovePoint(PickingInfo, position);
                 else Kayempee.MovePoint(PickingInfo, position);
                 Render();
             }
@@ -1410,5 +1431,7 @@ namespace KMPExpander
             }
             Render();
         }
+
+        
     }
 }

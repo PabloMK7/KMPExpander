@@ -139,6 +139,8 @@
             this.saveFileDialogDiv = new System.Windows.Forms.SaveFileDialog();
             this.saveFileDialogCmdl = new System.Windows.Forms.SaveFileDialog();
             this.colorDialog1 = new System.Windows.Forms.ColorDialog();
+            this.loadGlobalMapToolStripMenuItem = new System.Windows.Forms.ToolStripMenuItem();
+            this.unloadGlobalMapToolStripMenuItem = new System.Windows.Forms.ToolStripMenuItem();
             this.statusStrip1.SuspendLayout();
             this.menuStrip1.SuspendLayout();
             this.contextMenuStripSection.SuspendLayout();
@@ -330,7 +332,7 @@
             // 
             this.exportXMLToolStripMenuItem.Enabled = false;
             this.exportXMLToolStripMenuItem.Name = "exportXMLToolStripMenuItem";
-            this.exportXMLToolStripMenuItem.Size = new System.Drawing.Size(134, 22);
+            this.exportXMLToolStripMenuItem.Size = new System.Drawing.Size(135, 22);
             this.exportXMLToolStripMenuItem.Text = "Export XML";
             this.exportXMLToolStripMenuItem.Click += new System.EventHandler(this.exportXMLToolStripMenuItem_Click);
             // 
@@ -349,7 +351,7 @@
             this.cameraSettingsToolStripMenuItem});
             this.exportCSVToolStripMenuItem.Enabled = false;
             this.exportCSVToolStripMenuItem.Name = "exportCSVToolStripMenuItem";
-            this.exportCSVToolStripMenuItem.Size = new System.Drawing.Size(134, 22);
+            this.exportCSVToolStripMenuItem.Size = new System.Drawing.Size(135, 22);
             this.exportCSVToolStripMenuItem.Text = "Export CSV";
             // 
             // startPositionToolStripMenuItem
@@ -566,7 +568,7 @@
             this.toolStripSeparator7,
             this.optionsToolStripMenuItem});
             this.toolStripMenuItem5.Name = "toolStripMenuItem5";
-            this.toolStripMenuItem5.Size = new System.Drawing.Size(47, 20);
+            this.toolStripMenuItem5.Size = new System.Drawing.Size(46, 20);
             this.toolStripMenuItem5.Text = "Tools";
             // 
             // importImageToolStripMenuItem
@@ -574,6 +576,8 @@
             this.importImageToolStripMenuItem.DropDownItems.AddRange(new System.Windows.Forms.ToolStripItem[] {
             this.loadToolStripMenuItem,
             this.unloadToolStripMenuItem,
+            this.loadGlobalMapToolStripMenuItem,
+            this.unloadGlobalMapToolStripMenuItem,
             this.toolStripSeparator9,
             this.toggleViewToolStripMenuItem});
             this.importImageToolStripMenuItem.Enabled = false;
@@ -585,7 +589,7 @@
             // loadToolStripMenuItem
             // 
             this.loadToolStripMenuItem.Name = "loadToolStripMenuItem";
-            this.loadToolStripMenuItem.Size = new System.Drawing.Size(174, 22);
+            this.loadToolStripMenuItem.Size = new System.Drawing.Size(180, 22);
             this.loadToolStripMenuItem.Text = "Load Local Map";
             this.loadToolStripMenuItem.Click += new System.EventHandler(this.loadToolStripMenuItem_Click);
             // 
@@ -593,20 +597,20 @@
             // 
             this.unloadToolStripMenuItem.Enabled = false;
             this.unloadToolStripMenuItem.Name = "unloadToolStripMenuItem";
-            this.unloadToolStripMenuItem.Size = new System.Drawing.Size(174, 22);
+            this.unloadToolStripMenuItem.Size = new System.Drawing.Size(180, 22);
             this.unloadToolStripMenuItem.Text = "Unload Local Map";
             this.unloadToolStripMenuItem.Click += new System.EventHandler(this.unloadToolStripMenuItem_Click);
             // 
             // toolStripSeparator9
             // 
             this.toolStripSeparator9.Name = "toolStripSeparator9";
-            this.toolStripSeparator9.Size = new System.Drawing.Size(171, 6);
+            this.toolStripSeparator9.Size = new System.Drawing.Size(177, 6);
             // 
             // toggleViewToolStripMenuItem
             // 
             this.toggleViewToolStripMenuItem.Name = "toggleViewToolStripMenuItem";
             this.toggleViewToolStripMenuItem.ShortcutKeys = ((System.Windows.Forms.Keys)((System.Windows.Forms.Keys.Control | System.Windows.Forms.Keys.I)));
-            this.toggleViewToolStripMenuItem.Size = new System.Drawing.Size(174, 22);
+            this.toggleViewToolStripMenuItem.Size = new System.Drawing.Size(180, 22);
             this.toggleViewToolStripMenuItem.Text = "Toggle view";
             this.toggleViewToolStripMenuItem.Click += new System.EventHandler(this.toggleViewToolStripMenuItem_Click);
             // 
@@ -1088,6 +1092,21 @@
             this.colorDialog1.AnyColor = true;
             this.colorDialog1.FullOpen = true;
             // 
+            // loadGlobalMapToolStripMenuItem
+            // 
+            this.loadGlobalMapToolStripMenuItem.Name = "loadGlobalMapToolStripMenuItem";
+            this.loadGlobalMapToolStripMenuItem.Size = new System.Drawing.Size(180, 22);
+            this.loadGlobalMapToolStripMenuItem.Text = "Load Global Map";
+            this.loadGlobalMapToolStripMenuItem.Click += new System.EventHandler(this.loadGlobalMapToolStripMenuItem_Click);
+            // 
+            // unloadGlobalMapToolStripMenuItem
+            // 
+            this.unloadGlobalMapToolStripMenuItem.Enabled = false;
+            this.unloadGlobalMapToolStripMenuItem.Name = "unloadGlobalMapToolStripMenuItem";
+            this.unloadGlobalMapToolStripMenuItem.Size = new System.Drawing.Size(180, 22);
+            this.unloadGlobalMapToolStripMenuItem.Text = "Unload Global Map";
+            this.unloadGlobalMapToolStripMenuItem.Click += new System.EventHandler(this.unloadGlobalMapToolStripMenuItem_Click);
+            // 
             // Form1
             // 
             this.AutoScaleDimensions = new System.Drawing.SizeF(6F, 13F);
@@ -1241,6 +1260,8 @@
         private System.Windows.Forms.ToolStripComboBox viewPlaneComboBox;
         private System.Windows.Forms.ToolStripSeparator toolStripSeparator11;
         private System.Windows.Forms.ToolStripLabel toolStripLabel1;
+        private System.Windows.Forms.ToolStripMenuItem loadGlobalMapToolStripMenuItem;
+        private System.Windows.Forms.ToolStripMenuItem unloadGlobalMapToolStripMenuItem;
     }
 }
 

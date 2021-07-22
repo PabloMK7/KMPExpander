@@ -96,14 +96,17 @@ namespace KMPExpander.Class
 
             if (Image != null)
             {
+                float botCoord = isLocalMap ? 0 : 1f - (1 / 1.065f);
+                float rightCoor = isLocalMap ? 1 : 1 / 1.295f;
+
                 Gl.glBindTexture(Gl.GL_TEXTURE_2D, isLocalMap ? 1 : 2);
                 Gl.glColor3f(1f, 1f, 1f);
                 Gl.glBegin(Gl.GL_QUADS);
-                Gl.glTexCoord2f(0, 1f - (1 / 1.065f));
+                Gl.glTexCoord2f(0, botCoord);
                 Gl.glVertex2f(BottomLeftX, BottomLeftZ);
-                Gl.glTexCoord2f(1 / 1.295f, 1f - (1 / 1.065f));
+                Gl.glTexCoord2f(rightCoor, botCoord);
                 Gl.glVertex2f(TopRightX, BottomLeftZ);
-                Gl.glTexCoord2f(1 / 1.295f, 1);
+                Gl.glTexCoord2f(rightCoor, 1);
                 Gl.glVertex2f(TopRightX, TopRightZ);
                 Gl.glTexCoord2f(0, 1);
                 Gl.glVertex2f(BottomLeftX, TopRightZ);

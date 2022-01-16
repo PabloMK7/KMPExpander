@@ -233,6 +233,25 @@ namespace KMPExpander.Class.SimpleKMPs
                     Entries[i].RenderPicking(group_id,i);
             }
 
+            private static bool IsBigger180(Vector2 vertex, Vector2 p1, Vector2 p2)
+            {
+                Vector2 V1 = p1 - vertex;
+                Vector2 V2 = p2 - vertex;
+                return V2.YCross(V1) <= 0f;
+            }
+
+            public static bool IsConvex(CheckpointEntry prev, CheckpointEntry next)
+            {
+                Vector2 prevLeft = new Vector2(prev.LeftPointX, prev.LeftPointZ);
+                Vector2 prevRight = new Vector2(prev.RightPointX, prev.RightPointZ);
+                Vector2 nextLeft = new Vector2(next.LeftPointX, next.LeftPointZ);
+                Vector2 nextRight = new Vector2(next.RightPointX, next.RightPointZ);
+                return IsBigger180(prevLeft, nextLeft, prevRight) &&
+                    IsBigger180(prevRight, prevLeft, nextRight) &&
+                    IsBigger180(nextRight, prevRight, nextLeft) &&
+                    IsBigger180(nextLeft, nextRight, prevLeft);
+            }
+
             public void Render()
             {
                 if (!Visible) return;
@@ -253,6 +272,17 @@ namespace KMPExpander.Class.SimpleKMPs
                         Entries[i].RenderRightLine(Settings);
                         Entries[i + 1].RenderRightLine(Settings);
                         Gl.glEnd();
+
+                        if (!IsConvex(Entries[i], Entries[i+1]))
+                        {
+                            Gl.glBegin(Gl.GL_TRIANGLE_FAN);
+                            Gl.glColor4f(1f, 0f, 0f, 0.75f);
+                            Gl.glVertex2f(Entries[i].LeftPointX, Entries[i].LeftPointZ);
+                            Gl.glVertex2f(Entries[i].RightPointX, Entries[i].RightPointZ);
+                            Gl.glVertex2f(Entries[i+1].RightPointX, Entries[i+1].RightPointZ);
+                            Gl.glVertex2f(Entries[i+1].LeftPointX, Entries[i+1].LeftPointZ);
+                            Gl.glEnd();
+                        }
                     }
                 }
                 foreach (var entry in Entries)
@@ -341,15 +371,29 @@ namespace KMPExpander.Class.SimpleKMPs
                         foreach (var next in group.Next)
                             if (next != -1 && Entries[next].Visible)
                             {
+                                CheckpointGroup.CheckpointEntry prevC = group.Entries[group.Entries.Count - 1];
+                                CheckpointGroup.CheckpointEntry nextC = Entries[next].Entries[0];
+
                                 Gl.glBegin(Gl.GL_LINES);
-                                group.Entries[group.Entries.Count - 1].RenderLeftLine(Settings);
-                                Entries[next].Entries[0].RenderLeftLine(Settings);
+                                prevC.RenderLeftLine(Settings);
+                                nextC.RenderLeftLine(Settings);
                                 Gl.glEnd();
 
                                 Gl.glBegin(Gl.GL_LINES);
-                                group.Entries[group.Entries.Count - 1].RenderRightLine(Settings);
-                                Entries[next].Entries[0].RenderRightLine(Settings);
+                                prevC.RenderRightLine(Settings);
+                                nextC.RenderRightLine(Settings);
                                 Gl.glEnd();
+
+                                if (!CheckpointGroup.IsConvex(prevC, nextC))
+                                {
+                                    Gl.glBegin(Gl.GL_TRIANGLE_FAN);
+                                    Gl.glColor4f(1f, 0f, 0f, 0.75f);
+                                    Gl.glVertex2f(prevC.LeftPointX, prevC.LeftPointZ);
+                                    Gl.glVertex2f(prevC.RightPointX, prevC.RightPointZ);
+                                    Gl.glVertex2f(nextC.RightPointX, nextC.RightPointZ);
+                                    Gl.glVertex2f(nextC.LeftPointX, nextC.LeftPointZ);
+                                    Gl.glEnd();
+                                }
                             }
                     }
                     catch

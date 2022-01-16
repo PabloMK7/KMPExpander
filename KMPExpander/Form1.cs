@@ -705,12 +705,16 @@ namespace KMPExpander
 
         private void dataGridView1_CellContentClick(object sender, DataGridViewCellEventArgs e)
         {
-            string name = dataGridView1.Columns[e.ColumnIndex].Name;
-            if (name == "WideTurn" || name == "NormalTurn" || name == "SharpTurn")
+            if (e.ColumnIndex >= 0 && e.ColumnIndex < dataGridView1.Columns.Count)
             {
-                dataGridView1.EndEdit();
-                Render();
+                string name = dataGridView1.Columns[e.ColumnIndex].Name;
+                if (name == "KeepMiniturbo" || name == "EncourageMiniturbo" || name == "IncreasePathPrecision")
+                {
+                    dataGridView1.EndEdit();
+                    Render();
+                }
             }
+            
         }
 
         private void toolStripButtonRemove_Click(object sender, EventArgs e)

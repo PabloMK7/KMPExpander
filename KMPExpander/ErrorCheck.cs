@@ -107,6 +107,7 @@ namespace KMPExpander
             foreach (var g in s.Entries)
             {
                 if (g.Next.Max() < 0) errors.Add(String.Format("Item Group {0} has no next group.", i));
+                if (g.Previous.Max() < 0) errors.Add(String.Format("Item Group {0} has no previous group.", i));
                 foreach (var n in g.Next)
                 {
                     if (n < 0) continue;
@@ -234,10 +235,14 @@ namespace KMPExpander
                     if (n < 0) continue;
                     if (!isInList(s.Entries, n))
                     {
-                        errors.Add(String.Format("Checkpoint Group {0}: Item group with ID {1} doesn't exist.", i, n));
+                        errors.Add(String.Format("Checkpoint Group {0}: Checkpoint group with ID {1} doesn't exist.", i, n));
                         continue;
                     }
                     if (!s.Entries[n].Previous.Contains(i)) warnings.Add(String.Format("Checkpoint Group {0} has Checkpoint Group {1} in the next list, but Checkpoint Group {1} doesn't have Checkpoint Group {0} in the previous list.", i, n));
+                    if (!CheckPoints.CheckpointGroup.IsConvex(g.Entries[g.Entries.Count - 1], s.Entries[n].Entries[0]))
+                    {
+                        errors.Add(String.Format("Checkpoint groups {0} and {1} form a concave quadrilateral.", i, n));
+                    }
                 }
                 foreach (var n in g.Previous)
                 {
@@ -250,6 +255,7 @@ namespace KMPExpander
                     if (!s.Entries[n].Next.Contains(i)) warnings.Add(String.Format("Checkpoint Group {0} has Checkpoint Group {1} in the previous list, but Checkpoint Group {1} doesn't have Checkpoint Group {0} in the next list.", i, n));
                 }
                 int j = 0;
+                CheckPoints.CheckpointGroup.CheckpointEntry prevCheck = null;
                 foreach (var ent in g.Entries)
                 {
                     if (ent.Key == 0)
@@ -263,6 +269,15 @@ namespace KMPExpander
                             warnings.Add(String.Format("Checkpoint Group {0}: Key Checkpoints with value 0 (finish line) can only be the first of their group.", i));
                         }
                     }
+                    if (prevCheck != null)
+                    {
+                        if (!CheckPoints.CheckpointGroup.IsConvex(prevCheck, ent))
+                        {
+                            errors.Add(String.Format("Checkpoint Group {0}: Checkpoints {1} and {2} form a concave quadrilateral.", i, j - 1, j));
+                        }
+                    }
+                    prevCheck = ent;
+                    j++;
                 }
                 i++;
             }

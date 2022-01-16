@@ -236,10 +236,11 @@ namespace LibCTR.Collections
             }
         }
 
+
         [Browsable(false)]
-        /*public float Length
+        public float Length
         {
-            get { return (float)System.Math.Sqrt(X * X + Y * Y); }
+            get { return (float)System.Math.Sqrt(X * X + Z * Z); }
         }
 
         public Vector2 Normalize()
@@ -249,12 +250,12 @@ namespace LibCTR.Collections
 
         public float Dot(Vector2 Right)
         {
-            return X * Right.X + Y * Right.Y;
+            return X * Right.X + Z * Right.Z;
         }
 
-        public Vector2 Cross(Vector2 Right)
+        public float YCross(Vector2 Right)
         {
-            return new Vector2(Y * Right.Z - Right.Y * Z, Z * Right.X - Right.Z * X, X * Right.Y - Right.X * Y);
+            return X * Right.Z - Right.X * Z;
         }
 
         public float Angle(Vector2 Right)
@@ -264,47 +265,47 @@ namespace LibCTR.Collections
 
         public static Vector2 operator +(Vector2 Left, Vector2 Right)
         {
-            return new Vector2(Left.X + Right.X, Left.Y + Right.Y, Left.Z + Right.Z);
+            return new Vector2(Left.X + Right.X, Left.Z + Right.Z);
         }
 
         public static Vector2 operator +(Vector2 Left, float Right)
         {
-            return new Vector2(Left.X + Right, Left.Y + Right, Left.Z + Right);
+            return new Vector2(Left.X + Right, Left.Z + Right);
         }
 
         public static Vector2 operator -(Vector2 Left, Vector2 Right)
         {
-            return new Vector2(Left.X - Right.X, Left.Y - Right.Y, Left.Z - Right.Z);
+            return new Vector2(Left.X - Right.X, Left.Z - Right.Z);
         }
 
         public static Vector2 operator -(Vector2 Left, float Right)
         {
-            return new Vector2(Left.X - Right, Left.Y - Right, Left.Z - Right);
+            return new Vector2(Left.X - Right, Left.Z - Right);
         }
 
         public static Vector2 operator -(Vector2 Left)
         {
-            return new Vector2(-Left.X, -Left.Y, -Left.Z);
+            return new Vector2(-Left.X, -Left.Z);
         }
 
         public static Vector2 operator *(Vector2 Left, Vector2 Right)
         {
-            return new Vector2(Left.X * Right.X, Left.Y * Right.Y, Left.Z * Right.Z);
+            return new Vector2(Left.X * Right.X, Left.Z * Right.Z);
         }
 
         public static Vector2 operator *(Vector2 Left, float Right)
         {
-            return new Vector2(Left.X * Right, Left.Y * Right, Left.Z * Right);
+            return new Vector2(Left.X * Right, Left.Z * Right);
         }
 
         public static Vector2 operator *(float Left, Vector2 Right)
         {
-            return new Vector2(Left * Right.X, Left * Right.Y, Left * Right.Z);
+            return new Vector2(Left * Right.X, Left * Right.Z);
         }
 
         public static Vector2 operator /(Vector2 Left, float Right)
         {
-            return new Vector2(Left.X / Right, Left.Y / Right, Left.Z / Right);
+            return new Vector2(Left.X / Right, Left.Z / Right);
         }
 
         public static bool operator ==(Vector2 Left, Vector2 Right)
@@ -321,8 +322,8 @@ namespace LibCTR.Collections
         {
             if (!(obj is Vector2)) return false;
             Vector2 vec = (Vector2)obj;
-            return vec.X == X && vec.Y == Y && vec.Z == Z;
-        }*/
+            return vec.X == X && vec.Z == Z;
+        }
 
         public override int GetHashCode()
         {

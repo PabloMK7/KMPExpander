@@ -63,7 +63,7 @@ namespace KMPSections
                 er.Write(Settings2);
                 er.Write(RouteID);
                 er.Write(EnemyID);
-                er.Write(Unknown5);
+                er.Write(Unknown2);
             }
             public Byte Mode { get; set; }
             public Byte Type { get; set; }
@@ -76,7 +76,7 @@ namespace KMPSections
             public UInt16 Settings2 { get; set; }
             public sbyte RouteID { get; set; }
             public sbyte EnemyID { get; set; }
-            public UInt16 Unknown5 { get; set; }
+            public UInt16 Unknown2 { get; set; }
         }
     }
 }

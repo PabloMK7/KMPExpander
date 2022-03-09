@@ -318,8 +318,8 @@ namespace KMPExpander.Class.SimpleKMPs
                     MushSettingsVal = entry.MushSettingsVal;
                     DriftSettingsVal = entry.DriftSettingsVal;
                     Flags = entry.Flags;
-                    PathFindOptsVal = entry.Unknown2;
-                    MaxSearchYOffsetVal = entry.Unknown3;
+                    PathFindOptsVal = entry.PathFindOptsVal;
+                    MaxSearchYOffsetVal = entry.MaxSearchYOffsetVal;
                 }
                 public ENPT.ENPTEntry ToENPTEntry()
                 {
@@ -329,8 +329,8 @@ namespace KMPExpander.Class.SimpleKMPs
                     entry.MushSettingsVal = MushSettingsVal;
                     entry.DriftSettingsVal = DriftSettingsVal;
                     entry.Flags = Flags;
-                    entry.Unknown2 = PathFindOptsVal;
-                    entry.Unknown3 = MaxSearchYOffsetVal;
+                    entry.PathFindOptsVal = PathFindOptsVal;
+                    entry.MaxSearchYOffsetVal = MaxSearchYOffsetVal;
                     return entry;
                 }
 

@@ -351,11 +351,11 @@ namespace KMPExpander.Class
             if (!mat_info.UseTexture)
             {
                 Gl.glBindTexture(Gl.GL_TEXTURE_2D, 0);
-                Gl.glColor4f(mat_info.AmbientColor.R / 255f, mat_info.AmbientColor.G / 255f, mat_info.AmbientColor.B / 255f, mat_info.Opacity);
+                Gl.glColor4f(mat_info.DiffuseColor.R / 255f, mat_info.DiffuseColor.G / 255f, mat_info.DiffuseColor.B / 255f, mat_info.Opacity);
             }
             else
             {
-                Gl.glColor4f(mat_info.DiffuseColor.R / 255f, mat_info.DiffuseColor.G / 255f, mat_info.DiffuseColor.B / 255f, mat_info.Opacity);
+                Gl.glColor4f(1f, 1f, 1f, mat_info.Opacity);
                 Gl.glBindTexture(Gl.GL_TEXTURE_2D, mat_info.OpenGLTexID);
             }
         }

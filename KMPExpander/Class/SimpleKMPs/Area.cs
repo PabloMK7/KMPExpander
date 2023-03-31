@@ -164,7 +164,7 @@ namespace KMPExpander.Class.SimpleKMPs
                 Settings2 = entry.Settings2;
                 RouteID = entry.RouteID;
                 EnemyID = entry.EnemyID;
-                Unknown = entry.Unknown5;
+                Unknown = entry.Unknown2;
             }
 
             public AreaEntry() { }
@@ -183,7 +183,7 @@ namespace KMPExpander.Class.SimpleKMPs
                 entry.Settings2 = Settings2;
                 entry.RouteID = RouteID;
                 entry.EnemyID = EnemyID;
-                entry.Unknown5 = Unknown;
+                entry.Unknown2 = Unknown;
 
                 return entry;
             }

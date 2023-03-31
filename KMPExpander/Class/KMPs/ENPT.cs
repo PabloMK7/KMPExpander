@@ -54,16 +54,16 @@ namespace KMPSections
                 er.Write(MushSettingsVal);
                 er.Write(DriftSettingsVal);
                 er.Write(Flags);
-                er.Write(Unknown2);
-                er.Write(Unknown3);
+                er.Write(PathFindOptsVal);
+                er.Write(MaxSearchYOffsetVal);
             }
             public Vector3 Position { get; set; }
 			public Single Scale { get; set; }
             public UInt16 MushSettingsVal { get; set; }
             public byte DriftSettingsVal { get; set; }
             public byte Flags { get; set; }
-            public Int16 Unknown2 { get; set; }
-            public Int16 Unknown3 { get; set; }
+            public Int16 PathFindOptsVal { get; set; }
+            public Int16 MaxSearchYOffsetVal { get; set; }
         }
     }
 }

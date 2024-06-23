@@ -353,5 +353,19 @@ namespace KMPExpander.Class.SimpleKMPs
             foreach (var entry in Entries)
                 entry.RenderPoint();
         }
+
+        public void Transform(Vector3 translation, Vector3 scale)
+        {
+            foreach (var entry in Entries)
+            {
+                entry.Pos *= scale;
+                entry.Pos += translation;
+
+                entry.VP1 *= scale;
+                entry.VP1 += translation;
+                entry.VP2 *= scale;
+                entry.VP2 += translation;
+            }
+        }
     }
 }

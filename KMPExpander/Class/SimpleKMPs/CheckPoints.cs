@@ -404,5 +404,24 @@ namespace KMPExpander.Class.SimpleKMPs
                 group.Render();
             }
         }
+
+        public void Transform(Vector3 translation, Vector3 scale)
+        {
+            foreach (var group in Entries)
+            {
+                foreach (var entry in group.Entries)
+                {
+                    entry.LeftPointX *= scale.X;
+                    entry.LeftPointZ *= scale.Z;
+                    entry.LeftPointX += translation.X;
+                    entry.LeftPointZ += translation.Z;
+
+                    entry.RightPointX *= scale.X;
+                    entry.RightPointZ *= scale.Z;
+                    entry.RightPointX += translation.X;
+                    entry.RightPointZ += translation.Z;
+                }
+            }
+        }
     }
 }

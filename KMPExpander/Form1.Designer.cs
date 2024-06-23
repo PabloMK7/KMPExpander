@@ -84,6 +84,8 @@
             this.importImageToolStripMenuItem = new System.Windows.Forms.ToolStripMenuItem();
             this.loadToolStripMenuItem = new System.Windows.Forms.ToolStripMenuItem();
             this.unloadToolStripMenuItem = new System.Windows.Forms.ToolStripMenuItem();
+            this.loadGlobalMapToolStripMenuItem = new System.Windows.Forms.ToolStripMenuItem();
+            this.unloadGlobalMapToolStripMenuItem = new System.Windows.Forms.ToolStripMenuItem();
             this.toolStripSeparator9 = new System.Windows.Forms.ToolStripSeparator();
             this.toggleViewToolStripMenuItem = new System.Windows.Forms.ToolStripMenuItem();
             this.importOBJToolStripMenuItem = new System.Windows.Forms.ToolStripMenuItem();
@@ -139,8 +141,7 @@
             this.saveFileDialogDiv = new System.Windows.Forms.SaveFileDialog();
             this.saveFileDialogCmdl = new System.Windows.Forms.SaveFileDialog();
             this.colorDialog1 = new System.Windows.Forms.ColorDialog();
-            this.loadGlobalMapToolStripMenuItem = new System.Windows.Forms.ToolStripMenuItem();
-            this.unloadGlobalMapToolStripMenuItem = new System.Windows.Forms.ToolStripMenuItem();
+            this.transformKMPToolStripMenuItem = new System.Windows.Forms.ToolStripMenuItem();
             this.statusStrip1.SuspendLayout();
             this.menuStrip1.SuspendLayout();
             this.contextMenuStripSection.SuspendLayout();
@@ -565,6 +566,7 @@
             this.importImageToolStripMenuItem,
             this.importOBJToolStripMenuItem,
             this.errorCheckerToolStripMenuItem,
+            this.transformKMPToolStripMenuItem,
             this.toolStripSeparator7,
             this.optionsToolStripMenuItem});
             this.toolStripMenuItem5.Name = "toolStripMenuItem5";
@@ -589,7 +591,7 @@
             // loadToolStripMenuItem
             // 
             this.loadToolStripMenuItem.Name = "loadToolStripMenuItem";
-            this.loadToolStripMenuItem.Size = new System.Drawing.Size(180, 22);
+            this.loadToolStripMenuItem.Size = new System.Drawing.Size(176, 22);
             this.loadToolStripMenuItem.Text = "Load Local Map";
             this.loadToolStripMenuItem.Click += new System.EventHandler(this.loadToolStripMenuItem_Click);
             // 
@@ -597,20 +599,35 @@
             // 
             this.unloadToolStripMenuItem.Enabled = false;
             this.unloadToolStripMenuItem.Name = "unloadToolStripMenuItem";
-            this.unloadToolStripMenuItem.Size = new System.Drawing.Size(180, 22);
+            this.unloadToolStripMenuItem.Size = new System.Drawing.Size(176, 22);
             this.unloadToolStripMenuItem.Text = "Unload Local Map";
             this.unloadToolStripMenuItem.Click += new System.EventHandler(this.unloadToolStripMenuItem_Click);
+            // 
+            // loadGlobalMapToolStripMenuItem
+            // 
+            this.loadGlobalMapToolStripMenuItem.Name = "loadGlobalMapToolStripMenuItem";
+            this.loadGlobalMapToolStripMenuItem.Size = new System.Drawing.Size(176, 22);
+            this.loadGlobalMapToolStripMenuItem.Text = "Load Global Map";
+            this.loadGlobalMapToolStripMenuItem.Click += new System.EventHandler(this.loadGlobalMapToolStripMenuItem_Click);
+            // 
+            // unloadGlobalMapToolStripMenuItem
+            // 
+            this.unloadGlobalMapToolStripMenuItem.Enabled = false;
+            this.unloadGlobalMapToolStripMenuItem.Name = "unloadGlobalMapToolStripMenuItem";
+            this.unloadGlobalMapToolStripMenuItem.Size = new System.Drawing.Size(176, 22);
+            this.unloadGlobalMapToolStripMenuItem.Text = "Unload Global Map";
+            this.unloadGlobalMapToolStripMenuItem.Click += new System.EventHandler(this.unloadGlobalMapToolStripMenuItem_Click);
             // 
             // toolStripSeparator9
             // 
             this.toolStripSeparator9.Name = "toolStripSeparator9";
-            this.toolStripSeparator9.Size = new System.Drawing.Size(177, 6);
+            this.toolStripSeparator9.Size = new System.Drawing.Size(173, 6);
             // 
             // toggleViewToolStripMenuItem
             // 
             this.toggleViewToolStripMenuItem.Name = "toggleViewToolStripMenuItem";
             this.toggleViewToolStripMenuItem.ShortcutKeys = ((System.Windows.Forms.Keys)((System.Windows.Forms.Keys.Control | System.Windows.Forms.Keys.I)));
-            this.toggleViewToolStripMenuItem.Size = new System.Drawing.Size(180, 22);
+            this.toggleViewToolStripMenuItem.Size = new System.Drawing.Size(176, 22);
             this.toggleViewToolStripMenuItem.Text = "Toggle view";
             this.toggleViewToolStripMenuItem.Click += new System.EventHandler(this.toggleViewToolStripMenuItem_Click);
             // 
@@ -1092,20 +1109,12 @@
             this.colorDialog1.AnyColor = true;
             this.colorDialog1.FullOpen = true;
             // 
-            // loadGlobalMapToolStripMenuItem
+            // transformKMPToolStripMenuItem
             // 
-            this.loadGlobalMapToolStripMenuItem.Name = "loadGlobalMapToolStripMenuItem";
-            this.loadGlobalMapToolStripMenuItem.Size = new System.Drawing.Size(180, 22);
-            this.loadGlobalMapToolStripMenuItem.Text = "Load Global Map";
-            this.loadGlobalMapToolStripMenuItem.Click += new System.EventHandler(this.loadGlobalMapToolStripMenuItem_Click);
-            // 
-            // unloadGlobalMapToolStripMenuItem
-            // 
-            this.unloadGlobalMapToolStripMenuItem.Enabled = false;
-            this.unloadGlobalMapToolStripMenuItem.Name = "unloadGlobalMapToolStripMenuItem";
-            this.unloadGlobalMapToolStripMenuItem.Size = new System.Drawing.Size(180, 22);
-            this.unloadGlobalMapToolStripMenuItem.Text = "Unload Global Map";
-            this.unloadGlobalMapToolStripMenuItem.Click += new System.EventHandler(this.unloadGlobalMapToolStripMenuItem_Click);
+            this.transformKMPToolStripMenuItem.Name = "transformKMPToolStripMenuItem";
+            this.transformKMPToolStripMenuItem.Size = new System.Drawing.Size(189, 22);
+            this.transformKMPToolStripMenuItem.Text = "Transform KMP";
+            this.transformKMPToolStripMenuItem.Click += new System.EventHandler(this.transformKMPToolStripMenuItem_Click);
             // 
             // Form1
             // 
@@ -1262,6 +1271,7 @@
         private System.Windows.Forms.ToolStripLabel toolStripLabel1;
         private System.Windows.Forms.ToolStripMenuItem loadGlobalMapToolStripMenuItem;
         private System.Windows.Forms.ToolStripMenuItem unloadGlobalMapToolStripMenuItem;
+        private System.Windows.Forms.ToolStripMenuItem transformKMPToolStripMenuItem;
     }
 }
 

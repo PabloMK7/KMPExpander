@@ -261,5 +261,28 @@ namespace KMPExpander.Class
                     break;
             }
         }
+
+        public void Transform(Vector3 translation, Vector3 scale)
+        {
+            LocalMap.BottomLeftX *= scale.X;
+            LocalMap.BottomLeftZ *= scale.Z;
+            LocalMap.BottomLeftX += translation.X;
+            LocalMap.BottomLeftZ += translation.Z;
+
+            LocalMap.TopRightX *= scale.X;
+            LocalMap.TopRightZ *= scale.Z;
+            LocalMap.TopRightX += translation.X;
+            LocalMap.TopRightZ += translation.Z;
+
+            GlobalMap.BottomLeftX *= scale.X;
+            GlobalMap.BottomLeftZ *= scale.Z;
+            GlobalMap.BottomLeftX += translation.X;
+            GlobalMap.BottomLeftZ += translation.Z;
+
+            GlobalMap.TopRightX *= scale.X;
+            GlobalMap.TopRightZ *= scale.Z;
+            GlobalMap.TopRightX += translation.X;
+            GlobalMap.TopRightZ += translation.Z;
+        }
     }
 }

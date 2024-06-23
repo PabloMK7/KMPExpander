@@ -585,5 +585,17 @@ namespace KMPExpander.Class.SimpleKMPs
                 group.Render();
             }
         }
+
+        public void Transform(Vector3 translation, Vector3 scale)
+        {
+            foreach (var group in Entries)
+            {
+                foreach (var entry in group.Entries)
+                {
+                    entry.Pos *= scale;
+                    entry.Pos += translation;
+                }
+            }
+        }
     }
 }

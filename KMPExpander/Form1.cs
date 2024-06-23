@@ -1436,6 +1436,16 @@ namespace KMPExpander
             Render();
         }
 
-        
+        private void transformKMPToolStripMenuItem_Click(object sender, EventArgs e)
+        {
+            FormTransform transform = new FormTransform();
+            transform.ShowDialog();
+            if (transform.Confirmed)
+            {
+                if (Kayempee != null) Kayempee.Transform(transform.KMPTranslation, transform.KMPScale);
+                if (UIMapPos != null) UIMapPos.Transform(transform.KMPTranslation, transform.KMPScale);
+                Render();
+            }
+        }
     }
 }

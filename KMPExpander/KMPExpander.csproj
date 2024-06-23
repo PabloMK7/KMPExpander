@@ -177,6 +177,12 @@
     <Compile Include="FormSettings.Designer.cs">
       <DependentUpon>FormSettings.cs</DependentUpon>
     </Compile>
+    <Compile Include="FormTransform.cs">
+      <SubType>Form</SubType>
+    </Compile>
+    <Compile Include="FormTransform.Designer.cs">
+      <DependentUpon>FormTransform.cs</DependentUpon>
+    </Compile>
     <Compile Include="Program.cs" />
     <Compile Include="Properties\AssemblyInfo.cs" />
     <Compile Include="TestFormOBJ.cs">
@@ -199,6 +205,9 @@
     </EmbeddedResource>
     <EmbeddedResource Include="FormSettings.resx">
       <DependentUpon>FormSettings.cs</DependentUpon>
+    </EmbeddedResource>
+    <EmbeddedResource Include="FormTransform.resx">
+      <DependentUpon>FormTransform.cs</DependentUpon>
     </EmbeddedResource>
     <EmbeddedResource Include="Properties\Resources.resx">
       <Generator>ResXFileCodeGenerator</Generator>

@@ -231,6 +231,21 @@ namespace KMPExpander.Class.SimpleKMPs
                 VisualSettings Settings = (Application.OpenForms[0] as Form1).Settings;
                 List<object> SelectedDots = (Application.OpenForms[0] as Form1).SelectedDots;
 
+                if ((ObjectID == 0x160 || ObjectID == 0x1AC) && SelectedDots.Contains(this))
+                {
+                    Gl.glColor4f(Settings.ObjectsColor.R / 255f, Settings.ObjectsColor.G / 255f, Settings.ObjectsColor.B / 255f, 0.25f);
+                    Gl.glPushMatrix();
+                    Gl.glTranslatef(PositionX, PositionZ, 0);
+                    if (ObjectID == 0x160) Gl.glRotatef(-RotationY, 0, 0, 1);
+                    Gl.glBegin(Gl.GL_QUADS);
+                    Gl.glVertex2f(-ScaleX / 2, -ScaleZ / 2);
+                    Gl.glVertex2f(ScaleX / 2, -ScaleZ / 2);
+                    Gl.glVertex2f(ScaleX / 2, ScaleZ / 2);
+                    Gl.glVertex2f(-ScaleX / 2, ScaleZ / 2);
+                    Gl.glEnd();
+                    Gl.glPopMatrix();
+                }
+
                 Gl.glPointSize(Settings.PointSize + 2f);
                 Gl.glBegin(Gl.GL_POINTS);
                 if (SelectedDots.Contains(this)) Gl.glColor4f(Settings.HighlightPointborderColor.R / 255f, Settings.HighlightPointborderColor.G / 255f, Settings.HighlightPointborderColor.B / 255f, Settings.HighlightPointborderColor.A);
@@ -276,6 +291,15 @@ namespace KMPExpander.Class.SimpleKMPs
 
             foreach (var entry in Entries)
                 entry.RenderPoint(picking);
+        }
+
+        public void Transform(Vector3 translation, Vector3 scale)
+        {
+            foreach (var entry in Entries)
+            {
+                entry.Pos *= scale;
+                entry.Pos += translation;
+            }
         }
     }
 }

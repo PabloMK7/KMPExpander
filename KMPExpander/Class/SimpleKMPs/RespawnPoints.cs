@@ -113,16 +113,22 @@ namespace KMPExpander.Class.SimpleKMPs
                 Gl.glEnd();
             }
 
-            public void RenderPoint(bool picking)
+            public void RenderPoint(bool picking, int index)
             {
                 ViewPlaneHandler vph = (Application.OpenForms[0] as Form1).vph;
 
                 VisualSettings Settings = (Application.OpenForms[0] as Form1).Settings;
                 List<object> SelectedDots = (Application.OpenForms[0] as Form1).SelectedDots;
 
+                bool contains = SelectedDots.Contains(this);
+                if (SelectedDots.Count > 0 && SelectedDots[0] is CheckPoints.CheckpointGroup.CheckpointEntry)
+                {
+                    contains = ((CheckPoints.CheckpointGroup.CheckpointEntry)SelectedDots[0]).RespawnId == index;
+                }
+
                 Gl.glPointSize(Settings.PointSize + 2f);
                 Gl.glBegin(Gl.GL_POINTS);
-                if (SelectedDots.Contains(this)) Gl.glColor4f(Settings.HighlightPointborderColor.R / 255f, Settings.HighlightPointborderColor.G / 255f, Settings.HighlightPointborderColor.B / 255f, Settings.HighlightPointborderColor.A);
+                if (contains) Gl.glColor4f(Settings.HighlightPointborderColor.R / 255f, Settings.HighlightPointborderColor.G / 255f, Settings.HighlightPointborderColor.B / 255f, Settings.HighlightPointborderColor.A);
                 else Gl.glColor4f(Settings.PointborderColor.R / 255f, Settings.PointborderColor.G / 255f, Settings.PointborderColor.B / 255f, Settings.PointborderColor.A);
                 vph.draw2DVertice(Pos);
                 Gl.glEnd();
@@ -140,7 +146,7 @@ namespace KMPExpander.Class.SimpleKMPs
                 }
                 Gl.glPointSize(Settings.PointSize);
                 Gl.glBegin(Gl.GL_POINTS);
-                if (SelectedDots.Contains(this)) Gl.glColor4f(Settings.HighlightPointColor.R / 255f, Settings.HighlightPointColor.G / 255f, Settings.HighlightPointColor.B / 255f, Settings.HighlightPointColor.A);
+                if (contains) Gl.glColor4f(Settings.HighlightPointColor.R / 255f, Settings.HighlightPointColor.G / 255f, Settings.HighlightPointColor.B / 255f, Settings.HighlightPointColor.A);
                 else Gl.glColor4f(Settings.JugemColor.R / 255f, Settings.JugemColor.G / 255f, Settings.JugemColor.B / 255f, Settings.JugemColor.A);
                 vph.draw2DVertice(Pos);
                 Gl.glEnd();
@@ -180,8 +186,21 @@ namespace KMPExpander.Class.SimpleKMPs
                 return;
             }
 
+            int curr = 0;
             foreach (var entry in Entries)
-                entry.RenderPoint(picking);
+            {
+                entry.RenderPoint(picking, curr);
+                curr++;
+            }
+        }
+
+        public void Transform(Vector3 translation, Vector3 scale)
+        {
+            foreach (var entry in Entries)
+            {
+                entry.Pos *= scale;
+                entry.Pos += translation;
+            }
         }
     }
 }

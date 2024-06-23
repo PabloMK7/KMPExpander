@@ -445,5 +445,19 @@ namespace KMPExpander.Class
                     break;
             }
         }
+
+        public void Transform(Vector3 translation, Vector3 scale)
+        {
+            StartPositions.Transform(translation, scale);
+            EnemyRoutes.Transform(translation, scale);
+            ItemRoutes.Transform(translation, scale);
+            CheckPoints.Transform(translation, scale);
+            Objects.Transform(translation, scale);
+            Routes.Transform(translation, scale);
+            Area.Transform(translation, scale);
+            Camera.Transform(translation, scale);
+            RespawnPoints.Transform(translation, scale);
+            GliderRoutes.Transform(translation, scale);
+        }
     }
 }

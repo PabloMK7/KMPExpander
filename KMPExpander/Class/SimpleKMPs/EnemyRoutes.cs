@@ -174,18 +174,17 @@ namespace KMPExpander.Class.SimpleKMPs
                     }
                 }
                 [XmlAttribute]
-                public bool EncourageMiniturbo
+                public bool PreventRouteSwitch
                 {
                     get
                     {
-                        return (Flags & 0x10) != 0;
+                        return (Flags & 0x2) != 0;
                     }
                     set
                     {
-                        Flags = (byte)((Flags & ~(1 << 4)) | ((value ? 1 : 0) << 4));
+                        Flags = (byte)((Flags & ~(1 << 1)) | ((value ? 1 : 0) << 1));
                     }
                 }
-                
                 [XmlAttribute]
                 public bool IncreasePathPrecision
                 {
@@ -199,27 +198,27 @@ namespace KMPExpander.Class.SimpleKMPs
                     }
                 }
                 [XmlAttribute]
-                public bool StickToRoute
+                public bool TricksForbidden
                 {
                     get
                     {
-                        return (Flags & 0x40) != 0;
+                        return (Flags & 0x8) != 0;
                     }
                     set
                     {
-                        Flags = (byte)((Flags & ~(1 << 6)) | ((value ? 1 : 0) << 6));
+                        Flags = (byte)((Flags & ~(1 << 3)) | ((value ? 1 : 0) << 3));
                     }
                 }
                 [XmlAttribute]
-                public bool PreventRouteSwitch
+                public bool EncourageMiniturbo
                 {
                     get
                     {
-                        return (Flags & 0x2) != 0;
+                        return (Flags & 0x10) != 0;
                     }
                     set
                     {
-                        Flags = (byte)((Flags & ~(1 << 1)) | ((value ? 1 : 0) << 1));
+                        Flags = (byte)((Flags & ~(1 << 4)) | ((value ? 1 : 0) << 4));
                     }
                 }
                 [XmlAttribute]
@@ -235,6 +234,18 @@ namespace KMPExpander.Class.SimpleKMPs
                     }
                 }
                 [XmlAttribute]
+                public bool StickToRoute
+                {
+                    get
+                    {
+                        return (Flags & 0x40) != 0;
+                    }
+                    set
+                    {
+                        Flags = (byte)((Flags & ~(1 << 6)) | ((value ? 1 : 0) << 6));
+                    }
+                }
+                [XmlAttribute]
                 public bool ForceDefaultSpeed
                 {
                     get
@@ -244,18 +255,6 @@ namespace KMPExpander.Class.SimpleKMPs
                     set
                     {
                         Flags = (byte)((Flags & ~(1 << 7)) | ((value ? 1 : 0) << 7));
-                    }
-                }
-                [XmlAttribute]
-                public bool TricksForbidden
-                {
-                    get
-                    {
-                        return (Flags & 0x8) != 0;
-                    }
-                    set
-                    {
-                        Flags = (byte)((Flags & ~(1 << 3)) | ((value ? 1 : 0) << 3));
                     }
                 }
                 
@@ -319,8 +318,8 @@ namespace KMPExpander.Class.SimpleKMPs
                     MushSettingsVal = entry.MushSettingsVal;
                     DriftSettingsVal = entry.DriftSettingsVal;
                     Flags = entry.Flags;
-                    PathFindOptsVal = entry.Unknown2;
-                    MaxSearchYOffsetVal = entry.Unknown3;
+                    PathFindOptsVal = entry.PathFindOptsVal;
+                    MaxSearchYOffsetVal = entry.MaxSearchYOffsetVal;
                 }
                 public ENPT.ENPTEntry ToENPTEntry()
                 {
@@ -330,8 +329,8 @@ namespace KMPExpander.Class.SimpleKMPs
                     entry.MushSettingsVal = MushSettingsVal;
                     entry.DriftSettingsVal = DriftSettingsVal;
                     entry.Flags = Flags;
-                    entry.Unknown2 = PathFindOptsVal;
-                    entry.Unknown3 = MaxSearchYOffsetVal;
+                    entry.PathFindOptsVal = PathFindOptsVal;
+                    entry.MaxSearchYOffsetVal = MaxSearchYOffsetVal;
                     return entry;
                 }
 

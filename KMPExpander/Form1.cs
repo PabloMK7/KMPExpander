@@ -1,17 +1,17 @@
-﻿using System;
-using System.Collections.Generic;
-using System.ComponentModel;
-using System.Drawing;
-using System.IO;
-using System.Windows.Forms;
-using System.Reflection;
+﻿using Extensions;
 using KMPExpander.Class;
 using KMPExpander.Class.SimpleKMPs;
-using Tao.OpenGl;
 using LibCTR.Collections;
-using Extensions;
+using System;
+using System.Collections.Generic;
+using System.ComponentModel;
+using System.Diagnostics;
+using System.Drawing;
+using System.IO;
 using System.Linq;
 using System.Threading;
+using System.Windows.Forms;
+using Tao.OpenGl;
 
 namespace KMPExpander
 {
@@ -160,6 +160,10 @@ namespace KMPExpander
             }
         }
 
+        private int clamp(int value, int min, int max)
+        {
+            return Math.Min(Math.Max(value, min), max);
+        }
 
         #region menu
 
@@ -920,6 +924,9 @@ namespace KMPExpander
         private object AddingPencil = null;
         private Nullable<float> found_height = 0;
 
+        private Point move_viewport_start_location = new Point();
+        private Point move_viewport_start_scroll = new Point();
+
         private void simpleOpenGlControl1_Load(object sender, EventArgs e)
         {
             simpleOpenGlControl1.MouseWheel += new MouseEventHandler(simpleOpenGlControl1_MouseWheel);
@@ -970,16 +977,30 @@ namespace KMPExpander
 
         public void simpleOpenGlControl1_MouseWheel(object sender, MouseEventArgs e)
         {
-            bool mode = false;
-            if (e.Delta >= 0) mode = true;
-            doScroll(mode);
+            bool positive = e.Delta >= 0;
+
+            if ((ModifierKeys & (Keys.Shift | Keys.Control)) == 0)
+            {
+                doScroll(positive);
+            }
+            else
+            {
+                int speed = positive ? 100 : -100;
+
+                if ((ModifierKeys & Keys.Shift) > 0)
+                    hScrollBar1.Value = clamp((int)(hScrollBar1.Value - getViewportLevel() * speed), hScrollBar1.Minimum, hScrollBar1.Maximum);
+                else if ((ModifierKeys & Keys.Control) > 0)
+                    vScrollBar1.Value = clamp((int)(vScrollBar1.Value - getViewportLevel() * speed), vScrollBar1.Minimum, vScrollBar1.Maximum);
+
+                ViewportOffset = new Vector2(hScrollBar1.Value, vScrollBar1.Value);
+                Render();
+            }
         }
 
         public void doScroll(bool zoomIn)
         {
-            float Diff = (maximum_viewport - minimum_viewport) / 15f;
-            if (zoomIn) Viewport -= Diff;
-            else Viewport += Diff;
+            if (zoomIn) Viewport /= 1.3f;
+            else Viewport *= 1.3f;
 
             RectangleF disp = getDisplayRectangle(false);
             if (disp.Width < maximum_viewport * 2)
@@ -1053,7 +1074,7 @@ namespace KMPExpander
 
         private void simpleOpenGlControl1_Click(object sender, EventArgs e)
         {
-            
+
         }
 
         private void simpleOpenGlControl1_MouseClick(object sender, MouseEventArgs e)
@@ -1133,6 +1154,13 @@ namespace KMPExpander
                 return;
             }
 
+            if (e.Button == MouseButtons.Middle)
+            {
+                move_viewport_start_location = e.Location;
+                move_viewport_start_scroll = new Point(hScrollBar1.Value, vScrollBar1.Value);
+                return;
+            }
+
             if (e.Button != MouseButtons.Left) return;
 
             if (pencil_mode && (lastSelectedGroup != null))
@@ -1185,10 +1213,24 @@ namespace KMPExpander
                 else Kayempee.MovePoint(PickingInfo, position);
                 Render();
             }
+            else if (e.Button == MouseButtons.Middle)
+            {
+                float m = getViewportLevel();
+                int deltaX = e.X - move_viewport_start_location.X;
+                int deltaY = e.Y - move_viewport_start_location.Y;
+
+                hScrollBar1.Value = clamp((int)(move_viewport_start_scroll.X - m * deltaX), hScrollBar1.Minimum, hScrollBar1.Maximum);
+                vScrollBar1.Value = clamp((int)(move_viewport_start_scroll.Y - m * deltaY), vScrollBar1.Minimum, vScrollBar1.Maximum);
+
+                ViewportOffset = new Vector2(hScrollBar1.Value, vScrollBar1.Value);
+                Render();
+            }
         }
 
         private void simpleOpenGlControl1_MouseUp(object sender, MouseEventArgs e)
         {
+            if (e.Button == MouseButtons.Middle) return;
+
             Render();
             if (pencil_mode)
             {
@@ -1364,13 +1406,14 @@ namespace KMPExpander
             Gl.glLoadIdentity();            
         }
 
+        private float getViewportLevel()
+        {
+            return 2 * Viewport / Math.Min(simpleOpenGlControl1.Width, simpleOpenGlControl1.Height);
+        }
+
         private RectangleF getDisplayRectangle(bool AddViewportOffset)
         {
-            float x = Viewport / simpleOpenGlControl1.Width;
-            x *= 2;
-            float y = Viewport / simpleOpenGlControl1.Height;
-            y *= 2;
-            float m = (x > y) ? x : y;
+            float m = getViewportLevel();
             if (AddViewportOffset)
                 return new RectangleF(-(m * simpleOpenGlControl1.Width) / 2f + ViewportOffset.X, -(m * simpleOpenGlControl1.Height) / 2f + ViewportOffset.Z, (m * simpleOpenGlControl1.Width), (m * simpleOpenGlControl1.Height));
             else

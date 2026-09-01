@@ -15,20 +15,22 @@ namespace KMPExpander.Class
 {
     public class Map
     {
+        readonly UIMapPos uiMapPos;
         public float BottomLeftX, BottomLeftZ, TopRightX, TopRightZ;
-        public bool Visible = true;
         Bitmap Image;
 
-        public Map()
+        public Map(UIMapPos uiMapPos)
         {
+            this.uiMapPos = uiMapPos;
             BottomLeftX = -1000;
             BottomLeftZ = -1000;
             TopRightX = 1000;
             TopRightZ = 1000;
         }
 
-        public Map(EndianBinaryReaderEx er)
+        public Map(UIMapPos uiMapPos, EndianBinaryReaderEx er)
         {
+            this.uiMapPos = uiMapPos;
             BottomLeftX = er.ReadSingle();
             BottomLeftZ = er.ReadSingle();
             TopRightX = er.ReadSingle();
@@ -61,7 +63,7 @@ namespace KMPExpander.Class
 
         public void Render(bool isLocalMap)
         {
-            if (!Visible) return;
+            if (uiMapPos.Visibility == UIMapPos.MapVisibility.Hidden) return;
             VisualSettings Settings = (Application.OpenForms[0] as Form1).Settings;
             Color renderColor;
 
@@ -100,7 +102,7 @@ namespace KMPExpander.Class
                 float rightCoor = isLocalMap ? 1 : 1 / 1.295f;
 
                 Gl.glBindTexture(Gl.GL_TEXTURE_2D, isLocalMap ? 1 : 2);
-                Gl.glColor3f(1f, 1f, 1f);
+                Gl.glColor4f(1f, 1f, 1f, uiMapPos.Visibility == UIMapPos.MapVisibility.Transparent ? 0.5f : 1f);
                 Gl.glBegin(Gl.GL_QUADS);
                 Gl.glTexCoord2f(0, botCoord);
                 Gl.glVertex2f(BottomLeftX, BottomLeftZ);
@@ -159,7 +161,7 @@ namespace KMPExpander.Class
 
         public void RenderPicking(bool isLocalMap)
         {
-            if (!Visible) return;
+            if (uiMapPos.Visibility == UIMapPos.MapVisibility.Hidden) return;
 
             VisualSettings Settings = (Application.OpenForms[0] as Form1).Settings;
 
@@ -181,18 +183,25 @@ namespace KMPExpander.Class
 
     public class UIMapPos
     {
+        public enum MapVisibility
+        {
+            Visible, Transparent, Hidden
+        }
+
         public Map GlobalMap;
         public Map LocalMap;
         public Byte Unknown;
+        public MapVisibility Visibility;
 
         public UIMapPos(byte[] Data)
         {
             EndianBinaryReaderEx er = new EndianBinaryReaderEx(new MemoryStream(Data), Endianness.LittleEndian);
             try
             {
-                GlobalMap = new Map(er);
-                LocalMap = new Map(er);
+                GlobalMap = new Map(this, er);
+                LocalMap = new Map(this, er);
                 Unknown = er.ReadByte();
+                Visibility = MapVisibility.Visible;
             }
             finally
             {

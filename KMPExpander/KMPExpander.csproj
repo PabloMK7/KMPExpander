@@ -63,7 +63,7 @@
     <GenerateManifests>false</GenerateManifests>
   </PropertyGroup>
   <PropertyGroup>
-    <SignManifests>true</SignManifests>
+    <SignManifests>false</SignManifests>
   </PropertyGroup>
   <PropertyGroup>
     <TargetZone>Internet</TargetZone>
@@ -89,16 +89,22 @@
     <Reference Include="System.Xml" />
     <Reference Include="Tao.OpenGl, Version=2.1.0.12, Culture=neutral, PublicKeyToken=1ca010269a4501ef, processorArchitecture=MSIL">
       <SpecificVersion>False</SpecificVersion>
-      <HintPath>..\..\..\..\Visual Studio 2013\Projects\KMP Expander 3\KMP Expander 3\Libs\Tao.OpenGl.dll</HintPath>
+      <HintPath>..\libs\Tao.OpenGl.dll</HintPath>
     </Reference>
     <Reference Include="Tao.Platform.Windows, Version=1.0.0.5, Culture=neutral, PublicKeyToken=701104b2da67a104, processorArchitecture=MSIL">
       <SpecificVersion>False</SpecificVersion>
-      <HintPath>..\..\..\..\Visual Studio 2013\Projects\KMP Expander 3\KMP Expander 3\Libs\Tao.Platform.Windows.dll</HintPath>
+      <HintPath>..\libs\Tao.Platform.Windows.dll</HintPath>
     </Reference>
     <Reference Include="WindowsBase" />
   </ItemGroup>
   <ItemGroup>
     <Compile Include="Class\CDAB.cs" />
+    <Compile Include="Class\CheckpointSearch.cs" />
+    <Compile Include="Class\CullingPreview.cs" />
+    <Compile Include="Class\GhostCheckpoints.cs" />
+    <Compile Include="Class\KCL.cs" />
+    <Compile Include="Class\Gizmo3D.cs" />
+    <Compile Include="Class\ObjectModels.cs" />
     <Compile Include="Class\CMDL.cs" />
     <Compile Include="Class\Description.cs" />
     <Compile Include="Class\EndianBinaryReaderExtensions.cs" />
@@ -137,6 +143,7 @@
     <Compile Include="Class\SimpleKMP.cs" />
     <Compile Include="Class\SimpleKMPs\Area.cs" />
     <Compile Include="Class\SimpleKMPs\Camera.cs" />
+    <Compile Include="Class\SimpleKMPs\KartSimulator.cs" />
     <Compile Include="Class\SimpleKMPs\CheckPoints.cs" />
     <Compile Include="Class\SimpleKMPs\EnemyRoutes.cs" />
     <Compile Include="Class\SimpleKMPs\Generic.cs" />
@@ -156,6 +163,9 @@
     <Compile Include="Form1.cs">
       <SubType>Form</SubType>
     </Compile>
+    <Compile Include="View3D.cs" />
+    <Compile Include="Undo.cs" />
+    <Compile Include="GhostView.cs" />
     <Compile Include="Form1.Designer.cs">
       <DependentUpon>Form1.cs</DependentUpon>
     </Compile>
@@ -196,6 +206,7 @@
     </EmbeddedResource>
     <EmbeddedResource Include="Form1.resx">
       <DependentUpon>Form1.cs</DependentUpon>
+      <SubType>Designer</SubType>
     </EmbeddedResource>
     <EmbeddedResource Include="FormOBJ.resx">
       <DependentUpon>FormOBJ.cs</DependentUpon>

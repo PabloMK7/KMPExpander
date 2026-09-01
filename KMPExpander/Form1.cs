@@ -5,7 +5,6 @@ using LibCTR.Collections;
 using System;
 using System.Collections.Generic;
 using System.ComponentModel;
-using System.Diagnostics;
 using System.Drawing;
 using System.IO;
 using System.Linq;
@@ -148,6 +147,8 @@ namespace KMPExpander
 
         private void Form1_Load(object sender, EventArgs e)
         {
+            viewPlaneComboBox.SelectedIndex = 0;
+
             if (kmp_path.Length == 0) return;
 
             try
@@ -195,11 +196,34 @@ namespace KMPExpander
             obj_manager.ShowDialog();
         }
 
-        private void toggleViewToolStripMenuItem_Click(object sender, EventArgs e)
+        private void setMapVisibleStripMenuItem_Click(object sender, EventArgs e)
         {
-            UIMapPos.LocalMap.Visible = (UIMapPos.LocalMap.Visible ? false : true);
-            UIMapPos.GlobalMap.Visible = (UIMapPos.GlobalMap.Visible ? false : true);
+            if (UIMapPos == null) return;
+            setMapVisibility(UIMapPos.Visibility != UIMapPos.MapVisibility.Visible ? UIMapPos.MapVisibility.Visible : UIMapPos.MapVisibility.Hidden);
             Render();
+        }
+
+        private void setMapTransparentStripMenuItem_Click(object sender, EventArgs e)
+        {
+            if (UIMapPos == null) return;
+            setMapVisibility(UIMapPos.Visibility != UIMapPos.MapVisibility.Transparent ? UIMapPos.MapVisibility.Transparent : UIMapPos.MapVisibility.Hidden);
+            Render();
+        }
+
+        private void setMapHiddenStripMenuItem_Click(object sender, EventArgs e)
+        {
+            if (UIMapPos == null) return;
+            setMapVisibility(UIMapPos.Visibility != UIMapPos.MapVisibility.Hidden ? UIMapPos.MapVisibility.Hidden : UIMapPos.MapVisibility.Visible);
+            Render();
+        }
+
+        private void setMapVisibility(UIMapPos.MapVisibility visibility)
+        {
+            UIMapPos.Visibility = visibility;
+
+            setMapVisibleStripMenuItem.Checked = visibility == UIMapPos.MapVisibility.Visible;
+            setMapTransparentStripMenuItem.Checked = visibility == UIMapPos.MapVisibility.Transparent;
+            setMapHiddenStripMenuItem.Checked = visibility == UIMapPos.MapVisibility.Hidden;
         }
 
         private void optionsToolStripMenuItem_Click(object sender, EventArgs e)
@@ -271,6 +295,7 @@ namespace KMPExpander
             toolStripMenuItemSaveUIMap.Enabled = true;
             importImageToolStripMenuItem.Enabled = true;
             closeUIMapStripMenuItem7.Enabled = true;
+            setMapVisibility(UIMapPos.MapVisibility.Visible);
         }
 
         private void toolStripMenuItemOpenDiv_Click(object sender, EventArgs e)

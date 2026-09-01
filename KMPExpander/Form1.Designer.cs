@@ -87,9 +87,10 @@
             this.loadGlobalMapToolStripMenuItem = new System.Windows.Forms.ToolStripMenuItem();
             this.unloadGlobalMapToolStripMenuItem = new System.Windows.Forms.ToolStripMenuItem();
             this.toolStripSeparator9 = new System.Windows.Forms.ToolStripSeparator();
-            this.toggleViewToolStripMenuItem = new System.Windows.Forms.ToolStripMenuItem();
+            this.setMapHiddenStripMenuItem = new System.Windows.Forms.ToolStripMenuItem();
             this.importOBJToolStripMenuItem = new System.Windows.Forms.ToolStripMenuItem();
             this.errorCheckerToolStripMenuItem = new System.Windows.Forms.ToolStripMenuItem();
+            this.transformKMPToolStripMenuItem = new System.Windows.Forms.ToolStripMenuItem();
             this.toolStripSeparator7 = new System.Windows.Forms.ToolStripSeparator();
             this.optionsToolStripMenuItem = new System.Windows.Forms.ToolStripMenuItem();
             this.aboutToolStripMenuItem = new System.Windows.Forms.ToolStripMenuItem();
@@ -101,7 +102,6 @@
             this.exportCSVToolStripMenuItem1 = new System.Windows.Forms.ToolStripMenuItem();
             this.splitContainer1 = new System.Windows.Forms.SplitContainer();
             this.splitContainer2 = new System.Windows.Forms.SplitContainer();
-            this.treeView1 = new KMPExpander.Class.TreeViewFix();
             this.propertyGrid1 = new System.Windows.Forms.PropertyGrid();
             this.splitContainer3 = new System.Windows.Forms.SplitContainer();
             this.vScrollBar1 = new System.Windows.Forms.VScrollBar();
@@ -141,7 +141,9 @@
             this.saveFileDialogDiv = new System.Windows.Forms.SaveFileDialog();
             this.saveFileDialogCmdl = new System.Windows.Forms.SaveFileDialog();
             this.colorDialog1 = new System.Windows.Forms.ColorDialog();
-            this.transformKMPToolStripMenuItem = new System.Windows.Forms.ToolStripMenuItem();
+            this.setMapVisibleStripMenuItem = new System.Windows.Forms.ToolStripMenuItem();
+            this.setMapTransparentStripMenuItem = new System.Windows.Forms.ToolStripMenuItem();
+            this.treeView1 = new KMPExpander.Class.TreeViewFix();
             this.statusStrip1.SuspendLayout();
             this.menuStrip1.SuspendLayout();
             this.contextMenuStripSection.SuspendLayout();
@@ -164,6 +166,7 @@
             // 
             // statusStrip1
             // 
+            this.statusStrip1.ImageScalingSize = new System.Drawing.Size(20, 20);
             this.statusStrip1.Items.AddRange(new System.Windows.Forms.ToolStripItem[] {
             this.toolStripStatusLabel1});
             this.statusStrip1.Location = new System.Drawing.Point(0, 545);
@@ -581,7 +584,9 @@
             this.loadGlobalMapToolStripMenuItem,
             this.unloadGlobalMapToolStripMenuItem,
             this.toolStripSeparator9,
-            this.toggleViewToolStripMenuItem});
+            this.setMapVisibleStripMenuItem,
+            this.setMapTransparentStripMenuItem,
+            this.setMapHiddenStripMenuItem});
             this.importImageToolStripMenuItem.Enabled = false;
             this.importImageToolStripMenuItem.Name = "importImageToolStripMenuItem";
             this.importImageToolStripMenuItem.Size = new System.Drawing.Size(189, 22);
@@ -623,13 +628,12 @@
             this.toolStripSeparator9.Name = "toolStripSeparator9";
             this.toolStripSeparator9.Size = new System.Drawing.Size(173, 6);
             // 
-            // toggleViewToolStripMenuItem
+            // setMapHiddenStripMenuItem
             // 
-            this.toggleViewToolStripMenuItem.Name = "toggleViewToolStripMenuItem";
-            this.toggleViewToolStripMenuItem.ShortcutKeys = ((System.Windows.Forms.Keys)((System.Windows.Forms.Keys.Control | System.Windows.Forms.Keys.I)));
-            this.toggleViewToolStripMenuItem.Size = new System.Drawing.Size(176, 22);
-            this.toggleViewToolStripMenuItem.Text = "Toggle view";
-            this.toggleViewToolStripMenuItem.Click += new System.EventHandler(this.toggleViewToolStripMenuItem_Click);
+            this.setMapHiddenStripMenuItem.Name = "setMapHiddenStripMenuItem";
+            this.setMapHiddenStripMenuItem.Size = new System.Drawing.Size(224, 26);
+            this.setMapHiddenStripMenuItem.Text = "Hidden";
+            this.setMapHiddenStripMenuItem.Click += new System.EventHandler(this.setMapHiddenStripMenuItem_Click);
             // 
             // importOBJToolStripMenuItem
             // 
@@ -645,6 +649,13 @@
             this.errorCheckerToolStripMenuItem.Size = new System.Drawing.Size(189, 22);
             this.errorCheckerToolStripMenuItem.Text = "Error Checker";
             this.errorCheckerToolStripMenuItem.Click += new System.EventHandler(this.errorCheckerToolStripMenuItem_Click);
+            // 
+            // transformKMPToolStripMenuItem
+            // 
+            this.transformKMPToolStripMenuItem.Name = "transformKMPToolStripMenuItem";
+            this.transformKMPToolStripMenuItem.Size = new System.Drawing.Size(235, 26);
+            this.transformKMPToolStripMenuItem.Text = "Transform KMP";
+            this.transformKMPToolStripMenuItem.Click += new System.EventHandler(this.transformKMPToolStripMenuItem_Click);
             // 
             // toolStripSeparator7
             // 
@@ -747,19 +758,6 @@
             this.splitContainer2.Size = new System.Drawing.Size(227, 521);
             this.splitContainer2.SplitterDistance = 275;
             this.splitContainer2.TabIndex = 0;
-            // 
-            // treeView1
-            // 
-            this.treeView1.Dock = System.Windows.Forms.DockStyle.Fill;
-            this.treeView1.Location = new System.Drawing.Point(0, 0);
-            this.treeView1.Name = "treeView1";
-            this.treeView1.Size = new System.Drawing.Size(227, 275);
-            this.treeView1.TabIndex = 5;
-            this.treeView1.BeforeCheck += new System.Windows.Forms.TreeViewCancelEventHandler(this.treeView1_BeforeCheck);
-            this.treeView1.AfterCheck += new System.Windows.Forms.TreeViewEventHandler(this.treeView1_AfterCheck);
-            this.treeView1.AfterSelect += new System.Windows.Forms.TreeViewEventHandler(this.treeView1_AfterSelect);
-            this.treeView1.NodeMouseClick += new System.Windows.Forms.TreeNodeMouseClickEventHandler(this.treeView1_NodeMouseClick);
-            this.treeView1.MouseUp += new System.Windows.Forms.MouseEventHandler(this.treeView1_MouseUp);
             // 
             // propertyGrid1
             // 
@@ -1109,12 +1107,36 @@
             this.colorDialog1.AnyColor = true;
             this.colorDialog1.FullOpen = true;
             // 
-            // transformKMPToolStripMenuItem
+            // setMapVisibleStripMenuItem
             // 
-            this.transformKMPToolStripMenuItem.Name = "transformKMPToolStripMenuItem";
-            this.transformKMPToolStripMenuItem.Size = new System.Drawing.Size(189, 22);
-            this.transformKMPToolStripMenuItem.Text = "Transform KMP";
-            this.transformKMPToolStripMenuItem.Click += new System.EventHandler(this.transformKMPToolStripMenuItem_Click);
+            this.setMapVisibleStripMenuItem.Name = "setMapVisibleStripMenuItem";
+            this.setMapVisibleStripMenuItem.ShortcutKeys = ((System.Windows.Forms.Keys)(((System.Windows.Forms.Keys.Control | System.Windows.Forms.Keys.Shift) 
+            | System.Windows.Forms.Keys.I)));
+            this.setMapVisibleStripMenuItem.Size = new System.Drawing.Size(224, 26);
+            this.setMapVisibleStripMenuItem.Text = "Visible";
+            this.setMapVisibleStripMenuItem.Click += new System.EventHandler(this.setMapVisibleStripMenuItem_Click);
+            // 
+            // setMapTransparentStripMenuItem
+            // 
+            this.setMapTransparentStripMenuItem.Name = "setMapTransparentStripMenuItem";
+            this.setMapTransparentStripMenuItem.ShortcutKeys = ((System.Windows.Forms.Keys)((System.Windows.Forms.Keys.Control | System.Windows.Forms.Keys.I)));
+            this.setMapTransparentStripMenuItem.Size = new System.Drawing.Size(224, 26);
+            this.setMapTransparentStripMenuItem.Text = "Transparent";
+            this.setMapTransparentStripMenuItem.Click += new System.EventHandler(this.setMapTransparentStripMenuItem_Click);
+            // 
+            // treeView1
+            // 
+            this.treeView1.Dock = System.Windows.Forms.DockStyle.Fill;
+            this.treeView1.Location = new System.Drawing.Point(0, 0);
+            this.treeView1.Margin = new System.Windows.Forms.Padding(4);
+            this.treeView1.Name = "treeView1";
+            this.treeView1.Size = new System.Drawing.Size(302, 339);
+            this.treeView1.TabIndex = 5;
+            this.treeView1.BeforeCheck += new System.Windows.Forms.TreeViewCancelEventHandler(this.treeView1_BeforeCheck);
+            this.treeView1.AfterCheck += new System.Windows.Forms.TreeViewEventHandler(this.treeView1_AfterCheck);
+            this.treeView1.AfterSelect += new System.Windows.Forms.TreeViewEventHandler(this.treeView1_AfterSelect);
+            this.treeView1.NodeMouseClick += new System.Windows.Forms.TreeNodeMouseClickEventHandler(this.treeView1_NodeMouseClick);
+            this.treeView1.MouseUp += new System.Windows.Forms.MouseEventHandler(this.treeView1_MouseUp);
             // 
             // Form1
             // 
@@ -1249,7 +1271,7 @@
         private System.Windows.Forms.ToolStripSeparator toolStripSeparator8;
         public System.Windows.Forms.ToolStripButton toolStripButtonPencil;
         private System.Windows.Forms.ToolStripSeparator toolStripSeparator9;
-        private System.Windows.Forms.ToolStripMenuItem toggleViewToolStripMenuItem;
+        private System.Windows.Forms.ToolStripMenuItem setMapHiddenStripMenuItem;
         private System.Windows.Forms.ToolStripMenuItem toolStripMenuItem6;
         private System.Windows.Forms.ToolStripMenuItem toggle3DViewToolStripMenuItem;
         public Class.TreeViewFix treeView1;
@@ -1272,6 +1294,8 @@
         private System.Windows.Forms.ToolStripMenuItem loadGlobalMapToolStripMenuItem;
         private System.Windows.Forms.ToolStripMenuItem unloadGlobalMapToolStripMenuItem;
         private System.Windows.Forms.ToolStripMenuItem transformKMPToolStripMenuItem;
+        private System.Windows.Forms.ToolStripMenuItem setMapVisibleStripMenuItem;
+        private System.Windows.Forms.ToolStripMenuItem setMapTransparentStripMenuItem;
     }
 }
 

@@ -279,11 +279,8 @@ namespace KMPExpander.Class.SimpleKMPs
                 Color pickingColor = SectionPicking.GetColor(Sections.Camera, 0, entry_id);
                 ViewPlaneHandler vph = (Application.OpenForms[0] as Form1).vph;
                 
-                Gl.glPointSize(Settings.PointSize + 2f);
-                Gl.glBegin(Gl.GL_POINTS);
                 Gl.glColor4f(pickingColor.R / 255f, pickingColor.G / 255f, pickingColor.B / 255f, 1f);
-                vph.draw2DVertice(Pos);
-                Gl.glEnd();
+                vph.drawPoint(Pos, Settings.PointSize + 2f);
             }
 
             public void RenderPoint()
@@ -292,19 +289,13 @@ namespace KMPExpander.Class.SimpleKMPs
                 List<object> SelectedDots = (Application.OpenForms[0] as Form1).SelectedDots;
                 ViewPlaneHandler vph = (Application.OpenForms[0] as Form1).vph;
                 
-                Gl.glPointSize(Settings.PointSize + 2f);
-                Gl.glBegin(Gl.GL_POINTS);
                 if (SelectedDots.Contains(this)) Gl.glColor4f(Settings.HighlightPointborderColor.R / 255f, Settings.HighlightPointborderColor.G / 255f, Settings.HighlightPointborderColor.B / 255f, Settings.HighlightPointborderColor.A);
                 else Gl.glColor4f(Settings.PointborderColor.R / 255f, Settings.PointborderColor.G / 255f, Settings.PointborderColor.B / 255f, Settings.PointborderColor.A);
-                vph.draw2DVertice(Pos);
-                Gl.glEnd();
+                vph.drawPoint(Pos, Settings.PointSize + 2f, true);
 
-                Gl.glPointSize(Settings.PointSize);
-                Gl.glBegin(Gl.GL_POINTS);
                 if (SelectedDots.Contains(this)) Gl.glColor4f(Settings.HighlightPointColor.R / 255f, Settings.HighlightPointColor.G / 255f, Settings.HighlightPointColor.B / 255f, Settings.HighlightPointColor.A);
                 else Gl.glColor4f(Settings.CameColor.R / 255f, Settings.CameColor.G / 255f, Settings.CameColor.B / 255f, Settings.CameColor.A);
-                vph.draw2DVertice(Pos);
-                Gl.glEnd();
+                vph.drawPoint(Pos, Settings.PointSize);
 
                 // Viewpoints
                 if (SelectedDots.Contains(this))

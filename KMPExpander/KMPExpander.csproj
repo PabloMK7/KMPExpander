@@ -163,9 +163,15 @@
     <Compile Include="Form1.cs">
       <SubType>Form</SubType>
     </Compile>
-    <Compile Include="View3D.cs" />
-    <Compile Include="Undo.cs" />
-    <Compile Include="GhostView.cs" />
+    <Compile Include="View3D.cs">
+      <SubType>Form</SubType>
+    </Compile>
+    <Compile Include="Undo.cs">
+      <SubType>Form</SubType>
+    </Compile>
+    <Compile Include="GhostView.cs">
+      <SubType>Form</SubType>
+    </Compile>
     <Compile Include="Form1.Designer.cs">
       <DependentUpon>Form1.cs</DependentUpon>
     </Compile>

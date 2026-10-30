@@ -43,7 +43,7 @@ namespace KMPExpander.Class.SimpleKMPs
                 //public Vector3 Position { get; set; }
                 [XmlIgnore, Browsable(false)]
                 public Vector3 Pos { get; set; } = new Vector3(0, 0, 0);
-                [XmlAttribute]
+                [XmlAttribute, Description("Position of the item point.")]
                 public Single PositionX
                 {
                     get
@@ -55,7 +55,7 @@ namespace KMPExpander.Class.SimpleKMPs
                         Pos = new Vector3(value, Pos.Y, Pos.Z);
                     }
                 }
-                [XmlAttribute]
+                [XmlAttribute, Description("Height of the item point. Keep item points above Y = 0.")]
                 public Single PositionY
                 {
                     get
@@ -67,7 +67,7 @@ namespace KMPExpander.Class.SimpleKMPs
                         Pos = new Vector3(Pos.X, value, Pos.Z);
                     }
                 }
-                [XmlAttribute]
+                [XmlAttribute, Description("Position of the item point.")]
                 public Single PositionZ
                 {
                     get
@@ -79,11 +79,11 @@ namespace KMPExpander.Class.SimpleKMPs
                         Pos = new Vector3(Pos.X, Pos.Y, value);
                     }
                 }
-                [XmlAttribute]
+                [XmlAttribute, Description("Size of the item point. Shells aim at a spot inside this circle, which is a sphere in the game, so keep it on the road.")]
                 public Single Scale { get; set; }
                 [Browsable(false), XmlAttribute]
                 public UInt16 FlyModeVal { get; set; }
-                [XmlIgnore]
+                [XmlIgnore, Description("How gravity affects shells. 0 means they fall to the ground, the default. 1 means they fly along the route, for gliding sections and big jumps. 2 is for cannon sections, like 1 but faster.")]
                 public string GravityMode {
                     get {
                         switch (FlyModeVal)
@@ -105,7 +105,7 @@ namespace KMPExpander.Class.SimpleKMPs
                 }
                 [Browsable(false), XmlAttribute]
                 public UInt16 PlayerScanRadiusVal { get; set; }
-                [XmlIgnore]
+                [XmlIgnore, Description("How far shells look for players to hit. 0 means 300 units, the default. 1 means 900 units, for wide sections.")]
                 public string PlayerScanRadius
                 {
                     get
@@ -218,11 +218,8 @@ namespace KMPExpander.Class.SimpleKMPs
                     Color pickingColor = SectionPicking.GetColor(Sections.ItemRoutes, group_id, entry_id);
                     float PointScale = 50f * Scale;
 
-                    Gl.glPointSize(Settings.PointSize + 2f);
-                    Gl.glBegin(Gl.GL_POINTS);
                     Gl.glColor4f(pickingColor.R / 255f, pickingColor.G / 255f, pickingColor.B / 255f, 1f);
-                    vph.draw2DVertice(Pos);
-                    Gl.glEnd();
+                    vph.drawPoint(Pos, Settings.PointSize + 2f);
                 }
 
                 public void RenderPoint()
@@ -233,29 +230,26 @@ namespace KMPExpander.Class.SimpleKMPs
                     List<object> SelectedDots = (Application.OpenForms[0] as Form1).SelectedDots;
                     float PointScale = 50f * Scale;
 
-                    Gl.glPointSize(Settings.PointSize + 2f);
-                    Gl.glBegin(Gl.GL_POINTS);
                     if (SelectedDots.Contains(this)) Gl.glColor4f(Settings.HighlightPointborderColor.R / 255f, Settings.HighlightPointborderColor.G / 255f, Settings.HighlightPointborderColor.B / 255f, Settings.HighlightPointborderColor.A);
                     else Gl.glColor4f(Settings.PointborderColor.R / 255f, Settings.PointborderColor.G / 255f, Settings.PointborderColor.B / 255f, Settings.PointborderColor.A);
-                    vph.draw2DVertice(Pos);
-                    Gl.glEnd();
+                    vph.drawPoint(Pos, Settings.PointSize + 2f, true);
 
-                    Gl.glPointSize(Settings.PointSize);
-                    Gl.glBegin(Gl.GL_POINTS);
                     if (SelectedDots.Contains(this)) Gl.glColor4f(Settings.HighlightPointColor.R / 255f, Settings.HighlightPointColor.G / 255f, Settings.HighlightPointColor.B / 255f, Settings.HighlightPointColor.A);
                     else Gl.glColor4f(Settings.ItemColor.R / 255f, Settings.ItemColor.G / 255f, Settings.ItemColor.B / 255f, Settings.ItemColor.A);
-                    vph.draw2DVertice(Pos);
-                    Gl.glEnd();
+                    vph.drawPoint(Pos, Settings.PointSize);
 
                     Gl.glLineWidth(Settings.LineWidth);
                     if (SelectedDots.Contains(this))
                     {
-                        DrawFilledCircle(vph.getViewCoord(Pos, 0), vph.getViewCoord(Pos, 1), PointScale, 24, Settings.HighlightPointborderColor, Settings.HighlightPointColor);
+                        if (!vph.drawVolume(Pos, PointScale, Settings.HighlightPointborderColor, Settings.HighlightPointColor)) DrawFilledCircle(vph.getViewCoord(Pos, 0), vph.getViewCoord(Pos, 1), PointScale, 24, Settings.HighlightPointborderColor, Settings.HighlightPointColor);
                         float scanRad = 300;
                         if (PlayerScanRadiusVal != 0) scanRad *= 3;
+                        // The scan radius stays a flat circle at the point's height.
+                        vph.pushHeight(Pos.Y);
                         DrawStrippedCircle(vph.getViewCoord(Pos, 0), vph.getViewCoord(Pos, 1), scanRad, 24, Settings.HighlightPointborderColor);
+                        vph.popHeight();
                     }
-                    else DrawFilledCircle(vph.getViewCoord(Pos, 0), vph.getViewCoord(Pos, 1), PointScale, 24, Settings.ItemColor, Settings.ItemColor);
+                    else if (!vph.drawVolume(Pos, PointScale, Settings.ItemColor, Settings.ItemColor)) DrawFilledCircle(vph.getViewCoord(Pos, 0), vph.getViewCoord(Pos, 1), PointScale, 24, Settings.ItemColor, Settings.ItemColor);
                 }
 
                 public void RenderLine()

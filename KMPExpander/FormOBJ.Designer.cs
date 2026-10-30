@@ -40,6 +40,8 @@
             this.groupBox2 = new System.Windows.Forms.GroupBox();
             this.checkBox1 = new System.Windows.Forms.CheckBox();
             this.checkBox2 = new System.Windows.Forms.CheckBox();
+            this.frontFaceCullingCheckBox = new System.Windows.Forms.CheckBox();
+            this.backFaceCullingCheckBox = new System.Windows.Forms.CheckBox();
             this.menuStrip1.SuspendLayout();
             this.groupBox1.SuspendLayout();
             ((System.ComponentModel.ISupportInitialize)(this.pictureBoxTex)).BeginInit();
@@ -53,7 +55,7 @@
             this.closeWavefrontToolStripMenuItem});
             this.menuStrip1.Location = new System.Drawing.Point(0, 0);
             this.menuStrip1.Name = "menuStrip1";
-            this.menuStrip1.Size = new System.Drawing.Size(584, 24);
+            this.menuStrip1.Size = new System.Drawing.Size(719, 24);
             this.menuStrip1.TabIndex = 0;
             this.menuStrip1.Text = "menuStrip1";
             // 
@@ -115,7 +117,7 @@
             // 
             this.pictureBoxTex.Location = new System.Drawing.Point(7, 19);
             this.pictureBoxTex.Name = "pictureBoxTex";
-            this.pictureBoxTex.Size = new System.Drawing.Size(256, 305);
+            this.pictureBoxTex.Size = new System.Drawing.Size(391, 305);
             this.pictureBoxTex.SizeMode = System.Windows.Forms.PictureBoxSizeMode.CenterImage;
             this.pictureBoxTex.TabIndex = 4;
             this.pictureBoxTex.TabStop = false;
@@ -125,7 +127,7 @@
             this.groupBox2.Controls.Add(this.pictureBoxTex);
             this.groupBox2.Location = new System.Drawing.Point(303, 57);
             this.groupBox2.Name = "groupBox2";
-            this.groupBox2.Size = new System.Drawing.Size(272, 330);
+            this.groupBox2.Size = new System.Drawing.Size(404, 330);
             this.groupBox2.TabIndex = 5;
             this.groupBox2.TabStop = false;
             this.groupBox2.Text = "Texture";
@@ -136,7 +138,7 @@
             this.checkBox1.Checked = true;
             this.checkBox1.CheckState = System.Windows.Forms.CheckState.Checked;
             this.checkBox1.Enabled = false;
-            this.checkBox1.Location = new System.Drawing.Point(486, 33);
+            this.checkBox1.Location = new System.Drawing.Point(625, 33);
             this.checkBox1.Name = "checkBox1";
             this.checkBox1.Size = new System.Drawing.Size(84, 17);
             this.checkBox1.TabIndex = 6;
@@ -148,7 +150,7 @@
             // 
             this.checkBox2.AutoSize = true;
             this.checkBox2.Enabled = false;
-            this.checkBox2.Location = new System.Drawing.Point(406, 32);
+            this.checkBox2.Location = new System.Drawing.Point(545, 32);
             this.checkBox2.Name = "checkBox2";
             this.checkBox2.Size = new System.Drawing.Size(74, 17);
             this.checkBox2.TabIndex = 7;
@@ -156,11 +158,39 @@
             this.checkBox2.UseVisualStyleBackColor = true;
             this.checkBox2.CheckedChanged += new System.EventHandler(this.checkBox2_CheckedChanged);
             // 
+            // frontFaceCullingCheckBox
+            // 
+            this.frontFaceCullingCheckBox.AutoSize = true;
+            this.frontFaceCullingCheckBox.Enabled = false;
+            this.frontFaceCullingCheckBox.Location = new System.Drawing.Point(428, 32);
+            this.frontFaceCullingCheckBox.Name = "frontFaceCullingCheckBox";
+            this.frontFaceCullingCheckBox.Size = new System.Drawing.Size(111, 17);
+            this.frontFaceCullingCheckBox.TabIndex = 8;
+            this.frontFaceCullingCheckBox.Text = "Front Face Culling";
+            this.frontFaceCullingCheckBox.UseVisualStyleBackColor = true;
+            this.frontFaceCullingCheckBox.CheckedChanged += new System.EventHandler(this.frontFaceCullingCheckBox_CheckedChanged);
+            // 
+            // backFaceCullingCheckBox
+            // 
+            this.backFaceCullingCheckBox.AutoSize = true;
+            this.backFaceCullingCheckBox.Checked = true;
+            this.backFaceCullingCheckBox.CheckState = System.Windows.Forms.CheckState.Checked;
+            this.backFaceCullingCheckBox.Enabled = false;
+            this.backFaceCullingCheckBox.Location = new System.Drawing.Point(310, 32);
+            this.backFaceCullingCheckBox.Name = "backFaceCullingCheckBox";
+            this.backFaceCullingCheckBox.Size = new System.Drawing.Size(112, 17);
+            this.backFaceCullingCheckBox.TabIndex = 9;
+            this.backFaceCullingCheckBox.Text = "Back Face Culling";
+            this.backFaceCullingCheckBox.UseVisualStyleBackColor = true;
+            this.backFaceCullingCheckBox.CheckedChanged += new System.EventHandler(this.backFaceCullingCheckBox_CheckedChanged);
+            // 
             // FormOBJ
             // 
             this.AutoScaleDimensions = new System.Drawing.SizeF(6F, 13F);
             this.AutoScaleMode = System.Windows.Forms.AutoScaleMode.Font;
-            this.ClientSize = new System.Drawing.Size(584, 399);
+            this.ClientSize = new System.Drawing.Size(719, 399);
+            this.Controls.Add(this.backFaceCullingCheckBox);
+            this.Controls.Add(this.frontFaceCullingCheckBox);
             this.Controls.Add(this.checkBox2);
             this.Controls.Add(this.checkBox1);
             this.Controls.Add(this.groupBox2);
@@ -198,5 +228,7 @@
         private System.Windows.Forms.CheckBox checkBox1;
         private System.Windows.Forms.CheckBox checkBox2;
         private System.Windows.Forms.ToolStripMenuItem closeWavefrontToolStripMenuItem;
+        private System.Windows.Forms.CheckBox frontFaceCullingCheckBox;
+        private System.Windows.Forms.CheckBox backFaceCullingCheckBox;
     }
 }

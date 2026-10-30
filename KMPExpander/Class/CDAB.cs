@@ -169,45 +169,11 @@ namespace KMPExpander.Class
                 public Single minZ;
                 public Single maxX;
                 public Single maxZ;
-                public bool insideRoute(SimpleKMPs.Routes.RouteGroup grp)
-                {
-                    List<Extensions.pointInPoly.Point> poly = new List<Extensions.pointInPoly.Point>();
-                    foreach(var en in grp.Entries)
-                    {
-                        poly.Add(new Extensions.pointInPoly.Point(en.PositionX, en.PositionZ));
-                    }
-                    Extensions.pointInPoly.Point[] arr = poly.ToArray();
-                    if (Extensions.pointInPoly.isInside(arr, 4, new Extensions.pointInPoly.Point(minX, minZ)) &&
-                        Extensions.pointInPoly.isInside(arr, 4, new Extensions.pointInPoly.Point(minX, maxZ)) &&
-                        Extensions.pointInPoly.isInside(arr, 4, new Extensions.pointInPoly.Point(maxX, maxZ)) &&
-                        Extensions.pointInPoly.isInside(arr, 4, new Extensions.pointInPoly.Point(maxX, minZ)))
-                        return true;
-                    return false;
-                }
                 public void Render()
                 {
                     if (!GetVisibility()) return;
 
                     VisualSettings Settings = (Application.OpenForms[0] as Form1).Settings;
-                    SimpleKMP kmp = (Application.OpenForms[0] as Form1).getKayEmPee();
-                    if (kmp != null)
-                    {
-                        if (kmp.currentCullingRoutes.Count != 0)
-                        {
-                            bool isIniside = false;
-                            foreach (var i in kmp.currentCullingRoutes)
-                            {
-                                if (!isIniside && insideRoute(kmp.Routes.Entries[i])) isIniside = true;
-                            }
-                            if (!isIniside) return;
-                        }
-                        else if ((Application.OpenForms[0] as Form1).lastSelectedGroup != null && (Application.OpenForms[0] as Form1).lastSelectedGroup.GetType() == typeof(SimpleKMPs.CheckPoints.CheckpointGroup))
-                        {
-                            return;
-                        }
-                    }
-                    
-                    //
                     Gl.glColor4f(Settings.DivColor.R / 255f, Settings.DivColor.G / 255f, Settings.DivColor.B / 255f, Settings.DivColor.A);
                     Gl.glLineWidth(Settings.LineWidth / 2);
                     Gl.glBegin(Gl.GL_LINES);
@@ -263,20 +229,91 @@ namespace KMPExpander.Class
             }
             Header.FileSize = newfilesize;
         }
+
+        // How the game culls the course model: it builds a quadtree of depth 3 over the XZ bounding box of all the div
+        // entries, and draws an entry while one of the 8x8 cells of the last level that its rectangle touches is
+        // visible (see CullingPreview). A clip object (0x1E) hides, while the current checkpoint has its clip ID, the
+        // cells that lie wholly inside the quad of its route.
+        public const int GridCells = CullingPreview.GridCells;
+
+        public bool GetGrid(out float minX, out float minZ, out float cellW, out float cellH)
+        {
+            minX = float.MaxValue; minZ = float.MaxValue;
+            float maxX = float.MinValue, maxZ = float.MinValue;
+            foreach (var s in Streams)
+            {
+                foreach (var e in s.Entries)
+                {
+                    if (minX > e.minX) minX = e.minX;
+                    if (minZ > e.minZ) minZ = e.minZ;
+                    if (maxX < e.maxX) maxX = e.maxX;
+                    if (maxZ < e.maxZ) maxZ = e.maxZ;
+                }
+            }
+            cellW = (maxX - minX) / GridCells;
+            cellH = (maxZ - minZ) / GridCells;
+            return minX <= maxX;
+        }
+
+        // The game's test: each edge of the quad (route points 0-1, 1-2, 2-3, 3-0) is a line, and the inside is the
+        // side of the first route point that is not on that edge. The quad should be convex.
+        public static bool RectInsideQuad(float minX, float minZ, float maxX, float maxZ, SimpleKMPs.Routes.RouteGroup grp)
+        {
+            float[] px = new float[4], pz = new float[4];
+            for (int i = 0; i < 4; i++)
+            {
+                px[i] = grp.Entries[i].PositionX;
+                pz[i] = grp.Entries[i].PositionZ;
+            }
+            float[] cx = { minX, maxX, minX, maxX };
+            float[] cz = { minZ, minZ, maxZ, maxZ };
+            for (int i = 0; i < 4; i++)
+            {
+                int j = (i + 1) % 4;
+                int k = 0;
+                while (k == i || k == j) k++;
+                float nx = pz[j] - pz[i], nz = px[i] - px[j];
+                if (nx * (px[k] - px[i]) + nz * (pz[k] - pz[i]) > 0)
+                {
+                    nx = -nx;
+                    nz = -nz;
+                }
+                for (int c = 0; c < 4; c++)
+                {
+                    if ((cx[c] - px[i]) * nx + (cz[c] - pz[i]) * nz > 0) return false;
+                }
+            }
+            return true;
+        }
+
         internal void Render(bool picking = false)
         {
-            if (!isVisible || (Application.OpenForms[0] as Form1).vph.mode != ViewPlaneHandler.PLANE_MODES.XZ) return;
+            if (!isVisible || (Application.OpenForms[0] as Form1).vph.mode != ViewPlaneHandler.PLANE_MODES.XZ || (Application.OpenForms[0] as Form1).vph.Is3D) return;
             Gl.glBindTexture(Gl.GL_TEXTURE_2D, 0);
             if (!picking)
             {
                 Gl.glDepthFunc(Gl.GL_ALWAYS);
                 Gl.glLoadIdentity();
             }
+            // With a checkpoint selected, only the entries its clip ID hides are drawn, over the cells it hides. With the
+            // kart simulator, only the entries the game would draw for that kart.
+            Form1 form = Application.OpenForms[0] as Form1;
+            CullingPreview culling = form.Culling;
+            bool simulating = culling != null && culling.Simulating;
+            if (culling == null || culling.HiddenCells == null)
+            {
+                if (form.getKayEmPee() != null && form.lastSelectedGroup != null && form.lastSelectedGroup.GetType() == typeof(SimpleKMPs.CheckPoints.CheckpointGroup)) return;
+                culling = null;
+            }
+            VisualSettings Settings = form.Settings;
+            if (!picking && form.Culling != null) form.Culling.RenderGrid(Settings.DivColor.R / 255f, Settings.DivColor.G / 255f, Settings.DivColor.B / 255f);
             for (int i = 0; i < Shape.NrStreams; i++) {
                 for (int j = 0; j < Streams[i].NrEntries; j++)
                 {
                     if (!Streams[i].GetVisibility()) continue;
-                    Streams[i].Entries[j].Render();
+                    var e = Streams[i].Entries[j];
+                    if (culling != null && culling.RectHidden(e.minX, e.minZ, e.maxX, e.maxZ) != !simulating) continue;
+                    e.Render();
                 }
             }
         }
@@ -359,6 +396,12 @@ namespace KMPExpander.Class
             }
             return new STRM.STRMEntry(minX, minZ, maxX, maxZ);
         }
+        private static int gridIndex(float v, float min, float cellSize)
+        {
+            if (cellSize <= 0) return 0;
+            int i = (int)Math.Floor((v - min) / cellSize);
+            return Math.Max(0, Math.Min(GridCells - 1, i));
+        }
         public static CDAB createFromCmdl(string Filename, string saveFilename)
         {
             CMDL cmdl = null;
@@ -370,43 +413,39 @@ namespace KMPExpander.Class
                 MessageBox.Show(e.Message);
                 return null;
             }
+            // Like the retail div files: an 8x8 grid over the XZ bounding box of the whole model, the same grid the game
+            // culls with (GridCells), and one entry per mesh and cell. A triangle goes to the cell that holds the centre
+            // of its XZ bounding box; the entry is the bounding box of its triangles.
+            float minX = float.MaxValue, minZ = float.MaxValue, maxX = float.MinValue, maxZ = float.MinValue;
+            foreach (var shape in cmdl.shapes)
+            {
+                foreach (var tri in shape.indstrm[0].triangles)
+                {
+                    if (minX > tri.getMinX()) minX = tri.getMinX();
+                    if (minZ > tri.getMinZ()) minZ = tri.getMinZ();
+                    if (maxX < tri.getMaxX()) maxX = tri.getMaxX();
+                    if (maxZ < tri.getMaxZ()) maxZ = tri.getMaxZ();
+                }
+            }
+            float cellW = (maxX - minX) / GridCells, cellH = (maxZ - minZ) / GridCells;
             CDAB ret = new CDAB();
             for (int i = 0; i < cmdl.shapes.Count; i++)
             {
-                cmdl.shapes[i].indstrm[0].triangles = cmdl.shapes[i].indstrm[0].triangles.OrderBy(tri => tri.getMinZ()).ToList();
                 STRM mat = new STRM();
-                List<CMDL.CMDLShape.IndexStream.Triangle> zstrip = new List<CMDL.CMDLShape.IndexStream.Triangle>();
-                CMDL.CMDLShape.IndexStream.Triangle zseltri = cmdl.shapes[i].indstrm[0].triangles[0];
-                int zindex = 0;
-                while (true)
+                List<CMDL.CMDLShape.IndexStream.Triangle>[] cells = new List<CMDL.CMDLShape.IndexStream.Triangle>[GridCells * GridCells];
+                foreach (var tri in cmdl.shapes[i].indstrm[0].triangles)
                 {
-                    while (cmdl.shapes[i].indstrm[0].triangles[zindex].getMinZ() - zseltri.getMinZ() <= 1000)
-                    {
-                        zstrip.Add(cmdl.shapes[i].indstrm[0].triangles[zindex]);
-                        zindex++;
-                        if (zindex == cmdl.shapes[i].indstrm[0].triangles.Count) break;
-                    }
-                    zstrip = zstrip.OrderBy(face => face.getMinX()).ToList();
-                    List<CMDL.CMDLShape.IndexStream.Triangle> xstrip = new List<CMDL.CMDLShape.IndexStream.Triangle>();
-                    CMDL.CMDLShape.IndexStream.Triangle xseltri = zstrip[0];
-                    int xindex = 0;
-                    while (true)
-                    {
-                        while (zstrip[xindex].getMinX() - xseltri.getMinX() <= 1000)
-                        {
-                            xstrip.Add(zstrip[xindex]);
-                            xindex++;
-                            if (xindex == zstrip.Count) break;
-                        }
-                        mat.addSTRMEntry(calculateSTRMEntry(xstrip));
-                        cmdl.shapes[i].addNewIndexStream(xstrip);
-                        if (xindex == zstrip.Count) break;
-                        xseltri = zstrip[xindex];
-                        xstrip.Clear();
-                    }
-                    if (zindex == cmdl.shapes[i].indstrm[0].triangles.Count) break;
-                    zseltri = cmdl.shapes[i].indstrm[0].triangles[zindex];
-                    zstrip.Clear();
+                    int ix = gridIndex((tri.getMinX() + tri.getMaxX()) / 2, minX, cellW);
+                    int iz = gridIndex((tri.getMinZ() + tri.getMaxZ()) / 2, minZ, cellH);
+                    int c = iz * GridCells + ix;
+                    if (cells[c] == null) cells[c] = new List<CMDL.CMDLShape.IndexStream.Triangle>();
+                    cells[c].Add(tri);
+                }
+                foreach (var cell in cells)
+                {
+                    if (cell == null) continue;
+                    mat.addSTRMEntry(calculateSTRMEntry(cell));
+                    cmdl.shapes[i].addNewIndexStream(cell);
                 }
                 int vtxcnt = cmdl.shapes[i].Vertices.Count;
                 if (vtxcnt > UInt16.MaxValue) throw new Exception("Some material has more than 65535 vertices.");

@@ -29,9 +29,9 @@ namespace KMPExpander.Class.SimpleKMPs
 
         public class RouteGroup : SectionBase<RouteGroup.RouteEntry>
         {
-            [XmlAttribute, Category("Route")]
+            [XmlAttribute, Category("Route"), Description("Whether the route loops. Anything following it goes back to the first point after the last one.")]
             public bool Loop { get; set; }
-            [XmlAttribute, Category("Route")]
+            [XmlAttribute, Category("Route"), Description("Whether the route is smoothed. Recommended for the course intro cameras.")]
             public bool Smooth { get; set; }
             //[XmlElement("Entry")]
             //public List<RouteEntry> Entries = new List<RouteEntry>();
@@ -40,7 +40,7 @@ namespace KMPExpander.Class.SimpleKMPs
                 //public Vector3 Position { get; set; }
                 [XmlIgnore, Browsable(false)]
                 public Vector3 Pos { get; set; } = new Vector3(0, 0, 0);
-                [XmlAttribute]
+                [XmlAttribute, Description("Position of the route point.")]
                 public Single PositionX
                 {
                     get
@@ -52,7 +52,7 @@ namespace KMPExpander.Class.SimpleKMPs
                         Pos = new Vector3(value, Pos.Y, Pos.Z);
                     }
                 }
-                [XmlAttribute]
+                [XmlAttribute, Description("Position of the route point.")]
                 public Single PositionY
                 {
                     get
@@ -64,7 +64,7 @@ namespace KMPExpander.Class.SimpleKMPs
                         Pos = new Vector3(Pos.X, value, Pos.Z);
                     }
                 }
-                [XmlAttribute]
+                [XmlAttribute, Description("Position of the route point.")]
                 public Single PositionZ
                 {
                     get
@@ -76,9 +76,9 @@ namespace KMPExpander.Class.SimpleKMPs
                         Pos = new Vector3(Pos.X, Pos.Y, value);
                     }
                 }
-                [XmlAttribute]
+                [XmlAttribute, Description("Speed along the route, blended between points. Some objects use one of their own settings instead. Set the last point to 0 if whatever follows the route should never reach its end.")]
                 public UInt16 Speed { get; set; }
-                [XmlAttribute, TypeConverter(typeof(HexTypeConverter))]
+                [XmlAttribute, TypeConverter(typeof(HexTypeConverter)), Description("Used by some objects, with a meaning that depends on the object. 0 by default.")]
                 public UInt16 Setting2 { get; set; }
 
                 public RouteEntry() { }
@@ -110,11 +110,8 @@ namespace KMPExpander.Class.SimpleKMPs
                     VisualSettings Settings = (Application.OpenForms[0] as Form1).Settings;
                     Color pickingColor = SectionPicking.GetColor(Sections.Routes, group_id, entry_id);
 
-                    Gl.glPointSize(Settings.PointSize + 2f);
-                    Gl.glBegin(Gl.GL_POINTS);
                     Gl.glColor4f(pickingColor.R / 255f, pickingColor.G / 255f, pickingColor.B / 255f, 1f);
-                    vph.draw2DVertice(Pos);
-                    Gl.glEnd();
+                    vph.drawPoint(Pos, Settings.PointSize + 2f);
                 }
 
 
@@ -125,19 +122,13 @@ namespace KMPExpander.Class.SimpleKMPs
                     VisualSettings Settings = (Application.OpenForms[0] as Form1).Settings;
                     List<object> SelectedDots = (Application.OpenForms[0] as Form1).SelectedDots;
 
-                    Gl.glPointSize(Settings.PointSize + 2f);
-                    Gl.glBegin(Gl.GL_POINTS);
                     if (SelectedDots.Contains(this)) Gl.glColor4f(Settings.HighlightPointborderColor.R / 255f, Settings.HighlightPointborderColor.G / 255f, Settings.HighlightPointborderColor.B / 255f, Settings.HighlightPointborderColor.A);
                     else Gl.glColor4f(Settings.PointborderColor.R / 255f, Settings.PointborderColor.G / 255f, Settings.PointborderColor.B / 255f, Settings.PointborderColor.A);
-                    vph.draw2DVertice(Pos);
-                    Gl.glEnd();
+                    vph.drawPoint(Pos, Settings.PointSize + 2f, true);
 
-                    Gl.glPointSize(Settings.PointSize);
-                    Gl.glBegin(Gl.GL_POINTS);
                     if (SelectedDots.Contains(this)) Gl.glColor4f(Settings.HighlightPointColor.R / 255f, Settings.HighlightPointColor.G / 255f, Settings.HighlightPointColor.B / 255f, Settings.HighlightPointColor.A);
                     else Gl.glColor4f(Settings.RouteColor.R / 255f, Settings.RouteColor.G / 255f, Settings.RouteColor.B / 255f, Settings.RouteColor.A);
-                    vph.draw2DVertice(Pos);
-                    Gl.glEnd();
+                    vph.drawPoint(Pos, Settings.PointSize);
                 }
 
                 public void RenderLine()
@@ -200,10 +191,7 @@ namespace KMPExpander.Class.SimpleKMPs
                 {
                     Gl.glColor4f(Settings.RouteLinkColor.R / 255f, Settings.RouteLinkColor.G / 255f, Settings.RouteLinkColor.B / 255f, Settings.RouteLinkColor.A / (255f * 4f));
                     Gl.glBegin(Gl.GL_TRIANGLE_FAN);
-                    Gl.glVertex2d(Entries[0].PositionX, Entries[0].PositionZ);
-                    Gl.glVertex2d(Entries[1].PositionX, Entries[1].PositionZ);
-                    Gl.glVertex2d(Entries[2].PositionX, Entries[2].PositionZ);
-                    Gl.glVertex2d(Entries[3].PositionX, Entries[3].PositionZ);
+                    for (int i = 0; i < 4; i++) vph.drawXZ(Entries[i].PositionX, Entries[i].PositionZ, Entries[i].PositionY);
                     Gl.glEnd();
                 }
                 foreach (var entry in Entries)

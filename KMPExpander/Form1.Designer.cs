@@ -87,6 +87,8 @@
             this.loadGlobalMapToolStripMenuItem = new System.Windows.Forms.ToolStripMenuItem();
             this.unloadGlobalMapToolStripMenuItem = new System.Windows.Forms.ToolStripMenuItem();
             this.toolStripSeparator9 = new System.Windows.Forms.ToolStripSeparator();
+            this.setMapVisibleStripMenuItem = new System.Windows.Forms.ToolStripMenuItem();
+            this.setMapTransparentStripMenuItem = new System.Windows.Forms.ToolStripMenuItem();
             this.setMapHiddenStripMenuItem = new System.Windows.Forms.ToolStripMenuItem();
             this.importOBJToolStripMenuItem = new System.Windows.Forms.ToolStripMenuItem();
             this.errorCheckerToolStripMenuItem = new System.Windows.Forms.ToolStripMenuItem();
@@ -102,6 +104,7 @@
             this.exportCSVToolStripMenuItem1 = new System.Windows.Forms.ToolStripMenuItem();
             this.splitContainer1 = new System.Windows.Forms.SplitContainer();
             this.splitContainer2 = new System.Windows.Forms.SplitContainer();
+            this.treeView1 = new KMPExpander.Class.TreeViewFix();
             this.propertyGrid1 = new System.Windows.Forms.PropertyGrid();
             this.splitContainer3 = new System.Windows.Forms.SplitContainer();
             this.vScrollBar1 = new System.Windows.Forms.VScrollBar();
@@ -116,10 +119,11 @@
             this.toolStripSeparator8 = new System.Windows.Forms.ToolStripSeparator();
             this.toolStripButtonPencil = new System.Windows.Forms.ToolStripButton();
             this.toolStripSeparator10 = new System.Windows.Forms.ToolStripSeparator();
-            this.toolStripButton1 = new System.Windows.Forms.ToolStripButton();
-            this.toolStripSeparator11 = new System.Windows.Forms.ToolStripSeparator();
             this.viewPlaneComboBox = new System.Windows.Forms.ToolStripComboBox();
             this.toolStripLabel1 = new System.Windows.Forms.ToolStripLabel();
+            this.toolStripSeparator12 = new System.Windows.Forms.ToolStripSeparator();
+            this.toolStripSeparator11 = new System.Windows.Forms.ToolStripSeparator();
+            this.toolStripButton1 = new System.Windows.Forms.ToolStripButton();
             this.dataGridView1 = new System.Windows.Forms.DataGridView();
             this.openFileDialogKMP = new System.Windows.Forms.OpenFileDialog();
             this.saveFileDialogKMP = new System.Windows.Forms.SaveFileDialog();
@@ -141,9 +145,6 @@
             this.saveFileDialogDiv = new System.Windows.Forms.SaveFileDialog();
             this.saveFileDialogCmdl = new System.Windows.Forms.SaveFileDialog();
             this.colorDialog1 = new System.Windows.Forms.ColorDialog();
-            this.setMapVisibleStripMenuItem = new System.Windows.Forms.ToolStripMenuItem();
-            this.setMapTransparentStripMenuItem = new System.Windows.Forms.ToolStripMenuItem();
-            this.treeView1 = new KMPExpander.Class.TreeViewFix();
             this.statusStrip1.SuspendLayout();
             this.menuStrip1.SuspendLayout();
             this.contextMenuStripSection.SuspendLayout();
@@ -336,7 +337,7 @@
             // 
             this.exportXMLToolStripMenuItem.Enabled = false;
             this.exportXMLToolStripMenuItem.Name = "exportXMLToolStripMenuItem";
-            this.exportXMLToolStripMenuItem.Size = new System.Drawing.Size(135, 22);
+            this.exportXMLToolStripMenuItem.Size = new System.Drawing.Size(134, 22);
             this.exportXMLToolStripMenuItem.Text = "Export XML";
             this.exportXMLToolStripMenuItem.Click += new System.EventHandler(this.exportXMLToolStripMenuItem_Click);
             // 
@@ -355,7 +356,7 @@
             this.cameraSettingsToolStripMenuItem});
             this.exportCSVToolStripMenuItem.Enabled = false;
             this.exportCSVToolStripMenuItem.Name = "exportCSVToolStripMenuItem";
-            this.exportCSVToolStripMenuItem.Size = new System.Drawing.Size(135, 22);
+            this.exportCSVToolStripMenuItem.Size = new System.Drawing.Size(134, 22);
             this.exportCSVToolStripMenuItem.Text = "Export CSV";
             // 
             // startPositionToolStripMenuItem
@@ -573,7 +574,7 @@
             this.toolStripSeparator7,
             this.optionsToolStripMenuItem});
             this.toolStripMenuItem5.Name = "toolStripMenuItem5";
-            this.toolStripMenuItem5.Size = new System.Drawing.Size(46, 20);
+            this.toolStripMenuItem5.Size = new System.Drawing.Size(47, 20);
             this.toolStripMenuItem5.Text = "Tools";
             // 
             // importImageToolStripMenuItem
@@ -596,7 +597,7 @@
             // loadToolStripMenuItem
             // 
             this.loadToolStripMenuItem.Name = "loadToolStripMenuItem";
-            this.loadToolStripMenuItem.Size = new System.Drawing.Size(176, 22);
+            this.loadToolStripMenuItem.Size = new System.Drawing.Size(191, 22);
             this.loadToolStripMenuItem.Text = "Load Local Map";
             this.loadToolStripMenuItem.Click += new System.EventHandler(this.loadToolStripMenuItem_Click);
             // 
@@ -604,14 +605,14 @@
             // 
             this.unloadToolStripMenuItem.Enabled = false;
             this.unloadToolStripMenuItem.Name = "unloadToolStripMenuItem";
-            this.unloadToolStripMenuItem.Size = new System.Drawing.Size(176, 22);
+            this.unloadToolStripMenuItem.Size = new System.Drawing.Size(191, 22);
             this.unloadToolStripMenuItem.Text = "Unload Local Map";
             this.unloadToolStripMenuItem.Click += new System.EventHandler(this.unloadToolStripMenuItem_Click);
             // 
             // loadGlobalMapToolStripMenuItem
             // 
             this.loadGlobalMapToolStripMenuItem.Name = "loadGlobalMapToolStripMenuItem";
-            this.loadGlobalMapToolStripMenuItem.Size = new System.Drawing.Size(176, 22);
+            this.loadGlobalMapToolStripMenuItem.Size = new System.Drawing.Size(191, 22);
             this.loadGlobalMapToolStripMenuItem.Text = "Load Global Map";
             this.loadGlobalMapToolStripMenuItem.Click += new System.EventHandler(this.loadGlobalMapToolStripMenuItem_Click);
             // 
@@ -619,19 +620,36 @@
             // 
             this.unloadGlobalMapToolStripMenuItem.Enabled = false;
             this.unloadGlobalMapToolStripMenuItem.Name = "unloadGlobalMapToolStripMenuItem";
-            this.unloadGlobalMapToolStripMenuItem.Size = new System.Drawing.Size(176, 22);
+            this.unloadGlobalMapToolStripMenuItem.Size = new System.Drawing.Size(191, 22);
             this.unloadGlobalMapToolStripMenuItem.Text = "Unload Global Map";
             this.unloadGlobalMapToolStripMenuItem.Click += new System.EventHandler(this.unloadGlobalMapToolStripMenuItem_Click);
             // 
             // toolStripSeparator9
             // 
             this.toolStripSeparator9.Name = "toolStripSeparator9";
-            this.toolStripSeparator9.Size = new System.Drawing.Size(173, 6);
+            this.toolStripSeparator9.Size = new System.Drawing.Size(188, 6);
+            // 
+            // setMapVisibleStripMenuItem
+            // 
+            this.setMapVisibleStripMenuItem.Name = "setMapVisibleStripMenuItem";
+            this.setMapVisibleStripMenuItem.ShortcutKeys = ((System.Windows.Forms.Keys)(((System.Windows.Forms.Keys.Control | System.Windows.Forms.Keys.Shift) 
+            | System.Windows.Forms.Keys.I)));
+            this.setMapVisibleStripMenuItem.Size = new System.Drawing.Size(191, 22);
+            this.setMapVisibleStripMenuItem.Text = "Visible";
+            this.setMapVisibleStripMenuItem.Click += new System.EventHandler(this.setMapVisibleStripMenuItem_Click);
+            // 
+            // setMapTransparentStripMenuItem
+            // 
+            this.setMapTransparentStripMenuItem.Name = "setMapTransparentStripMenuItem";
+            this.setMapTransparentStripMenuItem.ShortcutKeys = ((System.Windows.Forms.Keys)((System.Windows.Forms.Keys.Control | System.Windows.Forms.Keys.I)));
+            this.setMapTransparentStripMenuItem.Size = new System.Drawing.Size(191, 22);
+            this.setMapTransparentStripMenuItem.Text = "Transparent";
+            this.setMapTransparentStripMenuItem.Click += new System.EventHandler(this.setMapTransparentStripMenuItem_Click);
             // 
             // setMapHiddenStripMenuItem
             // 
             this.setMapHiddenStripMenuItem.Name = "setMapHiddenStripMenuItem";
-            this.setMapHiddenStripMenuItem.Size = new System.Drawing.Size(224, 26);
+            this.setMapHiddenStripMenuItem.Size = new System.Drawing.Size(191, 22);
             this.setMapHiddenStripMenuItem.Text = "Hidden";
             this.setMapHiddenStripMenuItem.Click += new System.EventHandler(this.setMapHiddenStripMenuItem_Click);
             // 
@@ -653,7 +671,7 @@
             // transformKMPToolStripMenuItem
             // 
             this.transformKMPToolStripMenuItem.Name = "transformKMPToolStripMenuItem";
-            this.transformKMPToolStripMenuItem.Size = new System.Drawing.Size(235, 26);
+            this.transformKMPToolStripMenuItem.Size = new System.Drawing.Size(189, 22);
             this.transformKMPToolStripMenuItem.Text = "Transform KMP";
             this.transformKMPToolStripMenuItem.Click += new System.EventHandler(this.transformKMPToolStripMenuItem_Click);
             // 
@@ -759,6 +777,19 @@
             this.splitContainer2.SplitterDistance = 275;
             this.splitContainer2.TabIndex = 0;
             // 
+            // treeView1
+            // 
+            this.treeView1.Dock = System.Windows.Forms.DockStyle.Fill;
+            this.treeView1.Location = new System.Drawing.Point(0, 0);
+            this.treeView1.Name = "treeView1";
+            this.treeView1.Size = new System.Drawing.Size(227, 275);
+            this.treeView1.TabIndex = 5;
+            this.treeView1.BeforeCheck += new System.Windows.Forms.TreeViewCancelEventHandler(this.treeView1_BeforeCheck);
+            this.treeView1.AfterCheck += new System.Windows.Forms.TreeViewEventHandler(this.treeView1_AfterCheck);
+            this.treeView1.AfterSelect += new System.Windows.Forms.TreeViewEventHandler(this.treeView1_AfterSelect);
+            this.treeView1.NodeMouseClick += new System.Windows.Forms.TreeNodeMouseClickEventHandler(this.treeView1_NodeMouseClick);
+            this.treeView1.MouseUp += new System.Windows.Forms.MouseEventHandler(this.treeView1_MouseUp);
+            // 
             // propertyGrid1
             // 
             this.propertyGrid1.Dock = System.Windows.Forms.DockStyle.Fill;
@@ -849,10 +880,11 @@
             this.toolStripSeparator8,
             this.toolStripButtonPencil,
             this.toolStripSeparator10,
-            this.toolStripButton1,
-            this.toolStripSeparator11,
             this.viewPlaneComboBox,
-            this.toolStripLabel1});
+            this.toolStripLabel1,
+            this.toolStripSeparator12,
+            this.toolStripSeparator11,
+            this.toolStripButton1});
             this.toolStrip1.Location = new System.Drawing.Point(0, 0);
             this.toolStrip1.Name = "toolStrip1";
             this.toolStrip1.Size = new System.Drawing.Size(870, 25);
@@ -928,31 +960,16 @@
             this.toolStripSeparator10.Name = "toolStripSeparator10";
             this.toolStripSeparator10.Size = new System.Drawing.Size(6, 25);
             // 
-            // toolStripButton1
-            // 
-            this.toolStripButton1.Alignment = System.Windows.Forms.ToolStripItemAlignment.Right;
-            this.toolStripButton1.Image = global::KMPExpander.Properties.Resources.came_1;
-            this.toolStripButton1.ImageTransparentColor = System.Drawing.Color.Magenta;
-            this.toolStripButton1.Name = "toolStripButton1";
-            this.toolStripButton1.Size = new System.Drawing.Size(121, 22);
-            this.toolStripButton1.Text = "Play Intro Camera";
-            this.toolStripButton1.Click += new System.EventHandler(this.toolStripButton1_Click);
-            // 
-            // toolStripSeparator11
-            // 
-            this.toolStripSeparator11.Alignment = System.Windows.Forms.ToolStripItemAlignment.Right;
-            this.toolStripSeparator11.Name = "toolStripSeparator11";
-            this.toolStripSeparator11.Size = new System.Drawing.Size(6, 25);
-            // 
             // viewPlaneComboBox
             // 
             this.viewPlaneComboBox.Alignment = System.Windows.Forms.ToolStripItemAlignment.Right;
             this.viewPlaneComboBox.DropDownStyle = System.Windows.Forms.ComboBoxStyle.DropDownList;
             this.viewPlaneComboBox.DropDownWidth = 75;
             this.viewPlaneComboBox.Items.AddRange(new object[] {
-            "XZ",
-            "XY",
-            "ZY"});
+            "2D - XZ",
+            "2D - XY",
+            "2D - ZY",
+            "3D"});
             this.viewPlaneComboBox.Name = "viewPlaneComboBox";
             this.viewPlaneComboBox.RightToLeft = System.Windows.Forms.RightToLeft.No;
             this.viewPlaneComboBox.Size = new System.Drawing.Size(75, 25);
@@ -962,8 +979,30 @@
             // 
             this.toolStripLabel1.Alignment = System.Windows.Forms.ToolStripItemAlignment.Right;
             this.toolStripLabel1.Name = "toolStripLabel1";
-            this.toolStripLabel1.Size = new System.Drawing.Size(67, 22);
-            this.toolStripLabel1.Text = "View Plane:";
+            this.toolStripLabel1.Size = new System.Drawing.Size(41, 22);
+            this.toolStripLabel1.Text = "Mode:";
+            // 
+            // toolStripSeparator12
+            // 
+            this.toolStripSeparator12.Alignment = System.Windows.Forms.ToolStripItemAlignment.Right;
+            this.toolStripSeparator12.Name = "toolStripSeparator12";
+            this.toolStripSeparator12.Size = new System.Drawing.Size(6, 25);
+            // 
+            // toolStripSeparator11
+            // 
+            this.toolStripSeparator11.Alignment = System.Windows.Forms.ToolStripItemAlignment.Right;
+            this.toolStripSeparator11.Name = "toolStripSeparator11";
+            this.toolStripSeparator11.Size = new System.Drawing.Size(6, 25);
+            // 
+            // toolStripButton1
+            // 
+            this.toolStripButton1.Alignment = System.Windows.Forms.ToolStripItemAlignment.Right;
+            this.toolStripButton1.Image = global::KMPExpander.Properties.Resources.came_1;
+            this.toolStripButton1.ImageTransparentColor = System.Drawing.Color.Magenta;
+            this.toolStripButton1.Name = "toolStripButton1";
+            this.toolStripButton1.Size = new System.Drawing.Size(121, 22);
+            this.toolStripButton1.Text = "Play Intro Camera";
+            this.toolStripButton1.Click += new System.EventHandler(this.toolStripButton1_Click);
             // 
             // dataGridView1
             // 
@@ -1106,37 +1145,6 @@
             // 
             this.colorDialog1.AnyColor = true;
             this.colorDialog1.FullOpen = true;
-            // 
-            // setMapVisibleStripMenuItem
-            // 
-            this.setMapVisibleStripMenuItem.Name = "setMapVisibleStripMenuItem";
-            this.setMapVisibleStripMenuItem.ShortcutKeys = ((System.Windows.Forms.Keys)(((System.Windows.Forms.Keys.Control | System.Windows.Forms.Keys.Shift) 
-            | System.Windows.Forms.Keys.I)));
-            this.setMapVisibleStripMenuItem.Size = new System.Drawing.Size(224, 26);
-            this.setMapVisibleStripMenuItem.Text = "Visible";
-            this.setMapVisibleStripMenuItem.Click += new System.EventHandler(this.setMapVisibleStripMenuItem_Click);
-            // 
-            // setMapTransparentStripMenuItem
-            // 
-            this.setMapTransparentStripMenuItem.Name = "setMapTransparentStripMenuItem";
-            this.setMapTransparentStripMenuItem.ShortcutKeys = ((System.Windows.Forms.Keys)((System.Windows.Forms.Keys.Control | System.Windows.Forms.Keys.I)));
-            this.setMapTransparentStripMenuItem.Size = new System.Drawing.Size(224, 26);
-            this.setMapTransparentStripMenuItem.Text = "Transparent";
-            this.setMapTransparentStripMenuItem.Click += new System.EventHandler(this.setMapTransparentStripMenuItem_Click);
-            // 
-            // treeView1
-            // 
-            this.treeView1.Dock = System.Windows.Forms.DockStyle.Fill;
-            this.treeView1.Location = new System.Drawing.Point(0, 0);
-            this.treeView1.Margin = new System.Windows.Forms.Padding(4);
-            this.treeView1.Name = "treeView1";
-            this.treeView1.Size = new System.Drawing.Size(302, 339);
-            this.treeView1.TabIndex = 5;
-            this.treeView1.BeforeCheck += new System.Windows.Forms.TreeViewCancelEventHandler(this.treeView1_BeforeCheck);
-            this.treeView1.AfterCheck += new System.Windows.Forms.TreeViewEventHandler(this.treeView1_AfterCheck);
-            this.treeView1.AfterSelect += new System.Windows.Forms.TreeViewEventHandler(this.treeView1_AfterSelect);
-            this.treeView1.NodeMouseClick += new System.Windows.Forms.TreeNodeMouseClickEventHandler(this.treeView1_NodeMouseClick);
-            this.treeView1.MouseUp += new System.Windows.Forms.MouseEventHandler(this.treeView1_MouseUp);
             // 
             // Form1
             // 
@@ -1296,6 +1304,7 @@
         private System.Windows.Forms.ToolStripMenuItem transformKMPToolStripMenuItem;
         private System.Windows.Forms.ToolStripMenuItem setMapVisibleStripMenuItem;
         private System.Windows.Forms.ToolStripMenuItem setMapTransparentStripMenuItem;
+        private System.Windows.Forms.ToolStripSeparator toolStripSeparator12;
     }
 }
 

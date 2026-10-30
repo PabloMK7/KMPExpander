@@ -382,6 +382,22 @@ namespace KMPExpander.Class
             set { div_color = ColorTranslator.FromHtml(value); }
         }
 
+        private float point_radius_3d = 25f;
+        [Category("3D View"), Description("Size of the point spheres in the 3D view, in world units. They never get smaller than the point size on screen.")]
+        public float PointRadius3D
+        {
+            get { return point_radius_3d; }
+            set { point_radius_3d = value; }
+        }
+
+        private string object_models_folder = "";
+        [Category("Object Models"), Description("Folder with extracted object models. Each model is an OBJ file named after the object, or any OBJ inside a folder with that name. The names are the internal ones from ObjFlow.xml.")]
+        public string ObjectModelsFolder
+        {
+            get { return object_models_folder; }
+            set { object_models_folder = value ?? ""; }
+        }
+
         public VisualSettings() { }
 
         public void ToXML()

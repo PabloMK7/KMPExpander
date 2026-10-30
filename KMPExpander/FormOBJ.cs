@@ -31,6 +31,12 @@ namespace KMPExpander
                     comboBox1.DataSource = form1.OBJModel.Materials;
                     checkBox1.Enabled = true;
                     checkBox2.Enabled = true;
+                    backFaceCullingCheckBox.Enabled = true;
+                    frontFaceCullingCheckBox.Enabled = true;
+                    checkBox1.Checked = form1.OBJModel.Visible;
+                    checkBox2.Checked = form1.OBJModel.Wireframe;
+                    backFaceCullingCheckBox.Checked = form1.OBJModel.CullBackFace;
+                    frontFaceCullingCheckBox.Checked = form1.OBJModel.CullFrontFace;
                 }
                 catch (Exception ex)
                 {
@@ -73,6 +79,18 @@ namespace KMPExpander
         private void checkBox2_CheckedChanged(object sender, EventArgs e)
         {
             form1.OBJModel.Wireframe = (sender as CheckBox).Checked;
+            form1.Render();
+        }
+
+        private void backFaceCullingCheckBox_CheckedChanged(object sender, EventArgs e)
+        {
+            form1.OBJModel.CullBackFace = (sender as CheckBox).Checked;
+            form1.Render();
+        }
+
+        private void frontFaceCullingCheckBox_CheckedChanged(object sender, EventArgs e)
+        {
+            form1.OBJModel.CullFrontFace = (sender as CheckBox).Checked;
             form1.Render();
         }
     }

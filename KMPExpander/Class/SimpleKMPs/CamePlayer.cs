@@ -298,17 +298,11 @@ namespace KMPExpander.Class.SimpleKMPs
             public void RenderCame(VisualSettings Settings, Vector3 pos)
             {
                 ViewPlaneHandler vph = (Application.OpenForms[0] as Form1).vph;
-                Gl.glPointSize(Settings.PointSize * (2f / 3f) + 2f);
-                Gl.glBegin(Gl.GL_POINTS);
                 Gl.glColor4f(Settings.PointborderColor.R / 255f, Settings.PointborderColor.G / 255f, Settings.PointborderColor.B / 255f, Settings.PointborderColor.A);
-                vph.draw2DVertice(pos);
-                Gl.glEnd();
+                vph.drawPoint(pos, Settings.PointSize * (2f / 3f) + 2f, true);
 
-                Gl.glPointSize(Settings.PointSize * (2f / 3f));
-                Gl.glBegin(Gl.GL_POINTS);
                 Gl.glColor4f(Settings.CameColor.R / 255f, Settings.CameColor.G / 255f, Settings.CameColor.B / 255f, Settings.CameColor.A);
-                vph.draw2DVertice(pos);
-                Gl.glEnd();
+                vph.drawPoint(pos, Settings.PointSize * (2f / 3f));
             }
             public void RenderVP(VisualSettings Settings, Vector3 pos, Vector3 lookatpos)
             {
@@ -386,10 +380,10 @@ namespace KMPExpander.Class.SimpleKMPs
                 if (!Parent.opengl_initialized) return;
                 if (Parent.mode_3d)
                 {
-                    Parent.Base3DRender();
-                    Gl.glPushMatrix();
+                    // The 3D view plays the intro through the camera itself.
+                    Parent.Base3DRender(false, pos, lookatpos, FOV);
                     if (Parent.OBJModel != null) Parent.OBJModel.Render();
-                    Gl.glPopMatrix();
+                    if (Parent.Collision != null) Parent.Collision.Render();
                 }
                 else
                 {

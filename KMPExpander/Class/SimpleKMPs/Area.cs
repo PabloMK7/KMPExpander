@@ -31,7 +31,7 @@ namespace KMPExpander.Class.SimpleKMPs
         {
             [XmlAttribute, Browsable(false)]
             public Byte ShapeMode { get; set; }
-            [XmlIgnore]
+            [XmlIgnore, Description("The shape of the area. 0 means a box and 1 means a cylinder.")]
             public string Shape
             {
                 get
@@ -53,7 +53,7 @@ namespace KMPExpander.Class.SimpleKMPs
             }
             [XmlAttribute, Browsable(false)]
             public Byte TypeID { get; set; }
-            [XmlIgnore]
+            [XmlIgnore, Description("What the area does. 0 tells camera to use inside it (see CAMEIndex). 1 shows particle effects. 3 makes moving road collision push karts along the route in RouteID. 11 plays a sound effect.")]
             public string Type
             {
                 get
@@ -77,14 +77,14 @@ namespace KMPExpander.Class.SimpleKMPs
                     TypeID = Byte.Parse(value);
                 }
             }
-            [XmlAttribute("CameraId")]
+            [XmlAttribute("CameraId"), Description("For camera areas (type 0), the camera used while the player is inside the area.")]
             public SByte CAMEIndex { get; set; }
-            [XmlAttribute]
+            [XmlAttribute, Description("When areas overlap, the one with the highest priority is used.")]
             public Byte Priority { get; set; }
             //public Vector3 Position { get; set; }
             [XmlIgnore, Browsable(false)]
             public Vector3 Pos { get; set; } = new Vector3(0, 0, 0);
-            [XmlAttribute]
+            [XmlAttribute, Description("Position of the centre of the area.")]
             public Single PositionX
             {
                 get
@@ -96,7 +96,7 @@ namespace KMPExpander.Class.SimpleKMPs
                     Pos = new Vector3(value, Pos.Y, Pos.Z);
                 }
             }
-            [XmlAttribute]
+            [XmlAttribute, Description("Height of the bottom of the area. A box reaches 1000 times ScaleY units up from here, a cylinder 500 times ScaleY.")]
             public Single PositionY
             {
                 get
@@ -108,7 +108,7 @@ namespace KMPExpander.Class.SimpleKMPs
                     Pos = new Vector3(Pos.X, value, Pos.Z);
                 }
             }
-            [XmlAttribute]
+            [XmlAttribute, Description("Position of the centre of the area.")]
             public Single PositionZ
             {
                 get
@@ -121,28 +121,28 @@ namespace KMPExpander.Class.SimpleKMPs
                 }
             }
             //public Vector3 Rotation { get; set; }
-            [XmlAttribute]
+            [XmlAttribute, Description("Rotation of the area.")]
             public Single RotationX { get; set; }
-            [XmlAttribute]
+            [XmlAttribute, Description("Rotation of the area.")]
             public Single RotationY { get; set; }
-            [XmlAttribute]
+            [XmlAttribute, Description("Rotation of the area.")]
             public Single RotationZ { get; set; }
-            [XmlAttribute]
+            [XmlAttribute, Description("Size of the area.")]
             public Single ScaleX { get; set; }
-            [XmlAttribute]
+            [XmlAttribute, Description("Height of the area. A box is 1000 times this many units tall, a cylinder 500 times. Areas only reach upward from their position.")]
             public Single ScaleY { get; set; }
-            [XmlAttribute]
+            [XmlAttribute, Description("Size of the area.")]
             public Single ScaleZ { get; set; }
             //public Vector3 Scale { get; set; }
-            [XmlAttribute, TypeConverter(typeof(HexTypeConverter))]
+            [XmlAttribute, TypeConverter(typeof(HexTypeConverter)), Description("Its meaning depends on the area type. Copy it from an original course that uses the same kind of area.")]
             public UInt16 Settings1 { get; set; }
-            [XmlAttribute, TypeConverter(typeof(HexTypeConverter))]
+            [XmlAttribute, TypeConverter(typeof(HexTypeConverter)), Description("Its meaning depends on the area type. Copy it from an original course that uses the same kind of area.")]
             public UInt16 Settings2 { get; set; }
-            [XmlAttribute]
+            [XmlAttribute, Description("The route linked to the area. How it is used depends on the area type.")]
             public sbyte RouteID { get; set; }
-            [XmlAttribute]
+            [XmlAttribute, Description("Not used in Mario Kart 7. Always -1.")]
             public sbyte EnemyID { get; set; }
-            [XmlAttribute, TypeConverter(typeof(HexTypeConverter))]
+            [XmlAttribute, TypeConverter(typeof(HexTypeConverter)), Description("Unknown, probably padding. Always 0.")]
             public UInt16 Unknown { get; set; }
 
             public AreaEntry(AREA.AREAEntry entry)
@@ -194,12 +194,10 @@ namespace KMPExpander.Class.SimpleKMPs
                 float sizeY = 500f * ScaleZ;
                 VisualSettings Settings = (Application.OpenForms[0] as Form1).Settings;
                 Color pickingColor = SectionPicking.GetColor(Sections.Area, 0, entry_id);
+                ViewPlaneHandler vph = (Application.OpenForms[0] as Form1).vph;
 
-                Gl.glPointSize(Settings.PointSize + 2f);
-                Gl.glBegin(Gl.GL_POINTS);
                 Gl.glColor4f(pickingColor.R / 255f, pickingColor.G / 255f, pickingColor.B / 255f, 1f);
-                Gl.glVertex2f(PositionX, PositionZ);
-                Gl.glEnd();
+                vph.drawPoint(new Vector3(PositionX, PositionY, PositionZ), Settings.PointSize + 2f);
             }
             public void DrawFilledCircle(float cx, float cy, float rx, float ry, int num_segments, Color Border, Color Fill)
             {
@@ -231,8 +229,67 @@ namespace KMPExpander.Class.SimpleKMPs
                 }
                 Gl.glEnd();
             }
+            // The area as a volume in the 3D view: a box (type 0) or an elliptic cylinder, as wide as in the map and
+            // 1000 * ScaleY high above its position (the height is an assumption, after the 500 * scale of the map).
+            private void RenderVolume(List<object> SelectedDots, VisualSettings Settings, int type)
+            {
+                float sizeX = 500f * ScaleX, sizeZ = 500f * ScaleZ, height = 1000f * ScaleY;
+                Color c = SelectedDots.Contains(this) ? Settings.HighlightPointColor : Settings.AreaColor;
+                Color edge = SelectedDots.Contains(this) ? Settings.HighlightPointborderColor : Settings.AreaColor;
+                int sides = type == 0 ? 4 : 24;
+                float[] x = new float[sides + 1], z = new float[sides + 1];
+                for (int i = 0; i <= sides; i++)
+                {
+                    double a = type == 0 ? Math.PI / 4 + i * Math.PI / 2 : i * 2 * Math.PI / sides;
+                    float f = type == 0 ? (float)Math.Sqrt(2) : 1f;
+                    x[i] = sizeX * f * (float)Math.Cos(a);
+                    z[i] = sizeZ * f * (float)Math.Sin(a);
+                }
+                Gl.glPushMatrix();
+                Gl.glLoadIdentity();
+                Gl.glMultMatrixf((Application.OpenForms[0] as Form1).vph.modelMatrix(Pos, new Vector3(RotationX, RotationY, RotationZ), new Vector3(1, 1, 1)));
+                // See-through sides, top and bottom, which do not hide what is drawn behind them later.
+                Gl.glDepthMask(Gl.GL_FALSE);
+                Gl.glColor4f(c.R / 255f, c.G / 255f, c.B / 255f, 0.15f);
+                Gl.glBegin(Gl.GL_QUAD_STRIP);
+                for (int i = 0; i <= sides; i++)
+                {
+                    Gl.glVertex3f(x[i], 0, z[i]);
+                    Gl.glVertex3f(x[i], height, z[i]);
+                }
+                Gl.glEnd();
+                foreach (float h in new float[] { 0, height })
+                {
+                    Gl.glBegin(Gl.GL_POLYGON);
+                    for (int i = 0; i < sides; i++) Gl.glVertex3f(x[i], h, z[i]);
+                    Gl.glEnd();
+                }
+                Gl.glDepthMask(Gl.GL_TRUE);
+                Gl.glColor4f(edge.R / 255f, edge.G / 255f, edge.B / 255f, 1f);
+                Gl.glLineWidth(Settings.LineWidth);
+                foreach (float h in new float[] { 0, height })
+                {
+                    Gl.glBegin(Gl.GL_LINE_LOOP);
+                    for (int i = 0; i < sides; i++) Gl.glVertex3f(x[i], h, z[i]);
+                    Gl.glEnd();
+                }
+                Gl.glBegin(Gl.GL_LINES);
+                for (int i = 0; i < sides; i += type == 0 ? 1 : sides / 4)
+                {
+                    Gl.glVertex3f(x[i], 0, z[i]);
+                    Gl.glVertex3f(x[i], height, z[i]);
+                }
+                Gl.glEnd();
+                Gl.glPopMatrix();
+            }
+
             public void RenderZone(List<object> SelectedDots, VisualSettings Settings, int type)
             {
+                if ((Application.OpenForms[0] as Form1).vph.Is3D)
+                {
+                    RenderVolume(SelectedDots, Settings, type);
+                    return;
+                }
                 float sizeX = 500f * ScaleX;
                 float sizeY = 500f * ScaleZ;
                 if (type == 0)
@@ -240,7 +297,7 @@ namespace KMPExpander.Class.SimpleKMPs
                     if (SelectedDots.Contains(this)) Gl.glColor4f(Settings.HighlightPointColor.R / 255f, Settings.HighlightPointColor.G / 255f, Settings.HighlightPointColor.B / 255f, 0.25f);
                     else Gl.glColor4f(Settings.AreaColor.R / 255f, Settings.AreaColor.G / 255f, Settings.AreaColor.B / 255f, 0.25f);
                     Gl.glPushMatrix();
-                    Gl.glTranslatef(PositionX, PositionZ, 0);
+                    (Application.OpenForms[0] as Form1).vph.translateXZ(PositionX, PositionZ, PositionY);
                     Gl.glRotatef(-RotationY, 0, 0, 1);
                     Gl.glBegin(Gl.GL_QUADS);
                     Gl.glVertex2f(-sizeX, -sizeY);
@@ -266,7 +323,7 @@ namespace KMPExpander.Class.SimpleKMPs
                 } else if (type == 1)
                 {
                     Gl.glPushMatrix();
-                    Gl.glTranslatef(PositionX, PositionZ, 0);
+                    (Application.OpenForms[0] as Form1).vph.translateXZ(PositionX, PositionZ, PositionY);
                     Gl.glRotatef(-RotationY, 0, 0, 1);
                     Gl.glLineWidth(Settings.LineWidth);
 
@@ -279,21 +336,16 @@ namespace KMPExpander.Class.SimpleKMPs
             public void RenderPoint()
             {
                 VisualSettings Settings = (Application.OpenForms[0] as Form1).Settings;
+                ViewPlaneHandler vph = (Application.OpenForms[0] as Form1).vph;
                 List<object> SelectedDots = (Application.OpenForms[0] as Form1).SelectedDots;
 
-                Gl.glPointSize(Settings.PointSize + 2f);
-                Gl.glBegin(Gl.GL_POINTS);
                 if (SelectedDots.Contains(this)) Gl.glColor4f(Settings.HighlightPointborderColor.R / 255f, Settings.HighlightPointborderColor.G / 255f, Settings.HighlightPointborderColor.B / 255f, Settings.HighlightPointborderColor.A);
                 else Gl.glColor4f(Settings.PointborderColor.R / 255f, Settings.PointborderColor.G / 255f, Settings.PointborderColor.B / 255f, Settings.PointborderColor.A);
-                Gl.glVertex2f(PositionX, PositionZ);
-                Gl.glEnd();
+                vph.drawPoint(new Vector3(PositionX, PositionY, PositionZ), Settings.PointSize + 2f, true);
 
-                Gl.glPointSize(Settings.PointSize);
-                Gl.glBegin(Gl.GL_POINTS);
                 if (SelectedDots.Contains(this)) Gl.glColor4f(Settings.HighlightPointColor.R / 255f, Settings.HighlightPointColor.G / 255f, Settings.HighlightPointColor.B / 255f, Settings.HighlightPointColor.A);
                 else Gl.glColor4f(Settings.AreaColor.R / 255f, Settings.AreaColor.G / 255f, Settings.AreaColor.B / 255f, Settings.AreaColor.A);
-                Gl.glVertex2f(PositionX, PositionZ);
-                Gl.glEnd();
+                vph.drawPoint(new Vector3(PositionX, PositionY, PositionZ), Settings.PointSize);
 
                 RenderZone(SelectedDots, Settings, ShapeMode);
             }

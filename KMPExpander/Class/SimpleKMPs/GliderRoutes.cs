@@ -72,7 +72,7 @@ namespace KMPExpander.Class.SimpleKMPs
                 }
             }
             //
-            [XmlAttribute, Category("Glider Group"), TypeConverter(typeof(HexTypeConverter))]
+            [XmlAttribute, Category("Glider Group"), TypeConverter(typeof(HexTypeConverter)), Description("Unknown, normally 0.")]
             public UInt32 Unknown2 { get; set; }
             /*[XmlElement("Entry")]
             public List<GliderEntry> Entries = new List<GliderEntry>();*/
@@ -82,7 +82,7 @@ namespace KMPExpander.Class.SimpleKMPs
                 //public Vector3 Position { get; set; }
                 [XmlIgnore, Browsable(false)]
                 public Vector3 Pos { get; set; } = new Vector3(0, 0, 0);
-                [XmlAttribute]
+                [XmlAttribute, Description("Position of the glider point.")]
                 public Single PositionX
                 {
                     get
@@ -94,7 +94,7 @@ namespace KMPExpander.Class.SimpleKMPs
                         Pos = new Vector3(value, Pos.Y, Pos.Z);
                     }
                 }
-                [XmlAttribute]
+                [XmlAttribute, Description("Height of the glider point. Keep glider points above Y = 0.")]
                 public Single PositionY
                 {
                     get
@@ -106,7 +106,7 @@ namespace KMPExpander.Class.SimpleKMPs
                         Pos = new Vector3(Pos.X, value, Pos.Z);
                     }
                 }
-                [XmlAttribute]
+                [XmlAttribute, Description("Position of the glider point.")]
                 public Single PositionZ
                 {
                     get
@@ -118,11 +118,11 @@ namespace KMPExpander.Class.SimpleKMPs
                         Pos = new Vector3(Pos.X, Pos.Y, value);
                     }
                 }
-                [XmlAttribute]
+                [XmlAttribute, Description("Size of the glider point. Karts can move anywhere inside this circle, which is a sphere in the game.")]
                 public Single Scale { get; set; }
-                [XmlAttribute, TypeConverter(typeof(HexTypeConverter))]
+                [XmlAttribute, TypeConverter(typeof(HexTypeConverter)), Description("Unknown, normally 0.")]
                 public UInt32 Unknown1 { get; set; }
-                [XmlAttribute, TypeConverter(typeof(HexTypeConverter))]
+                [XmlAttribute, TypeConverter(typeof(HexTypeConverter)), Description("Unknown, normally 0.")]
                 public UInt32 Unknown2 { get; set; }
 
                 public GliderEntry() {
@@ -189,11 +189,8 @@ namespace KMPExpander.Class.SimpleKMPs
                     Color pickingColor = SectionPicking.GetColor(Sections.GliderRoutes, group_id, entry_id);
                     float PointScale = 50f * Scale;
 
-                    Gl.glPointSize(Settings.PointSize + 2f);
-                    Gl.glBegin(Gl.GL_POINTS);
                     Gl.glColor4f(pickingColor.R / 255f, pickingColor.G / 255f, pickingColor.B / 255f, 1f);
-                    vph.draw2DVertice(Pos);
-                    Gl.glEnd();
+                    vph.drawPoint(Pos, Settings.PointSize + 2f);
                 }
 
 
@@ -206,23 +203,17 @@ namespace KMPExpander.Class.SimpleKMPs
                     List<object> SelectedDots = (Application.OpenForms[0] as Form1).SelectedDots;
                     float PointScale = 50f * Scale;
 
-                    Gl.glPointSize(Settings.PointSize + 2f);
-                    Gl.glBegin(Gl.GL_POINTS);
                     if (SelectedDots.Contains(this)) Gl.glColor4f(Settings.HighlightPointborderColor.R / 255f, Settings.HighlightPointborderColor.G / 255f, Settings.HighlightPointborderColor.B / 255f, Settings.HighlightPointborderColor.A);
                     else Gl.glColor4f(Settings.PointborderColor.R / 255f, Settings.PointborderColor.G / 255f, Settings.PointborderColor.B / 255f, Settings.PointborderColor.A);
-                    vph.draw2DVertice(Pos);
-                    Gl.glEnd();
+                    vph.drawPoint(Pos, Settings.PointSize + 2f, true);
 
-                    Gl.glPointSize(Settings.PointSize);
-                    Gl.glBegin(Gl.GL_POINTS);
                     if (SelectedDots.Contains(this)) Gl.glColor4f(Settings.HighlightPointColor.R / 255f, Settings.HighlightPointColor.G / 255f, Settings.HighlightPointColor.B / 255f, Settings.HighlightPointColor.A);
                     else Gl.glColor4f(Settings.GliderColor.R / 255f, Settings.GliderColor.G / 255f, Settings.GliderColor.B / 255f, Settings.GliderColor.A);
-                    vph.draw2DVertice(Pos);
-                    Gl.glEnd();
+                    vph.drawPoint(Pos, Settings.PointSize);
          
                     Gl.glLineWidth(Settings.LineWidth);
-                    if (SelectedDots.Contains(this)) DrawFilledCircle(vph.getViewCoord(Pos, 0), vph.getViewCoord(Pos, 1), PointScale, 24, Settings.HighlightPointborderColor, Settings.HighlightPointColor);
-                    else DrawFilledCircle(vph.getViewCoord(Pos, 0), vph.getViewCoord(Pos, 1), PointScale, 24, Settings.GliderColor, Settings.GliderColor);
+                    if (SelectedDots.Contains(this)) { if (!vph.drawVolume(Pos, PointScale, Settings.HighlightPointborderColor, Settings.HighlightPointColor)) DrawFilledCircle(vph.getViewCoord(Pos, 0), vph.getViewCoord(Pos, 1), PointScale, 24, Settings.HighlightPointborderColor, Settings.HighlightPointColor); }
+                    else if (!vph.drawVolume(Pos, PointScale, Settings.GliderColor, Settings.GliderColor)) DrawFilledCircle(vph.getViewCoord(Pos, 0), vph.getViewCoord(Pos, 1), PointScale, 24, Settings.GliderColor, Settings.GliderColor);
                 }
 
                 public void RenderLine()

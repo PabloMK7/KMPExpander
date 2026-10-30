@@ -31,6 +31,8 @@ namespace KMPExpander.Class
         public RespawnPoints RespawnPoints;
         public StageInformation StageInformation;
         public List<int> currentCullingRoutes;
+        [XmlIgnore]
+        public KartSimulator KartSimulator = new KartSimulator();   // not part of the KMP
 
         public SimpleKMP()
         {
@@ -156,6 +158,9 @@ namespace KMPExpander.Class
             tv.Nodes.Add(StageInformation.GetTreeNode());
             tv.Nodes[i].Tag = StageInformation;
             tv.Nodes[i].ImageIndex = i + 1; tv.Nodes[i].SelectedImageIndex = i + 1; i++;
+            tv.Nodes.Add(KartSimulator.GetTreeNode());
+            tv.Nodes[i].Tag = KartSimulator;
+            tv.Nodes[i].ImageIndex = 1; tv.Nodes[i].SelectedImageIndex = 1; i++;
 
             foreach (TreeNode node in tv.Nodes)
             {
@@ -173,11 +178,16 @@ namespace KMPExpander.Class
             Gl.glBindTexture(Gl.GL_TEXTURE_2D, 0);
             if (!picking)
             {
-                Gl.glDepthFunc(Gl.GL_ALWAYS);
+                Gl.glDepthFunc((Application.OpenForms[0] as Form1).vph.Is3D ? Gl.GL_LEQUAL : Gl.GL_ALWAYS);
                 Gl.glLoadIdentity();
             }
             StartPositions.Render(picking);
             EnemyRoutes.Render(picking);
+            if (!picking && EnemyRoutes.Visible)
+            {
+                Form1 form = Application.OpenForms[0] as Form1;
+                KartSimulator.RenderRoutePoints(this, form.SelectedDots, form.ShowAllRoutePoints);
+            }
             ItemRoutes.Render(picking);
             CheckPoints.Render(picking);
             GliderRoutes.Render(picking);
@@ -186,6 +196,7 @@ namespace KMPExpander.Class
             RespawnPoints.Render(picking);
             Area.Render(picking);
             Camera.Render(picking);
+            KartSimulator.Render(picking);
         }
 
         public ISectionBase GetGroup(SectionPicking.PickingInfo pick_info)
@@ -214,6 +225,8 @@ namespace KMPExpander.Class
                     return Camera;
                 case Sections.StageInformation:
                     return StageInformation;
+                case Sections.KartSimulator:
+                    return KartSimulator;
                 default:
                     return null;
             }
@@ -245,6 +258,8 @@ namespace KMPExpander.Class
                     return Camera;
                 case Sections.StageInformation:
                     return StageInformation;
+                case Sections.KartSimulator:
+                    return KartSimulator;
                 default:
                     return null;
             }
@@ -284,9 +299,24 @@ namespace KMPExpander.Class
                     return Camera.Entries[pick_info.EntryID].Pos;
                 case Sections.StageInformation:
                     return null;
+                case Sections.KartSimulator:
+                    return KartSimulator.Entries[pick_info.EntryID].Pos;
                 default:
                     return null;
             }
+        }
+
+        // The position of an entry, for one side of a checkpoint (at the height the 3D view draws it); null for entries
+        // without one.
+        public Nullable<Vector3> GetAnyPointPosition(object point, bool left = false)
+        {
+            var checkpoint = point as CheckPoints.CheckpointGroup.CheckpointEntry;
+            if (checkpoint != null)
+                return left ? new Vector3(checkpoint.LeftPointX, checkpoint.GetHeight(), checkpoint.LeftPointZ)
+                            : new Vector3(checkpoint.RightPointX, checkpoint.GetHeight(), checkpoint.RightPointZ);
+            var pos = point == null ? null : point.GetType().GetProperty("Pos");
+            if (pos == null || pos.PropertyType != typeof(Vector3)) return null;
+            return (Vector3)pos.GetValue(point, null);
         }
 
         public object GetPoint(SectionPicking.PickingInfo pick_info)
@@ -315,6 +345,8 @@ namespace KMPExpander.Class
                     return Camera.Entries[pick_info.EntryID];
                 case Sections.StageInformation:
                     return StageInformation.Entries[pick_info.EntryID];
+                case Sections.KartSimulator:
+                    return KartSimulator.Entries[pick_info.EntryID];
                 default:
                     return null;
             }
@@ -350,6 +382,9 @@ namespace KMPExpander.Class
                     break;
                 case Sections.Camera:
                     Camera.Entries[pick_info.EntryID].PositionY = height;
+                    break;
+                case Sections.KartSimulator:
+                    KartSimulator.Entries[pick_info.EntryID].PositionY = height;
                     break;
             }
         }
@@ -416,6 +451,13 @@ namespace KMPExpander.Class
                 vph.storeToVector(ref res, position);
                 ((Camera.CameraEntry)point).Pos = res;
             }
+            else if (type == typeof(KartSimulator.KartEntry))
+            {
+                vph.storeToVector(ref res, position);
+                ((KartSimulator.KartEntry)point).Pos = res;
+                ((KartSimulator.KartEntry)point).Checkpoint = null;      // found again by the next search
+                ((KartSimulator.KartEntry)point).CameraSmoothed = false;
+            }
         }
 
         public void MovePoint(SectionPicking.PickingInfo pick_info,Vector3 position)
@@ -481,6 +523,13 @@ namespace KMPExpander.Class
                     res = Camera.Entries[pick_info.EntryID].Pos;
                     vph.storePlane(ref res, position);
                     Camera.Entries[pick_info.EntryID].Pos = res;
+                    break;
+                case Sections.KartSimulator:
+                    res = KartSimulator.Entries[pick_info.EntryID].Pos;
+                    vph.storePlane(ref res, position);
+                    KartSimulator.Entries[pick_info.EntryID].Pos = res;
+                    KartSimulator.Entries[pick_info.EntryID].Checkpoint = null;
+                    KartSimulator.Entries[pick_info.EntryID].CameraSmoothed = false;
                     break;
             }
         }

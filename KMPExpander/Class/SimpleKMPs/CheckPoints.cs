@@ -34,7 +34,7 @@ namespace KMPExpander.Class.SimpleKMPs
             public sbyte[] Previous { get; set; }
             [XmlAttribute, Category("Checkpoint Group"), Description("Specifies which next groups this one is linked to."), Editor(typeof(CustomEditor), typeof(UITypeEditor))]
             public sbyte[] Next { get; set; }
-            [XmlAttribute, Category("Checkpoint Group"), TypeConverter(typeof(HexTypeConverter))]
+            [XmlAttribute, Category("Checkpoint Group"), TypeConverter(typeof(HexTypeConverter)), Description("Unknown, normally 0.")]
             public UInt16 Unknown { get; set; }
             //[XmlElement("Entry")]
             //public List<CheckpointEntry> Entries = new List<CheckpointEntry>();
@@ -42,26 +42,26 @@ namespace KMPExpander.Class.SimpleKMPs
             public class CheckpointEntry
             {
                 //public Vector2 LeftPoint { get; set; }
-                [XmlAttribute]
+                [XmlAttribute, Description("Left end of the checkpoint, as seen when driving along the course.")]
                 public Single LeftPointX { get; set; }
-                [XmlAttribute]
+                [XmlAttribute, Description("Left end of the checkpoint, as seen when driving along the course.")]
                 public Single LeftPointZ { get; set; }
                 //public Vector2 RightPoint { get; set; }
-                [XmlAttribute]
+                [XmlAttribute, Description("Right end of the checkpoint, as seen when driving along the course.")]
                 public Single RightPointX { get; set; }
-                [XmlAttribute]
+                [XmlAttribute, Description("Right end of the checkpoint, as seen when driving along the course.")]
                 public Single RightPointZ { get; set; }
-                [XmlAttribute("Respawn")]
+                [XmlAttribute("Respawn"), Description("The respawn point used by this checkpoint. A kart that falls comes back at the respawn point of the checkpoint it was in. Never use a negative number.")]
                 public Byte RespawnId { get; set; }
-                [XmlAttribute]
+                [XmlAttribute, Description("Key checkpoint number, or -1 for a normal checkpoint. A lap counts when the key checkpoints are crossed in order and then key 0, the finish line. Key 0 goes on the first checkpoint after the finish line, and there must be exactly one.")]
                 public SByte Key { get; set; }
-                [XmlAttribute]
+                [XmlAttribute, Description("Clip ID, for culling. While the camera kart is in this checkpoint, the parts of the course model linked to clip objects with this ID are hidden. Use -1 when the checkpoint hides nothing.")]
                 public SByte ClipID { get; set; }
-                [XmlAttribute]
+                [XmlAttribute, Description("Only for courses split into sections. Use -1 for normal checkpoints, 0 for the start of the second section and 1 for the start of the third. Keep -1 on courses with 3 laps.")]
                 public SByte Section { get; set; }
-                [XmlAttribute]
+                [XmlAttribute, Description("Unknown, always 0.")]
                 public Byte Unknown3 { get; set; }
-                [XmlAttribute]
+                [XmlAttribute, Description("Unknown, always 0.")]
                 public Byte Unknown4 { get; set; }
 
                 public CheckpointEntry() {
@@ -112,85 +112,79 @@ namespace KMPExpander.Class.SimpleKMPs
                         else Gl.glColor4f(Settings.CkptRightColor.R / 255f, Settings.CkptRightColor.G / 255f, Settings.CkptRightColor.B / 255f, Settings.CkptRightColor.A);
                     }
                 }
+                // Checkpoints have no height; the 3D view draws them at the height of their respawn point.
+                public float GetHeight()
+                {
+                    SimpleKMP kmp = (Application.OpenForms[0] as Form1).getKayEmPee();
+                    if (kmp == null || RespawnId >= kmp.RespawnPoints.Entries.Count) return 0;
+                    return kmp.RespawnPoints.Entries[RespawnId].PositionY;
+                }
+
                 public void RenderPicking(int group_id,int entry_id)
                 {
                     VisualSettings Settings = (Application.OpenForms[0] as Form1).Settings;
+                    ViewPlaneHandler vph = (Application.OpenForms[0] as Form1).vph;
 
                     Color pickingColorL = SectionPicking.GetColor(Sections.CheckPoints, group_id, entry_id, PointID.Left);
                     Color pickingColorR = SectionPicking.GetColor(Sections.CheckPoints, group_id, entry_id, PointID.Right);
 
                     
 
-                    Gl.glPointSize(Settings.PointSize + 2f);
-                    Gl.glBegin(Gl.GL_POINTS);
                     Gl.glColor4f(pickingColorR.R / 255f, pickingColorR.G / 255f, pickingColorR.B / 255f, 1f);
-                    Gl.glVertex2f(RightPointX, RightPointZ);
-                    Gl.glEnd();
+                    vph.drawPoint(new Vector3(RightPointX, GetHeight(), RightPointZ), Settings.PointSize + 2f);
 
-                    Gl.glPointSize(Settings.PointSize + 2f);
-                    Gl.glBegin(Gl.GL_POINTS);
                     Gl.glColor4f(pickingColorL.R / 255f, pickingColorL.G / 255f, pickingColorL.B / 255f, 1f);
-                    Gl.glVertex2f(LeftPointX, LeftPointZ);
-                    Gl.glEnd();
+                    vph.drawPoint(new Vector3(LeftPointX, GetHeight(), LeftPointZ), Settings.PointSize + 2f);
                 }
 
                 public void RenderSegment()
                 {
                     VisualSettings Settings = (Application.OpenForms[0] as Form1).Settings;
+                    ViewPlaneHandler vph = (Application.OpenForms[0] as Form1).vph;
                     List<object> SelectedDots = (Application.OpenForms[0] as Form1).SelectedDots;
 
                     Gl.glBegin(Gl.GL_LINES);
                     judgeColor(Settings, false);
-                    Gl.glVertex2f(RightPointX, RightPointZ);
+                    vph.drawXZ(RightPointX, RightPointZ, GetHeight());
                     judgeColor(Settings, true);
-                    Gl.glVertex2f(LeftPointX, LeftPointZ);
+                    vph.drawXZ(LeftPointX, LeftPointZ, GetHeight());
                     Gl.glEnd();
 
-                    Gl.glPointSize(Settings.PointSize + 2f);
-                    Gl.glBegin(Gl.GL_POINTS);
                     if (SelectedDots.Contains(this)) Gl.glColor4f(Settings.HighlightPointborderColor.R / 255f, Settings.HighlightPointborderColor.G / 255f, Settings.HighlightPointborderColor.B / 255f, Settings.HighlightPointborderColor.A);
                     else Gl.glColor4f(Settings.PointborderColor.R / 255f, Settings.PointborderColor.G / 255f, Settings.PointborderColor.B / 255f, Settings.PointborderColor.A);
-                    Gl.glVertex2f(RightPointX, RightPointZ);
-                    Gl.glEnd();
+                    vph.drawPoint(new Vector3(RightPointX, GetHeight(), RightPointZ), Settings.PointSize + 2f, true);
 
-                    Gl.glPointSize(Settings.PointSize);
-                    Gl.glBegin(Gl.GL_POINTS);
                     if (SelectedDots.Contains(this)) Gl.glColor4f(Settings.HighlightPointColor.R / 255f, Settings.HighlightPointColor.G / 255f, Settings.HighlightPointColor.B / 255f, Settings.HighlightPointColor.A);
                     else
                     {
                         judgeColor(Settings, false);
                     }
-                    Gl.glVertex2f(RightPointX, RightPointZ);
-                    Gl.glEnd();
+                    vph.drawPoint(new Vector3(RightPointX, GetHeight(), RightPointZ), Settings.PointSize);
 
-                    Gl.glPointSize(Settings.PointSize + 2f);
-                    Gl.glBegin(Gl.GL_POINTS);
                     if (SelectedDots.Contains(this)) Gl.glColor4f(Settings.HighlightPointborderColor.R / 255f, Settings.HighlightPointborderColor.G / 255f, Settings.HighlightPointborderColor.B / 255f, Settings.HighlightPointborderColor.A);
                     else Gl.glColor4f(Settings.PointborderColor.R / 255f, Settings.PointborderColor.G / 255f, Settings.PointborderColor.B / 255f, Settings.PointborderColor.A);
-                    Gl.glVertex2f(LeftPointX, LeftPointZ);
-                    Gl.glEnd();
+                    vph.drawPoint(new Vector3(LeftPointX, GetHeight(), LeftPointZ), Settings.PointSize + 2f, true);
 
-                    Gl.glPointSize(Settings.PointSize);
-                    Gl.glBegin(Gl.GL_POINTS);
                     if (SelectedDots.Contains(this)) Gl.glColor4f(Settings.HighlightPointColor.R / 255f, Settings.HighlightPointColor.G / 255f, Settings.HighlightPointColor.B / 255f, Settings.HighlightPointColor.A);
                     else
                     {
                         judgeColor(Settings, true);
                     }
-                    Gl.glVertex2f(LeftPointX, LeftPointZ);
-                    Gl.glEnd();
+                    vph.drawPoint(new Vector3(LeftPointX, GetHeight(), LeftPointZ), Settings.PointSize);
                 }
 
                 public void RenderRightLine(VisualSettings Settings)
                 {
+                    ViewPlaneHandler vph = (Application.OpenForms[0] as Form1).vph;
                     judgeColor(Settings, false);
-                    Gl.glVertex2f(RightPointX, RightPointZ);
+                    vph.drawXZ(RightPointX, RightPointZ, GetHeight());
                 }
 
                 public void RenderLeftLine(VisualSettings Settings)
                 {
+                    ViewPlaneHandler vph = (Application.OpenForms[0] as Form1).vph;
                     judgeColor(Settings, true);
-                    Gl.glVertex2f(LeftPointX, LeftPointZ);
+                    vph.drawXZ(LeftPointX, LeftPointZ, GetHeight());
                 }
             }
 
@@ -257,6 +251,7 @@ namespace KMPExpander.Class.SimpleKMPs
                 if (!Visible) return;
 
                 VisualSettings Settings = (Application.OpenForms[0] as Form1).Settings;
+                ViewPlaneHandler vph = (Application.OpenForms[0] as Form1).vph;
 
                 if (Settings.LinkPoints)
                 {
@@ -277,10 +272,10 @@ namespace KMPExpander.Class.SimpleKMPs
                         {
                             Gl.glBegin(Gl.GL_TRIANGLE_FAN);
                             Gl.glColor4f(1f, 0f, 0f, 0.75f);
-                            Gl.glVertex2f(Entries[i].LeftPointX, Entries[i].LeftPointZ);
-                            Gl.glVertex2f(Entries[i].RightPointX, Entries[i].RightPointZ);
-                            Gl.glVertex2f(Entries[i+1].RightPointX, Entries[i+1].RightPointZ);
-                            Gl.glVertex2f(Entries[i+1].LeftPointX, Entries[i+1].LeftPointZ);
+                            vph.drawXZ(Entries[i].LeftPointX, Entries[i].LeftPointZ, Entries[i].GetHeight());
+                            vph.drawXZ(Entries[i].RightPointX, Entries[i].RightPointZ, Entries[i].GetHeight());
+                            vph.drawXZ(Entries[i+1].RightPointX, Entries[i+1].RightPointZ, Entries[i+1].GetHeight());
+                            vph.drawXZ(Entries[i+1].LeftPointX, Entries[i+1].LeftPointZ, Entries[i+1].GetHeight());
                             Gl.glEnd();
                         }
                     }
@@ -360,6 +355,7 @@ namespace KMPExpander.Class.SimpleKMPs
             }
 
             VisualSettings Settings = (Application.OpenForms[0] as Form1).Settings;
+            ViewPlaneHandler vph = (Application.OpenForms[0] as Form1).vph;
             Gl.glLineWidth(Settings.LineWidth);
             foreach (var group in Entries)
             {
@@ -388,10 +384,10 @@ namespace KMPExpander.Class.SimpleKMPs
                                 {
                                     Gl.glBegin(Gl.GL_TRIANGLE_FAN);
                                     Gl.glColor4f(1f, 0f, 0f, 0.75f);
-                                    Gl.glVertex2f(prevC.LeftPointX, prevC.LeftPointZ);
-                                    Gl.glVertex2f(prevC.RightPointX, prevC.RightPointZ);
-                                    Gl.glVertex2f(nextC.RightPointX, nextC.RightPointZ);
-                                    Gl.glVertex2f(nextC.LeftPointX, nextC.LeftPointZ);
+                                    vph.drawXZ(prevC.LeftPointX, prevC.LeftPointZ, prevC.GetHeight());
+                                    vph.drawXZ(prevC.RightPointX, prevC.RightPointZ, prevC.GetHeight());
+                                    vph.drawXZ(nextC.RightPointX, nextC.RightPointZ, nextC.GetHeight());
+                                    vph.drawXZ(nextC.LeftPointX, nextC.LeftPointZ, nextC.GetHeight());
                                     Gl.glEnd();
                                 }
                             }

@@ -36,7 +36,7 @@ namespace KMPSections
             public JGPTEntry()
             {
                 Index = 0;
-                Unknown = 0xFFFF;
+                ForceCheckpointID = -1;
             }
             public JGPTEntry(EndianBinaryReaderEx er)
             {
@@ -52,12 +52,12 @@ namespace KMPSections
                 er.Write(RadianDegree.ToRadians(Rotation.Y));
                 er.Write(RadianDegree.ToRadians(Rotation.Z));
                 er.Write(Index);
-                er.Write(Unknown);
+                er.Write(ForceCheckpointID);
             }
             public Vector3 Position { get; set; }
             public Vector3 Rotation { get; set; }
             public UInt16 Index { get; set; }
-            public UInt16 Unknown { get; set; }
+            public Int16 ForceCheckpointID { get; set; }
         }
     }
 }

@@ -42,7 +42,7 @@ namespace KMPExpander.Class.SimpleKMPs
                     ObjectIDRaw = (Application.OpenForms[0] as Form1).lastObjectID = value;
                 }
             }
-            [XmlIgnore, TypeConverter(typeof(HexTypeConverter))]
+            [XmlIgnore, TypeConverter(typeof(HexTypeConverter)), Description("The kind of object. Every race course needs at least the start grid and a sky box.")]
             public string ObjectType
             {
                 get
@@ -53,12 +53,12 @@ namespace KMPExpander.Class.SimpleKMPs
                 }
                 set { ObjectID = UInt16.Parse(value); }
             }
-            [XmlAttribute, TypeConverter(typeof(HexTypeConverter))]
+            [XmlAttribute, TypeConverter(typeof(HexTypeConverter)), Description("Unknown, it seems to affect how the object is drawn. Copy it from an original course. The start grid uses 0x0054.")]
             public UInt16 Unknown1 { get; set; }
             //public Vector3 Position { get; set; }
             [XmlIgnore, Browsable(false)]
             public Vector3 Pos { get; set; } = new Vector3(0, 0, 0);
-            [XmlAttribute]
+            [XmlAttribute, Description("Position of the object.")]
             public Single PositionX
             {
                 get
@@ -70,7 +70,7 @@ namespace KMPExpander.Class.SimpleKMPs
                     Pos = new Vector3(value, Pos.Y, Pos.Z);
                 }
             }
-            [XmlAttribute]
+            [XmlAttribute, Description("Position of the object.")]
             public Single PositionY
             {
                 get
@@ -82,7 +82,7 @@ namespace KMPExpander.Class.SimpleKMPs
                     Pos = new Vector3(Pos.X, value, Pos.Z);
                 }
             }
-            [XmlAttribute]
+            [XmlAttribute, Description("Position of the object.")]
             public Single PositionZ
             {
                 get
@@ -95,42 +95,42 @@ namespace KMPExpander.Class.SimpleKMPs
                 }
             }
             //public Vector3 Rotation { get; set; }
-            [XmlAttribute]
+            [XmlAttribute, Description("Rotation of the object.")]
             public Single RotationX { get; set; }
-            [XmlAttribute]
+            [XmlAttribute, Description("Rotation of the object. The start grid is turned around by 180 degrees.")]
             public Single RotationY { get; set; }
-            [XmlAttribute]
+            [XmlAttribute, Description("Rotation of the object.")]
             public Single RotationZ { get; set; }
-            [XmlAttribute]
+            [XmlAttribute, Description("Scale of the object. For most objects it multiplies the size, for a few, like underwater boxes, it is a size in units.")]
             public Single ScaleX { get; set; }
-            [XmlAttribute]
+            [XmlAttribute, Description("Scale of the object. For most objects it multiplies the size, for a few, like underwater boxes, it is a size in units.")]
             public Single ScaleY { get; set; }
-            [XmlAttribute]
+            [XmlAttribute, Description("Scale of the object. For most objects it multiplies the size, for a few, like underwater boxes, it is a size in units.")]
             public Single ScaleZ { get; set; }
             //public Vector3 Scale { get; set; }
-            [XmlAttribute]
+            [XmlAttribute, Description("The route the object follows, for objects that use one. Use -1 for none.")]
             public Int16 RouteID { get; set; }
-            [XmlAttribute]
+            [XmlAttribute, Description("A setting whose meaning depends on the object, 0 by default.")]
             public UInt16 Settings1 { get; set; }
-            [XmlAttribute]
+            [XmlAttribute, Description("A setting whose meaning depends on the object, 0 by default.")]
             public UInt16 Settings2 { get; set; }
-            [XmlAttribute]
+            [XmlAttribute, Description("A setting whose meaning depends on the object, 0 by default.")]
             public UInt16 Settings3 { get; set; }
-            [XmlAttribute]
+            [XmlAttribute, Description("A setting whose meaning depends on the object, 0 by default.")]
             public UInt16 Settings4 { get; set; }
-            [XmlAttribute]
+            [XmlAttribute, Description("A setting whose meaning depends on the object, 0 by default.")]
             public UInt16 Settings5 { get; set; }
-            [XmlAttribute]
+            [XmlAttribute, Description("A setting whose meaning depends on the object, 0 by default.")]
             public UInt16 Settings6 { get; set; }
-            [XmlAttribute]
+            [XmlAttribute, Description("A setting whose meaning depends on the object, 0 by default.")]
             public UInt16 Settings7 { get; set; }
-            [XmlAttribute]
+            [XmlAttribute, Description("A setting whose meaning depends on the object, 0 by default.")]
             public UInt16 Settings8 { get; set; }
-            [XmlAttribute]
+            [XmlAttribute, Description("In which game modes the object appears. The meaning of its 3 bits is unknown. The default is 7.")]
             public UInt16 Visibility { get; set; }
-            [XmlAttribute]
+            [XmlAttribute, Description("Enemy route linked to the object.")]
             public Int16 EnemyRoute { get; set; }
-            [XmlAttribute, TypeConverter(typeof(HexTypeConverter))]
+            [XmlAttribute, TypeConverter(typeof(HexTypeConverter)), Description("Unknown, 0 by default.")]
             public UInt16 Unknown3 { get; set; }
 
             public ObjectEntry(GOBJ.GOBJEntry entry)
@@ -217,11 +217,8 @@ namespace KMPExpander.Class.SimpleKMPs
                 VisualSettings Settings = (Application.OpenForms[0] as Form1).Settings;
                 Color pickingColor = SectionPicking.GetColor(Sections.Objects, 0, entry_id);
 
-                Gl.glPointSize(Settings.PointSize + 2f);
-                Gl.glBegin(Gl.GL_POINTS);
                 Gl.glColor4f(pickingColor.R / 255f, pickingColor.G / 255f, pickingColor.B / 255f, 1f);
-                vph.draw2DVertice(Pos);
-                Gl.glEnd();
+                vph.drawPoint(Pos, Settings.PointSize + 2f);
             }
 
             public void RenderPoint(bool picking)
@@ -235,7 +232,7 @@ namespace KMPExpander.Class.SimpleKMPs
                 {
                     Gl.glColor4f(Settings.ObjectsColor.R / 255f, Settings.ObjectsColor.G / 255f, Settings.ObjectsColor.B / 255f, 0.25f);
                     Gl.glPushMatrix();
-                    Gl.glTranslatef(PositionX, PositionZ, 0);
+                    vph.translateXZ(PositionX, PositionZ, PositionY);
                     if (ObjectID == 0x160) Gl.glRotatef(-RotationY, 0, 0, 1);
                     Gl.glBegin(Gl.GL_QUADS);
                     Gl.glVertex2f(-ScaleX / 2, -ScaleZ / 2);
@@ -246,19 +243,13 @@ namespace KMPExpander.Class.SimpleKMPs
                     Gl.glPopMatrix();
                 }
 
-                Gl.glPointSize(Settings.PointSize + 2f);
-                Gl.glBegin(Gl.GL_POINTS);
                 if (SelectedDots.Contains(this)) Gl.glColor4f(Settings.HighlightPointborderColor.R / 255f, Settings.HighlightPointborderColor.G / 255f, Settings.HighlightPointborderColor.B / 255f, Settings.HighlightPointborderColor.A);
                 else Gl.glColor4f(Settings.PointborderColor.R / 255f, Settings.PointborderColor.G / 255f, Settings.PointborderColor.B / 255f, Settings.PointborderColor.A);
-                vph.draw2DVertice(Pos);
-                Gl.glEnd();
+                vph.drawPoint(Pos, Settings.PointSize + 2f, true);
 
-                Gl.glPointSize(Settings.PointSize);
-                Gl.glBegin(Gl.GL_POINTS);
                 if (SelectedDots.Contains(this)) Gl.glColor4f(Settings.HighlightPointColor.R / 255f, Settings.HighlightPointColor.G / 255f, Settings.HighlightPointColor.B / 255f, Settings.HighlightPointColor.A);
                 else Gl.glColor4f(Settings.ObjectsColor.R / 255f, Settings.ObjectsColor.G / 255f, Settings.ObjectsColor.B / 255f, Settings.ObjectsColor.A);
-                vph.draw2DVertice(Pos);
-                Gl.glEnd();
+                vph.drawPoint(Pos, Settings.PointSize);
             }
         }
 

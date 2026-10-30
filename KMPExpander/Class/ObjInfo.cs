@@ -96,6 +96,7 @@ namespace KMPExpander.Class
     {
         public ObjectInfo Objinf;
         public Dictionary<UInt16, string> displayName;
+        public Dictionary<UInt16, string> internalName = new Dictionary<UInt16, string>();
 
         public ObjList()
         {
@@ -121,6 +122,7 @@ namespace KMPExpander.Class
                 UInt16 id = Convert.ToUInt16(Objinf.Entry[i].id, 16);
                 if (!displayName.ContainsKey(id)) {
                     displayName.Add(id, Objinf.Entry[i].Value + " [" + Objinf.Entry[i].@internal + "]");
+                    internalName.Add(id, Objinf.Entry[i].@internal);
                 }
             }
         }

@@ -310,10 +310,163 @@ namespace Extensions
         };
 
         public PLANE_MODES mode;
+        // The 3D view keeps the XZ layout of the 2D one (X, Z, and the height Y on the depth axis) and its camera matrix
+        // turns that back into the world, so the 2D drawing code only needs a height for what it draws in XZ.
+        public bool Is3D = false;
+        // Set by the 3D camera every frame: what drawPoint needs to size its spheres, and whether this is the picking
+        // pass (flat colours, no lighting).
+        public bool Picking = false;
+        public Vector3 CameraPos, CameraDir;
+        public float PixelScale = 1;          // world units per pixel at distance 1 along CameraDir
+        public float PointRadius = 25;        // world radius of a sphere of the base point size
+        public float BasePointSize = 7;
+        private int sphereList = 0;
 
         public ViewPlaneHandler()
         {
             mode = PLANE_MODES.XZ;
+        }
+
+        // A point given by its X and Z, at height y in the 3D view.
+        public void drawXZ(float x, float z, float y)
+        {
+            if (Is3D) Gl.glVertex3f(x, z, y);
+            else Gl.glVertex2f(x, z);
+        }
+
+        // A point of size pixels: a square in 2D; in 3D a lit sphere of PointRadius (never smaller than size pixels on
+        // screen). The shading outlines the spheres, so the border passes of the 2D points are left out.
+        public void drawPoint(Vector3 v, float size, bool border = false)
+        {
+            if (!Is3D)
+            {
+                Gl.glPointSize(size);
+                Gl.glBegin(Gl.GL_POINTS);
+                draw2DVertice(v);
+                Gl.glEnd();
+                return;
+            }
+            if (border) return;
+            float depth = Math.Max(1f, (v - CameraPos).Dot(CameraDir));
+            float r = Math.Max(PointRadius * size / Math.Max(1f, BasePointSize), size / 2 * depth * PixelScale);
+            Gl.glPushMatrix();
+            Gl.glTranslatef(v.X, v.Z, v.Y);
+            Gl.glScalef(r, r, r);
+            if (!Picking) Gl.glEnable(Gl.GL_LIGHTING);
+            if (sphereList == 0) CompileSphere();
+            else Gl.glCallList(sphereList);
+            Gl.glDisable(Gl.GL_LIGHTING);
+            Gl.glPopMatrix();
+        }
+
+        // In 3D, the volume of a point of radius r (the scale of enemy, item and glider points): a see-through sphere in
+        // the fill colour (a quarter of its alpha, as the 2D circles) with its equator in the border colour. False in 2D,
+        // where the caller draws its circle.
+        public bool drawVolume(Vector3 v, float r, System.Drawing.Color border, System.Drawing.Color fill)
+        {
+            if (!Is3D) return false;
+            Gl.glPushMatrix();
+            Gl.glTranslatef(v.X, v.Z, v.Y);
+            Gl.glScalef(r, r, r);
+            Gl.glDepthMask(Gl.GL_FALSE);
+            Gl.glColor4f(fill.R / 255f, fill.G / 255f, fill.B / 255f, fill.A / (255f * 4f));
+            if (!Picking) Gl.glEnable(Gl.GL_LIGHTING);
+            if (sphereList == 0) CompileSphere();
+            else Gl.glCallList(sphereList);
+            Gl.glDisable(Gl.GL_LIGHTING);
+            Gl.glColor4f(border.R / 255f, border.G / 255f, border.B / 255f, border.A / 255f);
+            Gl.glBegin(Gl.GL_LINE_LOOP);
+            for (int i = 0; i < 32; i++)
+            {
+                double a = 2 * Math.PI * i / 32;
+                Gl.glVertex3f((float)Math.Cos(a), (float)Math.Sin(a), 0);
+            }
+            Gl.glEnd();
+            Gl.glDepthMask(Gl.GL_TRUE);
+            Gl.glPopMatrix();
+            return true;
+        }
+
+        // A unit sphere, its normals being its vertices (as the sphere is symmetric, the (X, Z, Y) layout changes nothing).
+        private void CompileSphere()
+        {
+            const int slices = 16, stacks = 10;
+            sphereList = Gl.glGenLists(1);
+            Gl.glNewList(sphereList, Gl.GL_COMPILE_AND_EXECUTE);
+            for (int i = 0; i < stacks; i++)
+            {
+                double a0 = Math.PI * i / stacks - Math.PI / 2, a1 = Math.PI * (i + 1) / stacks - Math.PI / 2;
+                Gl.glBegin(Gl.GL_QUAD_STRIP);
+                for (int j = 0; j <= slices; j++)
+                {
+                    double b = 2 * Math.PI * j / slices;
+                    foreach (double a in new double[] { a1, a0 })
+                    {
+                        float x = (float)(Math.Cos(a) * Math.Cos(b)), y = (float)(Math.Cos(a) * Math.Sin(b)), z = (float)Math.Sin(a);
+                        Gl.glNormal3f(x, y, z);
+                        Gl.glVertex3f(x, y, z);
+                    }
+                }
+                Gl.glEnd();
+            }
+            Gl.glEndList();
+        }
+
+        // The OpenGL matrix that draws a model given in world axes at pos, rotated (degrees; X, then Y, then Z, as sead's
+        // makeR) and scaled, in the layout of this view (that of draw3DVertice).
+        public float[] modelMatrix(Vector3 pos, Vector3 rotation, Vector3 scale)
+        {
+            double rx = rotation.X * Math.PI / 180, ry = rotation.Y * Math.PI / 180, rz = rotation.Z * Math.PI / 180;
+            double cx = Math.Cos(rx), sx = Math.Sin(rx), cy = Math.Cos(ry), sy = Math.Sin(ry), cz = Math.Cos(rz), sz = Math.Sin(rz);
+            double[,] r = {
+                { cy * cz, sx * sy * cz - cx * sz, cx * sy * cz + sx * sz },
+                { cy * sz, sx * sy * sz + cx * cz, cx * sy * sz - sx * cz },
+                { -sy, sx * cy, cx * cy } };
+            double[,] view;
+            switch (Is3D ? PLANE_MODES.XZ : mode)
+            {
+                case PLANE_MODES.XY: view = new double[,] { { 1, 0, 0 }, { 0, -1, 0 }, { 0, 0, 1 } }; break;
+                case PLANE_MODES.ZY: view = new double[,] { { 0, 0, 1 }, { 0, -1, 0 }, { -1, 0, 0 } }; break;
+                default: view = new double[,] { { 1, 0, 0 }, { 0, 0, 1 }, { 0, 1, 0 } }; break;
+            }
+            double[] s = { scale.X, scale.Y, scale.Z }, p = { pos.X, pos.Y, pos.Z };
+            float[] m = new float[16];
+            for (int row = 0; row < 3; row++)
+            {
+                for (int col = 0; col < 3; col++)
+                {
+                    double v = 0;
+                    for (int k = 0; k < 3; k++) v += view[row, k] * r[k, col];
+                    m[col * 4 + row] = (float)(v * s[col]);
+                }
+                double t = 0;
+                for (int k = 0; k < 3; k++) t += view[row, k] * p[k];
+                m[12 + row] = (float)t;
+            }
+            m[15] = 1;
+            return m;
+        }
+
+        public void translateXZ(float x, float z, float y)
+        {
+            Gl.glTranslatef(x, z, Is3D ? y : 0);
+        }
+
+        // What is drawn in XZ until popHeight (the circles around the points) goes to height y in the 3D view.
+        // The circles are see-through, so they do not hide what is drawn behind them later.
+        public void pushHeight(float y)
+        {
+            if (!Is3D) return;
+            Gl.glPushMatrix();
+            Gl.glTranslatef(0, 0, y);
+            Gl.glDepthMask(Gl.GL_FALSE);
+        }
+
+        public void popHeight()
+        {
+            if (!Is3D) return;
+            Gl.glDepthMask(Gl.GL_TRUE);
+            Gl.glPopMatrix();
         }
 
         public float getViewCoord(Vector3 v, int a)
@@ -335,6 +488,11 @@ namespace Extensions
 
         public void draw2DVertice(Vector3 v)
         {
+            if (Is3D)
+            {
+                Gl.glVertex3f(v.X, v.Z, v.Y);
+                return;
+            }
             switch (mode)
             {
                 case PLANE_MODES.XY:

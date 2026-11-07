@@ -1,2 +1,36 @@
 <h1>Camera Settings</h1>
-<p>Camera settings related help is still being developed, will be added in the next KMP Expander release.</p>
+<p>Cameras are used for the replays (chosen by the camera areas) and of the course intro. A camera is only ever shown through a camera area or the intro.</p>
+<h3>Camera types</h3>
+<ul>
+<li><strong>0 - Goal:</strong> built by the game for the first 5 seconds after the finish, but never shown. It orbits the kart like type 3.</li>
+<li><strong>1 - Fixed:</strong> stands at its position (or rides its route if it has one) and looks at the kart.</li>
+<li><strong>2 - Path:</strong> rides its route and looks at the kart.</li>
+<li><strong>3 - Follow:</strong> orbits the kart: <strong>Viewpoint Begin</strong> X turns it around the kart from behind (degrees), Y tilts it (degrees, negative is above), Z is its distance. <strong>Viewpoint End</strong> turns its view.</li>
+<li><strong>4 - Fixed, Moving Look-at:</strong> stands at its position and looks at a point moving from Viewpoint Begin to Viewpoint End (course coordinates).</li>
+<li><strong>5 - Path, Moving Look-at:</strong> rides its route and looks at a point moving from Viewpoint Begin to Viewpoint End. Used by the course intro.</li>
+<li><strong>6 - Follow Path:</strong> circles the kart: its route points are offsets from the kart (the original courses use small circles of radius 40 to 60 around (0, 0, 0)).</li>
+<li><strong>7, 8 - Follow Path (2nd / 3rd place):</strong> as type 6, following the second or third driver of the award ceremony.</li>
+</ul>
+<h3>Parameters</h3>
+<ul>
+<li><strong>Next:</strong> the next camera of the intro chain, -1 for the last one. On follow cameras (0, 3, 6, 7, 8), -2 keeps the camera level instead of tilting it with the kart.</li>
+<li><strong>VideoNext:</strong> not 0 on the pair of cameras that most likely rendered the course preview video of the menu. The game leaves such cameras out of replays and of the intro.</li>
+<li><strong>RouteID:</strong> the route the camera rides. Its speed is the <strong>Speed</strong> of the route points / 100 units per frame, blended between points.</li>
+<li><strong>FOVBegin, FOVEnd, FOVSpeed:</strong> the field of view (degrees) starts at FOV Begin and moves toward FOV End by FOV Speed hundredths of a degree per frame.</li>
+<li><strong>ViewpointBegin, ViewpointEnd, ViewpointSpeed:</strong> see the camera types. For types 4 and 5 the look-at point moves at Viewpoint Speed hundredths of a unit per frame (0 keeps it at Viewpoint Begin).</li>
+<li><strong>Duration:</strong> above 0 only on the intro cameras. The first camera with a duration (and a Video Next of 0) starts the intro chain.</li>
+<li><strong>PointSpeed, StartFlag, VideoFlag, Rotation:</strong> not read by the game.</li>
+</ul>
+<h3>Course intro</h3>
+<ul>
+<li>Make a chain of <strong>three</strong> cameras linked by Next (the last one -1), each with a duration above 0. Type 5 is the usual choice.</li>
+<li>The shots last <strong>232, 204 and 240 frames</strong> whatever durations you write, a fourth camera would play until the intro ends after 700 frames. For the last camera, the duration is the time its look-at point takes to reach Viewpoint End (240 matches the shot).</li>
+<li>The karts only appear in the third shot, so end the intro on the start line. Nothing closer than 30 units to the camera is drawn.</li>
+<li>Never link the cameras in a loop, the game would hang while loading the course. Keep the duration of the other cameras at 0.</li>
+<li><strong>Play Intro Camera</strong> plays the intro as the game does, in the 3D view it shows the camera's view on a 5:3 screen like the 3DS's (View menu: &quot;3DS screen at 400 x 240 pixels&quot; for its own size).</li>
+</ul>
+<h3>Replay cameras</h3>
+<ul>
+<li>Each camera area shows its camera while the watched kart is inside, every cut restarts the camera from the start of its route and field of view.</li>
+<li>The <strong>Replay Camera</strong> button of the 3D view shows them for the camera kart of the kart simulation, while the karts drive.</li>
+</ul>

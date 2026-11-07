@@ -29,10 +29,24 @@ namespace KMPExpander.Class.SimpleKMPs
 
         public class RouteGroup : SectionBase<RouteGroup.RouteEntry>
         {
-            [XmlAttribute, Category("Route"), Description("Whether the route loops. Anything following it goes back to the first point after the last one.")]
-            public bool Loop { get; set; }
-            [XmlAttribute, Category("Route"), Description("Whether the route is smoothed. Recommended for the course intro cameras.")]
-            public bool Smooth { get; set; }
+            // The two settings of the route (Field::PathBase): the first chooses straight lines (0) or a curve through the
+            // points (not 0), the second a closed route (0), whose first point follows the last one, or an open route
+            // (not 0), which cameras run back and forth.
+            [XmlAttribute, Browsable(false)]
+            public Byte Setting1 { get; set; }
+            [XmlAttribute, Browsable(false)]
+            public Byte Setting2 { get; set; }
+            [XmlIgnore, Category("Route"), Description("Whether the route is a curve through its points instead of straight lines.")]
+            public bool Smooth { get { return Setting1 != 0; } set { Setting1 = (byte)(value ? 1 : 0); } }
+            [XmlIgnore, Category("Route"), Description("Whether the route is closed: whatever follows it goes from the last point back to the first one. An open route is run back and forth by cameras.")]
+            public bool Loop { get { return Setting2 == 0; } set { Setting2 = (byte)(value ? 0 : 1); } }
+            // Files saved by older versions, which stored the first setting as Loop and the second as Smooth.
+            [XmlAttribute("Loop"), Browsable(false)]
+            public bool LegacyLoop { get { return false; } set { Setting1 = (byte)(value ? 1 : 0); } }
+            public bool ShouldSerializeLegacyLoop() { return false; }
+            [XmlAttribute("Smooth"), Browsable(false)]
+            public bool LegacySmooth { get { return false; } set { Setting2 = (byte)(value ? 1 : 0); } }
+            public bool ShouldSerializeLegacySmooth() { return false; }
             //[XmlElement("Entry")]
             //public List<RouteEntry> Entries = new List<RouteEntry>();
             public class RouteEntry
@@ -142,8 +156,8 @@ namespace KMPExpander.Class.SimpleKMPs
 
             public RouteGroup(POTI.POTIRoute path)
             {
-                Loop = (path.Setting1 & 1) == 1;
-                Smooth = (path.Setting2 & 1) == 1;
+                Setting1 = path.Setting1;
+                Setting2 = path.Setting2;
                 foreach (var entry in path.Points)
                 {
                     Entries.Add(new RouteEntry(entry));
@@ -154,8 +168,8 @@ namespace KMPExpander.Class.SimpleKMPs
             {
                 POTI.POTIRoute route = new POTI.POTIRoute();
                 route.NrPoints = (ushort)Entries.Count;
-                route.Setting1 = (byte)(Loop ? 1 : 0);
-                route.Setting2 = (byte)(Smooth ? 1 : 0);
+                route.Setting1 = Setting1;
+                route.Setting2 = Setting2;
                 foreach (var entry in Entries)
                     route.Points.Add(entry.ToPOTIPoint());
                 return route;
@@ -172,20 +186,10 @@ namespace KMPExpander.Class.SimpleKMPs
                 if (Settings.LinkPoints)
                 {
                     Gl.glColor4f(Settings.RouteLinkColor.R / 255f, Settings.RouteLinkColor.G / 255f, Settings.RouteLinkColor.B / 255f, Settings.RouteLinkColor.A);
-                    for (int i = 0; i < Entries.Count - 1; i++)
-                    {
-                        Gl.glBegin(Gl.GL_LINES);
-                        Entries[i].RenderLine();
-                        Entries[i + 1].RenderLine();
-                        Gl.glEnd();
-                    }
-                    if (Loop)
-                    {
-                        Gl.glBegin(Gl.GL_LINES);
-                        Entries[Entries.Count-1].RenderLine();
-                        Entries[0].RenderLine();
-                        Gl.glEnd();
-                    }
+                    // As cameras ride it: closed or not, straight or curved.
+                    Gl.glBegin(Gl.GL_LINE_STRIP);
+                    foreach (Vector3 p in CameraRail.Polyline(this)) vph.draw2DVertice(p);
+                    Gl.glEnd();
                 }
                 if (isCulling && vph.mode == ViewPlaneHandler.PLANE_MODES.XZ)
                 {

@@ -44,7 +44,7 @@ namespace KMPExpander
             public string Text;
         }
 
-        private void InitializeGhosts(ToolStripDropDownButton viewButton)
+        private void InitializeGhosts(ToolStripDropDownItem viewButton)
         {
             ghostMenuItem = new ToolStripMenuItem("Ghost checkpoints") { CheckOnClick = true };
             ghostMenuItem.ToolTipText = "Top view: the ghost checkpoints of the selected checkpoint";

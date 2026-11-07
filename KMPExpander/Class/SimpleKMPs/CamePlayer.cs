@@ -2,6 +2,7 @@
 using LibCTR.Collections;
 using System;
 using System.Collections.Generic;
+using System.Diagnostics;
 using System.Linq;
 using System.Text;
 using System.Threading;
@@ -11,24 +12,17 @@ using Tao.OpenGl;
 
 namespace KMPExpander.Class.SimpleKMPs
 {
+    // Plays the course intro as the game does (IntroCameraDirector), 60 frames per second, until its 700 frames are over
+    // or Escape is pressed. The 3D view shows what the camera sees on a screen of the 3DS's size; the 2D views show the
+    // camera, its route, its view and its look-at points on the map.
     public class CamePlayer
     {
         public Form1 Parent;
-        // public readonly int INTERVAL = 16;
-        public IntroCamePlayer incame;
-        public bool stopCurr = false;
-        public bool exitThread;
-        public bool userStop;
+        private IntroCameraDirector director;
+        private float fraction = 1;
+
         public CamePlayer(Form1 Parent) {
             this.Parent = Parent;
-        }
-        public Camera.CameraEntry GetStartingIntroCame()
-        {
-            for (int i = 0; i < Parent.Kayempee.Camera.Entries.Count; i++)
-            {
-                if (Parent.Kayempee.Camera.Entries[i].TypeID == 5) return Parent.Kayempee.Camera.Entries[i];
-            }
-            return null;
         }
         public void blockStuff()
         {
@@ -55,344 +49,190 @@ namespace KMPExpander.Class.SimpleKMPs
             Parent.PreventClose = false;
         }
         public void playIntroSequence()
-        { 
-            exitThread = false;
-            userStop = false;
-            blockStuff();
-            Thread thread = new Thread(new ThreadStart(playIntro));
-            thread.Start();
-            while (!exitThread && thread.IsAlive)
-            {
-                Application.DoEvents();
-                if (Keyboard.IsKeyDown(Key.Escape))
-                {
-                    userStop = true;
-                    incame.Stop();
-                }
-                if (incame != null)
-                {
-                    if (incame.needsRendering)
-                    {
-                        incame.Render();
-                        incame.needsRendering = false;
-                    }
-                }
-            }
-            unblockStuff();
-        }
-        public void playIntro()
         {
             if (Parent.Kayempee == null) return;
-            SimpleKMP kmp = Parent.Kayempee;
-            Camera.CameraEntry curr = GetStartingIntroCame();
-            if (curr == null) return;
-            Camera.CameraEntry currtest = curr;
-            int totcount = kmp.Camera.Entries.Count;
-            int count = 0;
-            while (true) //Check if cameras are linked properly
+            director = new IntroCameraDirector(Parent.Kayempee);
+            if (director.Error != null || director.Chain.Count == 0)
             {
-                if (count >= 0) break;
-                if (kmp.Routes.Entries.ElementAtOrDefault(currtest.RouteID) == null || kmp.Routes.Entries.ElementAtOrDefault(currtest.RouteID).Entries.Count == 0) return;
-                currtest = kmp.Camera.Entries.ElementAtOrDefault(currtest.Next);
-                if (currtest == null) break;
-                else if (currtest.TypeID != 5) return;
-                count++;
+                MessageBox.Show(director.Error ?? "The course has no intro cameras.", "Play Intro Camera", MessageBoxButtons.OK, MessageBoxIcon.Information);
+                return;
             }
-            System.Diagnostics.Stopwatch s = new System.Diagnostics.Stopwatch();
-            int currduration = (int)(curr.DurationRaw / 60 * 1000);
-            incame = new IntroCamePlayer(Parent, kmp, curr);
-            s.Start();
-            while (!userStop)
+            KartSimulator sim = Parent.Kayempee.KartSimulator;
+            sim.PlaceForIntro(Parent.Kayempee, Parent.OBJModel);
+            Func<int, KartView> karts = Parent.DemoKarts();
+            blockStuff();
+            Parent.IntroPlaying = true;
+            try
             {
-                System.Threading.Thread.Sleep(1);
-                if (s.ElapsedMilliseconds >= currduration)
+                director.Start(karts);
+                Render();
+                Stopwatch clock = Stopwatch.StartNew();
+                long frames = 0;
+                double lastDrawn = -1;
+                while (!director.Finished)
                 {
-                    if (userStop) break;
-                    s.Reset();
-                    incame.Stop();
-                    curr = kmp.Camera.Entries.ElementAtOrDefault(curr.Next);
-                    if (curr == null) break;
-                    incame = new IntroCamePlayer(Parent, kmp, curr);
-                    currduration = (int)(curr.DurationRaw / 60 * 1000);
-                    s.Start();
+                    Application.DoEvents();
+                    if (Keyboard.IsKeyDown(Key.Escape) || Parent.IsDisposed) break;
+                    // At most 6 frames at once, so that a slow frame does not make the camera jump.
+                    double exact = clock.Elapsed.TotalSeconds * 60;
+                    long due = (long)exact;
+                    int steps = (int)Math.Max(0, Math.Min(6, due - frames));
+                    frames = Math.Max(frames + steps, due - 6);
+                    for (int i = 0; i < steps && !director.Finished; i++) director.Step(karts);
+                    // Drawn about 60 times a second, between the last two frames, so that the camera moves smoothly.
+                    if (exact - lastDrawn < 0.9)
+                    {
+                        Thread.Sleep(1);
+                        continue;
+                    }
+                    lastDrawn = exact;
+                    fraction = (float)Math.Max(0, Math.Min(1, exact - frames));
+                    Render();
                 }
             }
-            exitThread = true;
+            finally
+            {
+                Parent.IntroPlaying = false;
+                sim.RestoreAfterIntro();
+                unblockStuff();
+            }
         }
-        public class IntroCamePlayer
+
+        private string Status()
         {
-            public Form1 Parent;
-            public Vector3 pos;
-            public Vector3 lookat;
-            public Routes.RouteGroup route;
-            public Camera.CameraEntry entry;
-            public SimpleKMP kmp;
-            public int currindex;
-            public Vector3 currindexpos;
-            public Vector3 nextindexpos;
-            public Vector3 directionVector;
-            public float betweenindexdis;
-            public float currspd;
-            public float nextspd;
-            public bool stop;
-            //
-            public bool stopLookAt;
-            public Vector3 lookatstart;
-            public Vector3 lookatend;
-            public Vector3 lookatdirvector;
-            public Vector3 lookatpos;
-            public float distbetweenviewport;
-            public int lookattimes;
-            public Vector3 lookatspeed;
-            //
-            public float FOV;
-            public float FOVstart;
-            public float FOVend;
-            public float FOVincamount;
-            public int FOVamountTimes;
-            //
-            public Vector3 posrend;
-            public Vector3 lookatrend;
-            public float FOVrend;
-            //
-            public bool needsRendering;
-            public int running = 0;
-            Thread UpdateThread;
-            public bool runThread;
+            DemoCamera c = director.Current;
+            string shot = c == null ? "last view held" : String.Format("shot {0}: camera {1} ({2})", director.Shot + 1, c.Index, c.Entry.Type);
+            return String.Format("Course intro: frame {0}/{1}, {2}{3}. Escape stops it.", director.Frame, IntroCameraDirector.IntroFrames, shot,
+                director.Chain.Count != 3 ? String.Format(" (the chain has {0} cameras; the game plays shots of 232, 204 and 240 frames, a fourth one until the end)", director.Chain.Count) : "");
+        }
 
-            public IntroCamePlayer(Form1 Parent, SimpleKMP kmp, Camera.CameraEntry entry)
+        public void Render()
+        {
+            if (!Parent.opengl_initialized) return;
+            Parent.SetStatusText(Status());
+            DemoView v = DemoView.Lerp(director.PrevView, director.View, fraction);
+            if (Parent.mode_3d)
             {
-                this.Parent = Parent;
-                this.entry = entry;
-                this.kmp = kmp;
-                needsRendering = false;
-                route = kmp.Routes.Entries[entry.RouteID];
-                currindex = 0;
-                UpdateLookAtValues();
-                UpdateFOVValues();
-                try
-                {
-                    UpdateValues();
-                } catch
-                {
-                    stop = true;
-                    pos = routetopos(route.Entries[currindex]);
-                }
-                Start();
+                Parent.RenderIntro3D(v, !director.KartsHidden);
+                return;
             }
-            public Vector3 normaldirection(Vector3 vec1, Vector3 vec2)
-            {
-                return new Vector3(vec2.X - vec1.X, vec2.Y - vec1.Y, vec2.Z - vec1.Z).Normalize(); 
-            }
-            public Vector3 routetopos(Routes.RouteGroup.RouteEntry r)
-            {
-                return new Vector3(r.PositionX, r.PositionY, r.PositionZ);
-            }
-            public float distance(Vector3 pos1, Vector3 pos2)
-            {
-                return (float)Math.Sqrt(Math.Pow(pos1.X - pos2.X, 2) + Math.Pow(pos1.Y - pos2.Y, 2) + Math.Pow(pos1.Z - pos2.Z, 2));
-            }
-            public void Start()
-            {
-                runThread = true;
-                UpdateThread = new Thread(new ThreadStart(Update));
-                UpdateThread.Start();
-            }
-            public void Update()
-            {
-                System.Diagnostics.Stopwatch s = new System.Diagnostics.Stopwatch();
-                s.Start();
-                running = 1;
-                while (runThread)
-                {
-                    if (s.ElapsedMilliseconds >= 16)
-                    {
-                        s.Reset();
-                        s.Start();
-                        UpdatePos();
-                        UpdateLookAt();
-                        UpdateFOV();
-                        needsRendering = true;
-                    }
-                }
-                running = 0;
-            }
-            public void Stop()
-            {
-                runThread = false;
-                while (running != 0) Thread.Sleep(1);
-            }
-            public void UpdateValues()
-            {
-                currindexpos = pos = routetopos(route.Entries[currindex]);
-                nextindexpos = routetopos(route.Entries[currindex + 1]);
-                betweenindexdis = distance(currindexpos, nextindexpos);
-                directionVector = normaldirection(currindexpos, nextindexpos);
-                currspd = route.Entries[currindex].Speed;
-                nextspd = route.Entries[currindex + 1].Speed;
-            }
-            public void UpdateLookAtValues()
-            {
-                lookatstart = lookatpos = new Vector3(entry.Viewpoint1X, entry.Viewpoint1Y, entry.Viewpoint1Z);
-                lookatend = new Vector3(entry.Viewpoint2X, entry.Viewpoint2Y, entry.Viewpoint2Z);
-                lookatdirvector = normaldirection(lookatstart, lookatend);
-                distbetweenviewport = distance(lookatstart, lookatend);
-                lookatspeed = entry.ViewpointSpeed * 0.01f * lookatdirvector;
-                lookattimes = (int)(distbetweenviewport / lookatspeed.Length);
-            }
-            public void UpdateFOVValues()
-            {
-                FOVstart = FOV = entry.FOVBegin;
-                FOVend = entry.FOVEnd;
-                float FOVdist = FOVend - FOVstart;
-                FOVincamount = entry.FOVSpeed * 0.01f;
-                FOVamountTimes = (int)(FOVdist / FOVincamount);
-            }
-            public void UpdatePos()
-            {
-                if (!stop)
-                {
-                    float advancedRatio = distance(pos, currindexpos) / betweenindexdis;
-                    if (advancedRatio >= 1)
-                    {
-                        currindex++;
-                        if (route.Entries.ElementAtOrDefault(currindex + 1) == null)
-                        {
-                            stop = true;
-                        } else
-                        {
-                            UpdateValues();
-                        }
-                    }
-                    else
-                    {
-                        float newspeed = (currspd + ((nextspd - currspd) * advancedRatio)) / 93.75f;
-                        pos += directionVector * newspeed;
-                        if ((distance(pos, currindexpos) / betweenindexdis) >= 1) pos = nextindexpos;
-                    }
-                }
-            }
-            public void UpdateLookAt()
-            {
-                if (lookattimes > 0)
-                {
-                    lookatpos += lookatspeed;
-                    lookattimes--;
-                } else
-                {
-                    lookatpos = lookatend;
-                }
-            }
-            public void UpdateFOV()
-            {
-                if (FOVamountTimes > 0)
-                {
-                    FOV += FOVincamount;
-                    FOVamountTimes--;
-                }
-                else
-                {
-                    FOV = FOVend;
-                }
-            }
-            public void RenderCame(VisualSettings Settings, Vector3 pos)
-            {
-                ViewPlaneHandler vph = (Application.OpenForms[0] as Form1).vph;
-                Gl.glColor4f(Settings.PointborderColor.R / 255f, Settings.PointborderColor.G / 255f, Settings.PointborderColor.B / 255f, Settings.PointborderColor.A);
-                vph.drawPoint(pos, Settings.PointSize * (2f / 3f) + 2f, true);
+            Parent.BaseRender();
+            if (Parent.OBJModel != null) Parent.OBJModel.Render();
+            RenderThis(v);
+            Parent.simpleOpenGlControl1.Refresh();
+        }
 
-                Gl.glColor4f(Settings.CameColor.R / 255f, Settings.CameColor.G / 255f, Settings.CameColor.B / 255f, Settings.CameColor.A);
-                vph.drawPoint(pos, Settings.PointSize * (2f / 3f));
-            }
-            public void RenderVP(VisualSettings Settings, Vector3 pos, Vector3 lookatpos)
-            {
-                ViewPlaneHandler vph = (Application.OpenForms[0] as Form1).vph;
-                Vector3 vp1 = new Vector3(entry.Viewpoint1X, entry.Viewpoint1Y, entry.Viewpoint1Z);
-                Vector3 vp2 = new Vector3(entry.Viewpoint2X, entry.Viewpoint2Y, entry.Viewpoint2Z);
-                Gl.glColor4f((Settings.HighlightPointborderColor.R / 255f), (Settings.HighlightPointborderColor.G / 255f), (Settings.HighlightPointborderColor.B / 255f), Settings.HighlightPointborderColor.A);
-                Gl.glLineWidth(Settings.LineWidth / 2f);
-                Gl.glPushAttrib(Gl.GL_ENABLE_BIT);
-                Gl.glLineStipple(3, 0xAAAA);
-                Gl.glEnable(Gl.GL_LINE_STIPPLE);
-                Gl.glBegin(Gl.GL_LINES);
-                vph.draw2DVertice(vp1);
-                vph.draw2DVertice(vp2);
-                Gl.glEnd();
-                Gl.glPopAttrib();
+        private void RenderThis(DemoView v)
+        {
+            DemoCameraDrawing.Draw(Parent.vph, Parent.Settings, Parent.Kayempee, v, Parent.DemoKarts());
+        }
+    }
 
-                Gl.glPointSize(Settings.PointSize / 2);
-                Gl.glBegin(Gl.GL_POINTS);
-                vph.draw2DVertice(vp1);
-                vph.draw2DVertice(vp2);
-                Gl.glColor4f(Settings.HighlightPointColor.R / 255f, Settings.HighlightPointColor.G / 255f, Settings.HighlightPointColor.B / 255f, Settings.HighlightPointColor.A);
-                vph.draw2DVertice(lookatpos);
-                Gl.glEnd();
-            }
-            public void RenderView(VisualSettings Settings, Vector3 pos, Vector3 lookatpos, float FOV)
+    // The 2D drawing of a demo camera, for the course intro and the replay camera: its route (moved onto the kart for the
+    // cameras whose route follows it), its view as a cone of its field of view, the camera, and for types 4 and 5 the
+    // points its look-at moves between.
+    public static class DemoCameraDrawing
+    {
+        public static void Draw(ViewPlaneHandler vph, VisualSettings Settings, SimpleKMP kmp, DemoView v, Func<int, KartView> karts)
+        {
+            Gl.glBindTexture(Gl.GL_TEXTURE_2D, 0);
+            Gl.glDepthFunc(Gl.GL_ALWAYS);
+            Gl.glLoadIdentity();
+            Camera.CameraEntry entry = v.Camera != null ? v.Camera.Entry : null;
+            Routes.RouteGroup route = entry != null && entry.RouteID >= 0 ? kmp.Routes.Entries.ElementAtOrDefault(entry.RouteID) : null;
+            if (route != null && route.Entries.Count > 0)
             {
-                ViewPlaneHandler vph = (Application.OpenForms[0] as Form1).vph;
-                double angle = Math.Atan2(vph.getViewCoord(lookatpos, 1) - vph.getViewCoord(pos, 1), vph.getViewCoord(lookatpos, 0) - vph.getViewCoord(pos, 0));
-                double xcenter = Math.Cos(angle) * 1000000000d;
-                double ycenter = Math.Sin(angle) * 1000000000d;
-                double xside1 = Math.Cos(angle + RadianDegree.ToRadiansD((double)FOV / 2)) * 1000000000d;
-                double yside1 = Math.Sin(angle + RadianDegree.ToRadiansD((double)FOV / 2)) * 1000000000d;
-                double xside2 = Math.Cos(angle - RadianDegree.ToRadiansD((double)FOV / 2)) * 1000000000d;
-                double yside2 = Math.Sin(angle - RadianDegree.ToRadiansD((double)FOV / 2)) * 1000000000d;
-                Gl.glColor4f((Settings.HighlightPointColor.R / 255f), (Settings.HighlightPointColor.G / 255f), (Settings.HighlightPointColor.B / 255f), 0.25f);
-                Gl.glBegin(Gl.GL_TRIANGLE_FAN);
-                vph.draw2DVertice(pos);
-                Gl.glVertex2d(xside1, yside1);
-                Gl.glVertex2d(xside2, yside2);
-                Gl.glEnd();
-                Gl.glColor4f((Settings.CameColor.R / 255f), (Settings.CameColor.G / 255f), (Settings.CameColor.B / 255f), Settings.CameColor.A);
-                Gl.glBegin(Gl.GL_LINE_LOOP);
-                Gl.glVertex2d(xside1, yside1);
-                vph.draw2DVertice(pos);
-                Gl.glVertex2d(xside2, yside2);
-                Gl.glEnd();
-                Gl.glColor4f((Settings.HighlightPointborderColor.R / 255f), (Settings.HighlightPointborderColor.G / 255f), (Settings.HighlightPointborderColor.B / 255f), Settings.HighlightPointborderColor.A);
-                Gl.glLineWidth(Settings.LineWidth / 2f);
-                Gl.glPushAttrib(Gl.GL_ENABLE_BIT);
-                Gl.glLineStipple(3, 0xAAAA);
-                Gl.glEnable(Gl.GL_LINE_STIPPLE);
-                Gl.glBegin(Gl.GL_LINES);
-                vph.draw2DVertice(pos);
-                Gl.glVertex2d(xcenter, ycenter);
-                Gl.glEnd();
-                Gl.glPopAttrib();
+                // Follow path cameras ride their route around the kart's camera target, in course axes.
+                Vector3 offset = new Vector3(0);
+                if (entry.TypeID >= 6 && entry.TypeID <= 8) offset = karts(entry.TypeID == 7 ? 1 : entry.TypeID == 8 ? 2 : -1).Target;
+                DrawRoute(vph, Settings, route, offset);
+            }
+            RenderView(vph, Settings, v.Position, v.LookAt, v.Fov);
+            RenderCame(vph, Settings, v.Position);
+            if (entry != null && (entry.TypeID == 4 || entry.TypeID == 5)) RenderVP(vph, Settings, entry, v.LookAt);
+            Gl.glDepthFunc(Gl.GL_LEQUAL);
+        }
 
-            }
-            public void RenderThis()
-            {
-                Gl.glBindTexture(Gl.GL_TEXTURE_2D, 0);
-                Gl.glDepthFunc(Gl.GL_ALWAYS);
-                Gl.glLoadIdentity();
-                route.Render();
-                VisualSettings Settings = (Application.OpenForms[0] as Form1).Settings;
-                lookatrend.CopyFrom(lookatpos);
-                posrend.CopyFrom(pos);
-                FOVrend = FOV;
-                RenderView(Settings, posrend, lookatrend, FOVrend);
-                RenderCame(Settings, posrend);
-                RenderVP(Settings, posrend, lookatrend);
-            }
-            public void Render() {
-                if (!Parent.opengl_initialized) return;
-                if (Parent.mode_3d)
-                {
-                    // The 3D view plays the intro through the camera itself.
-                    Parent.Base3DRender(false, pos, lookatpos, FOV);
-                    if (Parent.OBJModel != null) Parent.OBJModel.Render();
-                    if (Parent.Collision != null) Parent.Collision.Render();
-                }
-                else
-                {
-                    Parent.BaseRender();
-                    if (Parent.OBJModel != null) Parent.OBJModel.Render();
-                    RenderThis();
-                }
-                Parent.simpleOpenGlControl1.Refresh();
-            }
-        }        
+        public static void DrawRoute(ViewPlaneHandler vph, VisualSettings Settings, Routes.RouteGroup route, Vector3 offset)
+        {
+            Gl.glLineWidth(Settings.LineWidth);
+            Gl.glColor4f(Settings.RouteLinkColor.R / 255f, Settings.RouteLinkColor.G / 255f, Settings.RouteLinkColor.B / 255f, Settings.RouteLinkColor.A / 255f);
+            Gl.glBegin(Gl.GL_LINE_STRIP);
+            foreach (Vector3 p in CameraRail.Polyline(route)) vph.draw2DVertice(p + offset);
+            Gl.glEnd();
+            Gl.glColor4f(Settings.RouteColor.R / 255f, Settings.RouteColor.G / 255f, Settings.RouteColor.B / 255f, Settings.RouteColor.A / 255f);
+            foreach (var p in route.Entries) vph.drawPoint(p.Pos + offset, Settings.PointSize * 0.6f);
+        }
+
+        private static void RenderCame(ViewPlaneHandler vph, VisualSettings Settings, Vector3 pos)
+        {
+            Gl.glColor4f(Settings.PointborderColor.R / 255f, Settings.PointborderColor.G / 255f, Settings.PointborderColor.B / 255f, Settings.PointborderColor.A);
+            vph.drawPoint(pos, Settings.PointSize * (2f / 3f) + 2f, true);
+
+            Gl.glColor4f(Settings.CameColor.R / 255f, Settings.CameColor.G / 255f, Settings.CameColor.B / 255f, Settings.CameColor.A);
+            vph.drawPoint(pos, Settings.PointSize * (2f / 3f));
+        }
+
+        // The look-at points: viewpoint begin and end joined by a dotted line, and where the camera looks now.
+        private static void RenderVP(ViewPlaneHandler vph, VisualSettings Settings, Camera.CameraEntry entry, Vector3 lookatpos)
+        {
+            Vector3 vp1 = entry.VPBegin;
+            Vector3 vp2 = entry.VPEnd;
+            Gl.glColor4f((Settings.HighlightPointborderColor.R / 255f), (Settings.HighlightPointborderColor.G / 255f), (Settings.HighlightPointborderColor.B / 255f), Settings.HighlightPointborderColor.A);
+            Gl.glLineWidth(Settings.LineWidth / 2f);
+            Gl.glPushAttrib(Gl.GL_ENABLE_BIT);
+            Gl.glLineStipple(3, 0xAAAA);
+            Gl.glEnable(Gl.GL_LINE_STIPPLE);
+            Gl.glBegin(Gl.GL_LINES);
+            vph.draw2DVertice(vp1);
+            vph.draw2DVertice(vp2);
+            Gl.glEnd();
+            Gl.glPopAttrib();
+
+            Gl.glPointSize(Settings.PointSize / 2);
+            Gl.glBegin(Gl.GL_POINTS);
+            vph.draw2DVertice(vp1);
+            vph.draw2DVertice(vp2);
+            Gl.glColor4f(Settings.HighlightPointColor.R / 255f, Settings.HighlightPointColor.G / 255f, Settings.HighlightPointColor.B / 255f, Settings.HighlightPointColor.A);
+            vph.draw2DVertice(lookatpos);
+            Gl.glEnd();
+        }
+
+        // The camera's view on the map: a cone of its field of view toward the look-at point. It reaches 50000 units,
+        // the far clip of the game's cameras. (It used to reach 10^9 units, from the origin instead of the camera, which
+        // the float precision of the drawing made shake.)
+        private static void RenderView(ViewPlaneHandler vph, VisualSettings Settings, Vector3 pos, Vector3 lookatpos, float FOV)
+        {
+            double angle = Math.Atan2(vph.getViewCoord(lookatpos, 1) - vph.getViewCoord(pos, 1), vph.getViewCoord(lookatpos, 0) - vph.getViewCoord(pos, 0));
+            double px = vph.getViewCoord(pos, 0), py = vph.getViewCoord(pos, 1), reach = 50000;
+            double xcenter = px + Math.Cos(angle) * reach;
+            double ycenter = py + Math.Sin(angle) * reach;
+            double xside1 = px + Math.Cos(angle + RadianDegree.ToRadiansD((double)FOV / 2)) * reach;
+            double yside1 = py + Math.Sin(angle + RadianDegree.ToRadiansD((double)FOV / 2)) * reach;
+            double xside2 = px + Math.Cos(angle - RadianDegree.ToRadiansD((double)FOV / 2)) * reach;
+            double yside2 = py + Math.Sin(angle - RadianDegree.ToRadiansD((double)FOV / 2)) * reach;
+            Gl.glColor4f((Settings.HighlightPointColor.R / 255f), (Settings.HighlightPointColor.G / 255f), (Settings.HighlightPointColor.B / 255f), 0.25f);
+            Gl.glBegin(Gl.GL_TRIANGLE_FAN);
+            vph.draw2DVertice(pos);
+            Gl.glVertex2d(xside1, yside1);
+            Gl.glVertex2d(xside2, yside2);
+            Gl.glEnd();
+            Gl.glColor4f((Settings.CameColor.R / 255f), (Settings.CameColor.G / 255f), (Settings.CameColor.B / 255f), Settings.CameColor.A);
+            Gl.glBegin(Gl.GL_LINE_LOOP);
+            Gl.glVertex2d(xside1, yside1);
+            vph.draw2DVertice(pos);
+            Gl.glVertex2d(xside2, yside2);
+            Gl.glEnd();
+            Gl.glColor4f((Settings.HighlightPointborderColor.R / 255f), (Settings.HighlightPointborderColor.G / 255f), (Settings.HighlightPointborderColor.B / 255f), Settings.HighlightPointborderColor.A);
+            Gl.glLineWidth(Settings.LineWidth / 2f);
+            Gl.glPushAttrib(Gl.GL_ENABLE_BIT);
+            Gl.glLineStipple(3, 0xAAAA);
+            Gl.glEnable(Gl.GL_LINE_STIPPLE);
+            Gl.glBegin(Gl.GL_LINES);
+            vph.draw2DVertice(pos);
+            Gl.glVertex2d(xcenter, ycenter);
+            Gl.glEnd();
+            Gl.glPopAttrib();
+        }
     }
 }

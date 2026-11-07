@@ -101,6 +101,7 @@
     <Compile Include="Class\CDAB.cs" />
     <Compile Include="Class\CheckpointSearch.cs" />
     <Compile Include="Class\CullingPreview.cs" />
+    <Compile Include="Class\DemoCameras.cs" />
     <Compile Include="Class\GhostCheckpoints.cs" />
     <Compile Include="Class\KCL.cs" />
     <Compile Include="Class\Gizmo3D.cs" />

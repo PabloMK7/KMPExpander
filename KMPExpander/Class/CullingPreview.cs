@@ -261,7 +261,8 @@ namespace KMPExpander.Class
         // kart: the simulated kart, or null.
         // For the camera kart, clipID says whether the clip ID of its checkpoint hides cells and cameraView whether its view
         // does.
-        public static CullingPreview Compute(CDAB div, OBJWrapper obj, SimpleKMP kmp, SimpleKMPs.KartSimulator.KartEntry kart, List<int> selectedClipRoutes, bool clipID = true, bool cameraView = true)
+        // view: the camera to cull for instead of the kart's race camera (the replay camera), or null.
+        public static CullingPreview Compute(CDAB div, OBJWrapper obj, SimpleKMP kmp, SimpleKMPs.KartSimulator.KartEntry kart, List<int> selectedClipRoutes, bool clipID = true, bool cameraView = true, DemoView view = null)
         {
             CullingPreview c = new CullingPreview();
             bool hasGrid = false;
@@ -294,7 +295,13 @@ namespace KMPExpander.Class
                 routes = clipID ? GetClipRoutes(kmp, c.KartClipID) : null;
                 Vector3 modelMin = hasObj ? objMin : new Vector3(c.MinX, float.MinValue, c.MinZ);
                 Vector3 modelMax = hasObj ? objMax : new Vector3(c.MinX + GridCells * c.CellW, float.MaxValue, c.MinZ + GridCells * c.CellH);
-                if (cameraView) c.ViewEdges = GetViewRegion(kart.GetCameraPosition(), kart.GetCameraDirection(), kart.Far, kart.GetCorners(), modelMin, modelMax, out c.ViewPolygon);
+                if (cameraView && view != null)
+                {
+                    Vector3 dir = view.LookAt - view.Position;
+                    float halfHeight = (float)Math.Tan(view.Fov * Math.PI / 360);
+                    c.ViewEdges = GetViewRegion(view.Position, dir.Normalize(), kart.Far, SimpleKMPs.KartSimulator.KartEntry.ViewCorners(view.Position, dir, view.Up, halfHeight, 3, kart.Far), modelMin, modelMax, out c.ViewPolygon);
+                }
+                else if (cameraView) c.ViewEdges = GetViewRegion(kart.GetCameraPosition(), kart.GetCameraDirection(), kart.Far, kart.GetCorners(), modelMin, modelMax, out c.ViewPolygon);
                 c.clipRoutes = routes;
             }
             if (!active) return c;

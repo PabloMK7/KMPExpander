@@ -43,8 +43,9 @@ namespace KMPExpander.Class.SimpleKMPs
             }
         }
 
-        // The race camera's defaults were measured in the game (Mario Circuit, driving): 55 to 68 units behind the
-        // kart, 20 to 40 above it, looking 7 to 22 degrees down; its view is 5:3, with a half height tangent of 0.488
+        // The race camera's defaults were measured in the game (Mario Circuit, driving; the medians of the AI driving
+        // the player's kart: 50 units behind and 33 above the kart, aimed at a point 19.7 above it), 37 to 68 units behind
+        // the kart, 20 to 47 above it, looking 7 to 22 degrees down; its view is 5:3, with a half height tangent of 0.488
         // (0.543 at top speed), the near corners 1.5 units and the far ones 50000 units away. The kart went about 8 units
         // per frame.
         public enum Modes { Driving, Airborne, Gliding, Cannon, Respawning }
@@ -64,6 +65,8 @@ namespace KMPExpander.Class.SimpleKMPs
             internal ushort FloorValue;
             internal int BoostFrames, RespawnFrames, RespawnCount;
             internal bool GliderArmed, Underwater;
+            internal int WingDelay;                      // frames before the glider opens after a glider pad
+            internal bool Bounced;                       // thrown up by a bouncy object, until it lands
             internal string RespawnReason = "";
             internal GliderRoutes.GliderGroup GlideGroup;
             internal int GlideIndex;
@@ -85,6 +88,15 @@ namespace KMPExpander.Class.SimpleKMPs
             // armed the glider, the drift, and the items.
             internal int ValleyIgnore = 0x20;
             internal bool Drifting, DriftDrawn, AllowMiniTurbo = true, BoostStrong;
+            // Steering: frames spent turning the same way, and whether the turn has become a sliding turn.
+            // The drawn state of the frame before (see BeginInterpolation), and the real state while it is replaced.
+            internal Vector3 PrevPos, PrevBodyUp, SavedPos, SavedBodyUp;
+            internal float PrevDirection, PrevBodyAngle, PrevCamFwdX, PrevCamFwdZ, PrevCamY;
+            internal float SavedDirection, SavedBodyAngle, SavedCamFwdX, SavedCamFwdZ, SavedCamY;
+            internal bool HasPrev;
+            internal int SteerFrames, SteerSide;
+            internal float YawRate;
+            internal bool SlidingTurn;
             internal int DriftOverLv1Frames, DriftSide, MushroomCount, MushroomTimer;
             internal float DriftCharge, TargetLane;
             internal float BodyAngle;                    // degrees between the body and the direction of travel
@@ -130,8 +142,10 @@ namespace KMPExpander.Class.SimpleKMPs
             public Single Lane { get; set; } = 0;
             [Description("Top speed in units per frame. Changing Level sets the usual value for that engine class. In the game the CPUs reached about 6.1 to 6.4 at 50cc, 6.8 to 7.2 at 100cc and 7.7 to 8.0 at 150cc.")]
             public Single Speed { get; set; } = 7.9f;
-            [Description("How fast the kart can turn, in degrees per frame.")]
-            public Single MaxTurn { get; set; } = 4;
+            [Description("How fast the kart can turn while driving, in degrees per frame. Measured in game (150cc, Wuhu Loop): about 1.1 with the stick held, at any speed; the kart reaches it gradually over half a second, and loses speed while it turns.")]
+            public Single MaxTurn { get; set; } = 1.1f;
+            [Description("How fast the kart can turn while drifting, in degrees per frame. Measured in game: about 1.6, without the loss of speed of normal turns.")]
+            public Single MaxDriftTurn { get; set; } = 1.6f;
             [Description("What the kart is doing, such as driving, in the air, gliding, in a cannon, under water or respawning, and why it respawns.")]
             public string Status
             {
@@ -140,6 +154,7 @@ namespace KMPExpander.Class.SimpleKMPs
                     if (Target == null && Mode != Modes.Respawning) return "";
                     string text = Mode == Modes.Respawning ? "respawning (" + RespawnReason + ")" : Mode.ToString().ToLowerInvariant();
                     if (Underwater && Mode != Modes.Respawning) text += ", under water";
+                    if (Bounced && Mode == Modes.Airborne) text += ", bounced";
                     if (Drifting) text += DriftCharge >= MiniTurboLv2 ? ", drifting (mini-turbo 2)" : DriftCharge >= MiniTurboLv1 ? ", drifting (mini-turbo 1)" : ", drifting";
                     if (BoostFrames > 0) text += ", boost";
                     if (MushroomCount > 0) text += ItemVal == 4 ? ", Mushrooms" : ", " + MushroomCount + (ItemVal == 3 ? " Golden" : "") + " Mushroom" + (MushroomCount > 1 ? "s" : "");
@@ -229,9 +244,9 @@ namespace KMPExpander.Class.SimpleKMPs
             }
 
             [Description("How far behind the kart its race camera is, in units.")]
-            public Single CameraBack { get; set; } = 60;
+            public Single CameraBack { get; set; } = 50;
             [Description("How high above the kart its race camera is, in units.")]
-            public Single CameraUp { get; set; } = 31;
+            public Single CameraUp { get; set; } = 33;
             [Description("How far the camera looks down, in degrees. Negative values look down.")]
             public Single CameraPitch { get; set; } = -14.5f;
             [Description("How wide the camera's view is. It is the tangent of half the vertical field of view.")]
@@ -256,6 +271,10 @@ namespace KMPExpander.Class.SimpleKMPs
             internal const float CameraTurnRate = 0.25f, CameraHeightRate = 0.15f;
             internal bool CameraSmoothed;
             internal float CameraFwdX, CameraFwdZ, CameraY;
+            // The race camera's up vector: the kart's up, followed slowly (in game it tilted at most ~12 degrees on
+            // Toad Circuit's slopes and changed over about a second; the rate is a guess).
+            internal Vector3 CameraUpVector = new Vector3(0, 1, 0);
+            internal const float CameraUpRate = 0.05f;
 
             internal void UpdateCamera()
             {
@@ -264,9 +283,12 @@ namespace KMPExpander.Class.SimpleKMPs
                     CameraFwdX = ForwardX;
                     CameraFwdZ = ForwardZ;
                     CameraY = Pos.Y + CameraUp;
+                    CameraUpVector = BodyUp;
                     CameraSmoothed = true;
                     return;
                 }
+                Vector3 cu = CameraUpVector + (BodyUp - CameraUpVector) * CameraUpRate;
+                if (cu.Length > 0) CameraUpVector = cu.Normalize();
                 float x = CameraFwdX + (ForwardX - CameraFwdX) * CameraTurnRate, z = CameraFwdZ + (ForwardZ - CameraFwdZ) * CameraTurnRate;
                 float l = (float)Math.Sqrt(x * x + z * z);
                 if (l > 1e-4f) { CameraFwdX = x / l; CameraFwdZ = z / l; }
@@ -292,16 +314,23 @@ namespace KMPExpander.Class.SimpleKMPs
             // the other side.
             public Vector3[] GetCorners()
             {
-                Vector3 p = GetCameraPosition(), d = GetCameraDirection();
-                float rl = (float)Math.Sqrt(d.Z * d.Z + d.X * d.X);
-                Vector3 right = new Vector3(d.Z / rl, 0, -d.X / rl);
+                return ViewCorners(GetCameraPosition(), GetCameraDirection(), new Vector3(0, 1, 0), ViewHalfHeight, Near, Far);
+            }
+
+            // The corners of any 5:3 view: from p looking along d, rolled by up, of half height tangent halfHeight.
+            public static Vector3[] ViewCorners(Vector3 p, Vector3 d, Vector3 upHint, float halfHeight, float Near, float Far)
+            {
+                d = d.Normalize();
+                Vector3 right = upHint.Cross(d);
+                if (right.Length < 1e-4f) right = new Vector3(0, 1, 0).Cross(d);
+                right = right.Normalize();
                 Vector3 up = new Vector3(d.Y * right.Z - d.Z * right.Y, d.Z * right.X - d.X * right.Z, d.X * right.Y - d.Y * right.X);
                 Vector3[] corners = new Vector3[8];
                 for (int i = 0; i < 8; i++)
                 {
                     float dist = (i & 2) != 0 ? Near : Far;
-                    float h = dist * ViewHalfHeight * ((i & 1) != 0 ? -1 : 1);
-                    float w = dist * ViewHalfHeight * (5f / 3f) * ((i & 4) != 0 ? 1 : -1);
+                    float h = dist * halfHeight * ((i & 1) != 0 ? -1 : 1);
+                    float w = dist * halfHeight * (5f / 3f) * ((i & 4) != 0 ? 1 : -1);
                     corners[i] = new Vector3(p.X + d.X * dist + up.X * h + right.X * w,
                                              p.Y + d.Y * dist + up.Y * h + right.Y * w,
                                              p.Z + d.Z * dist + up.Z * h + right.Z * w);
@@ -320,7 +349,8 @@ namespace KMPExpander.Class.SimpleKMPs
 
             // The kart as an arrow (orange for the camera kart, blue for the others, faded when the game would not
             // draw it), and for the camera kart its camera and the view region as a cone.
-            public void Render()
+            // bodyOnly: only the kart, as the replay and intro cameras show it.
+            public void Render(bool bodyOnly = false)
             {
                 Form1 form = Application.OpenForms[0] as Form1;
                 ViewPlaneHandler vph = form.vph;
@@ -338,7 +368,7 @@ namespace KMPExpander.Class.SimpleKMPs
                     vph.drawPoint(Pos, Settings.PointSize + 2f);
                     return;
                 }
-                if (isCamera && c.ViewPolygon != null && c.ViewPolygon.Count >= 3)
+                if (isCamera && !bodyOnly && c.ViewPolygon != null && c.ViewPolygon.Count >= 3)
                 {
                     Gl.glColor4f(1f, 0.5f, 0f, 0.12f);
                     Gl.glBegin(Gl.GL_POLYGON);
@@ -350,9 +380,13 @@ namespace KMPExpander.Class.SimpleKMPs
                     foreach (var p in c.ViewPolygon) vph.drawXZ(p[0], p[1], Pos.Y);
                     Gl.glEnd();
                 }
-                // In 3D the arrow is never shorter than a kart (about 30 units).
-                float size = Settings.PointSize * 3 * form.GetPixelSize(Pos);
-                if (vph.Is3D) size = Math.Max(size, 18);
+                // The kart's footprint: 21 units long and 15 wide (the shadow model body_std_shadow is 19.8 x 14.4, the
+                // body 20.4 x 14.3, and 15 units wide from behind in game), with a pointed nose to show its heading. In the
+                // map and the 3D view it is never shorter than about a point on screen (1.5 point sizes), so that it can be
+                // found when zoomed out, and zoomed in it shows its real size; as the replay and intro cameras show it
+                // (bodyOnly), always at its real size.
+                float size = Settings.PointSize * 1.5f * form.GetPixelSize(Pos) / KartLength;
+                size = bodyOnly ? 1 : Math.Max(1, size);
                 // The body: turned into the turn while drifting (measured in game: 41 to 44 degrees between the body and
                 // the direction of travel), turning in and back gradually.
                 // In 3D the kart stands on its up (the smoothed floor normal): its forward is the body's direction laid
@@ -363,27 +397,35 @@ namespace KMPExpander.Class.SimpleKMPs
                 if (Length(fwd) == 0) fwd = new Vector3(BodyX, 0, BodyZ);
                 Vector3 side = up.Cross(fwd);
                 Func<float, float, float, Vector3> at = (f, sd, h) => Add(Add(Add(Pos, fwd, f), side, sd), up, h);
-                Vector3[] body = { at(size, 0, 0), at(-size * 0.6f, size * 0.5f, 0), at(-size * 0.6f, -size * 0.5f, 0) };
+                float l = KartLength / 2 * size, w = KartWidth / 2 * size;
+                Vector3[] body = { at(l, 0, 0), at(l * 0.45f, -w, 0), at(-l, -w, 0), at(-l, w, 0), at(l * 0.45f, w, 0) };
                 // In 3D a lit wedge KartHeight high; the sparks and the outline go on its top.
                 float top = vph.Is3D ? KartHeight + 0.5f : 0;
                 Gl.glColor4f(r, g, b, a);
-                if (vph.Is3D) DrawWedge(vph, body, up, KartHeight);
+                if (vph.Is3D) DrawKartModel(vph, at, size, r, g, b, a);
                 else
                 {
-                    Gl.glBegin(Gl.GL_TRIANGLES);
+                    Gl.glBegin(Gl.GL_POLYGON);
                     foreach (var p in body) vph.draw2DVertice(p);
                     Gl.glEnd();
                 }
                 if (Drifting && DriftCharge >= MiniTurboLv1)
                 {
-                    // The drift sparks, as in the game: blue once mini-turbo level 1 is charged, orange at level 2.
-                    float back = size * 0.6f, len = size * 0.9f, half = size * 0.35f;
+                    // The drift sparks, as in the game: blue once mini-turbo level 1 is charged, orange at level 2, behind
+                    // each rear wheel, near the ground, as a flat and an upright triangle so that they show from any side.
                     if (DriftCharge >= MiniTurboLv2) Gl.glColor4f(1f, 0.55f, 0f, a);
                     else Gl.glColor4f(0.2f, 0.5f, 1f, a);
                     Gl.glBegin(Gl.GL_TRIANGLES);
-                    vph.draw2DVertice(at(-back, 0, top));
-                    vph.draw2DVertice(at(-back - len, half, top));
-                    vph.draw2DVertice(at(-back - len, -half, top));
+                    foreach (float wheel in new[] { -1f, 1f })
+                    {
+                        float sd = wheel * 6.25f * size, f0 = -9 * size, f1 = -15 * size, h = 1.5f * size, spread = 2.5f * size;
+                        vph.draw2DVertice(at(f0, sd, h));
+                        vph.draw2DVertice(at(f1, sd + spread, h * 0.3f));
+                        vph.draw2DVertice(at(f1, sd - spread, h * 0.3f));
+                        vph.draw2DVertice(at(f0, sd, h));
+                        vph.draw2DVertice(at(f1, sd, h + spread));
+                        vph.draw2DVertice(at(f1, sd, 0));
+                    }
                     Gl.glEnd();
                     Gl.glColor4f(r, g, b, a);
                 }
@@ -403,7 +445,7 @@ namespace KMPExpander.Class.SimpleKMPs
                     Gl.glLineWidth(1);
                     Gl.glColor4f(r, g, b, a);
                 }
-                if (selected && Target != null && form.getKayEmPee().EnemyRoutes.GetVisibility())
+                if (selected && !bodyOnly && Target != null && form.getKayEmPee().EnemyRoutes.GetVisibility())
                 {
                     // The route point the kart heads for, and its aim point (moved to the kart's lane), shown with the
                     // enemy points.
@@ -417,7 +459,7 @@ namespace KMPExpander.Class.SimpleKMPs
                     vph.drawPoint(Target.Pos, Settings.PointSize + 2f);
                     Gl.glColor4f(r, g, b, a);
                 }
-                if (isCamera)
+                if (isCamera && !bodyOnly)
                 {
                     Vector3 cam = GetCameraPosition();
                     vph.drawPoint(cam, vph.Is3D ? Settings.PointSize / 4 : Settings.PointSize / 2 + 1);
@@ -425,28 +467,58 @@ namespace KMPExpander.Class.SimpleKMPs
             }
         }
 
-        // The height of the kart drawn in 3D: about its collision sphere's radius.
-        internal const float KartHeight = 12;
+        // The height of the kart drawn in 3D: about its collision sphere's radius. Its length and width: see Render.
+        internal const float KartHeight = 12, KartLength = 21, KartWidth = 15;
 
-        // A wedge over the triangle bottom, height along up, lit like the points' spheres.
+        // A simple kart, 21 units long and 15 wide at scale 1, in the kart's axes (at: forward, side, height): a chassis
+        // with a pointed nose in the kart's colour, four dark wheels (the rear ones bigger) and the driver.
+        private static void DrawKartModel(ViewPlaneHandler vph, Func<float, float, float, Vector3> at, float size, float r, float g, float b, float a)
+        {
+            Func<float, float, float, Vector3> s = (f, sd, h) => at(f * size, sd * size, h * size);
+            Action<float, float, float, float, float, float> box = (f0, f1, s0, s1, h0, h1) =>
+                DrawWedge(vph, new[] { s(f0, s0, h0), s(f1, s0, h0), s(f1, s1, h0), s(f0, s1, h0) }, Normalize(Add(s(0, 0, 1), s(0, 0, 0), -1)), (h1 - h0) * size);
+            Gl.glColor4f(r, g, b, a);
+            // Chassis and nose.
+            DrawWedge(vph, new[] { s(10.5f, 0, 1.5f), s(6, -4.5f, 1.5f), s(-9, -5, 1.5f), s(-9, 5, 1.5f), s(6, 4.5f, 1.5f) }, Normalize(Add(s(0, 0, 1), s(0, 0, 0), -1)), 3.5f * size);
+            // Seat back and bumper.
+            box(-9.5f, -6, -4, 4, 1.5f, 7);
+            Gl.glColor4f(0.15f, 0.15f, 0.15f, a);
+            foreach (int side in new[] { -1, 1 })
+            {
+                box(-9, -4, side * 5, side * 7.5f, 0, 5.5f);    // rear wheels
+                box(4, 8, side * 4.5f, side * 7, 0, 4.5f);      // front wheels
+            }
+            // The driver: body and head.
+            Gl.glColor4f(Math.Min(1, r + 0.35f), Math.Min(1, g + 0.35f), Math.Min(1, b + 0.35f), a);
+            box(-6, -1, -3, 3, 5, 10);
+            box(-5, -1.5f, -2, 2, 10, 13.5f);
+            Gl.glColor4f(r, g, b, a);
+        }
+
+        // A prism over the convex polygon bottom, height along up, lit like the points' spheres.
         private static void DrawWedge(ViewPlaneHandler vph, Vector3[] bottom, Vector3 up, float height)
         {
             if (!vph.Picking) Gl.glEnable(Gl.GL_LIGHTING);
-            Vector3[] top = new Vector3[3];
-            for (int i = 0; i < 3; i++) top[i] = Add(bottom[i], up, height);
-            Vector3 centre = Add(Add(bottom[0], bottom[1]), bottom[2]) * (1f / 3);
+            int count = bottom.Length;
+            Vector3[] top = new Vector3[count];
+            for (int i = 0; i < count; i++) top[i] = Add(bottom[i], up, height);
+            Vector3 centre = new Vector3(0);
+            foreach (var b in bottom) centre = Add(centre, b);
+            centre = centre * (1f / count);
             // Normals in the (X, Z, Y) layout of the 3D view.
             Action<Vector3> normal = n => Gl.glNormal3f(n.X, n.Z, n.Y);
-            Gl.glBegin(Gl.GL_TRIANGLES);
+            Gl.glBegin(Gl.GL_POLYGON);
             normal(up);
-            for (int i = 0; i < 3; i++) vph.draw3DVertice(top[i]);
+            for (int i = 0; i < count; i++) vph.draw3DVertice(top[i]);
+            Gl.glEnd();
+            Gl.glBegin(Gl.GL_POLYGON);
             normal(up * -1);
-            for (int i = 2; i >= 0; i--) vph.draw3DVertice(bottom[i]);
+            for (int i = count - 1; i >= 0; i--) vph.draw3DVertice(bottom[i]);
             Gl.glEnd();
             Gl.glBegin(Gl.GL_QUADS);
-            for (int i = 0; i < 3; i++)
+            for (int i = 0; i < count; i++)
             {
-                int j = (i + 1) % 3;
+                int j = (i + 1) % count;
                 Vector3 n = Add(bottom[j], bottom[i], -1).Cross(up);
                 if (n.Dot(Add(Add(bottom[i], bottom[j]) * 0.5f, centre, -1)) < 0) n = n * -1;
                 normal(n);
@@ -766,6 +838,7 @@ namespace KMPExpander.Class.SimpleKMPs
         public bool StartDriving(SimpleKMP kmp, bool standing)
         {
             battle = kmp.CheckPoints.Entries.Count == 0;
+            FindBouncers(kmp);
             route = BuildRoute(kmp, !battle);
             checkpoints = !battle && kmp.CheckPoints.Entries.Count > 0 ? new CheckpointSearch(kmp) : null;
             bool any = false;
@@ -778,14 +851,20 @@ namespace KMPExpander.Class.SimpleKMPs
                 k.NormalRate = 1;
                 k.AirFrames = 0;
                 k.GroundNormal = k.BodyUp = new Vector3(0, 1, 0);
+                k.YawRate = 0;
                 k.RespawnDrop = false;
                 k.BoostFrames = k.RespawnFrames = k.RespawnCount = 0;
                 k.BoostStrong = false;
                 k.GliderArmed = k.Underwater = false;
                 k.GlideGroup = null;
+                k.WingDelay = 0;
+                k.Bounced = false;
                 k.Checkpoint = null;
                 k.OutOfCheckpoints = false;
                 k.CameraSmoothed = false;
+                k.SteerFrames = k.SteerSide = 0;
+                k.YawRate = 0;
+                k.SlidingTurn = false;
                 if (checkpoints != null)
                 {
                     checkpoints.Init(k.CheckpointState, k.Pos.X, k.Pos.Z);
@@ -837,6 +916,47 @@ namespace KMPExpander.Class.SimpleKMPs
             return any;
         }
 
+        // Drawing between two frames: the karts are put a share t of the way from their state of the frame before to
+        // their state now, so that they move smoothly whatever the drawing rate and the simulation speed. EndInterpolation
+        // puts the real state back. The simulation itself always moves in whole game frames.
+        private bool interpolating;
+        public void BeginInterpolation(float t)
+        {
+            if (interpolating) return;
+            interpolating = true;
+            foreach (var k in Entries)
+            {
+                k.SavedPos = k.Pos; k.SavedBodyUp = k.BodyUp; k.SavedDirection = k.Direction; k.SavedBodyAngle = k.BodyAngle;
+                k.SavedCamFwdX = k.CameraFwdX; k.SavedCamFwdZ = k.CameraFwdZ; k.SavedCamY = k.CameraY;
+                if (!k.HasPrev || t >= 1 || (k.Pos - k.PrevPos).Length > 200) continue;
+                k.Pos = k.PrevPos + (k.Pos - k.PrevPos) * t;
+                k.BodyUp = Normalize(Add(k.PrevBodyUp, Add(k.BodyUp, k.PrevBodyUp, -1), t));
+                k.Direction = k.PrevDirection + Wrap(k.Direction - k.PrevDirection) * t;
+                k.BodyAngle = k.PrevBodyAngle + (k.BodyAngle - k.PrevBodyAngle) * t;
+                k.CameraFwdX = k.PrevCamFwdX + (k.CameraFwdX - k.PrevCamFwdX) * t;
+                k.CameraFwdZ = k.PrevCamFwdZ + (k.CameraFwdZ - k.PrevCamFwdZ) * t;
+                k.CameraY = k.PrevCamY + (k.CameraY - k.PrevCamY) * t;
+            }
+        }
+
+        public void EndInterpolation()
+        {
+            if (!interpolating) return;
+            interpolating = false;
+            foreach (var k in Entries)
+            {
+                k.Pos = k.SavedPos; k.BodyUp = k.SavedBodyUp; k.Direction = k.SavedDirection; k.BodyAngle = k.SavedBodyAngle;
+                k.CameraFwdX = k.SavedCamFwdX; k.CameraFwdZ = k.SavedCamFwdZ; k.CameraY = k.SavedCamY;
+            }
+        }
+
+        private static float Wrap(float degrees)
+        {
+            while (degrees > 180) degrees -= 360;
+            while (degrees < -180) degrees += 360;
+            return degrees;
+        }
+
         // One frame of driving for every enabled kart. Returns false when no kart is driving any more.
         public bool Step(SimpleKMP kmp, OBJWrapper obj)
         {
@@ -844,6 +964,9 @@ namespace KMPExpander.Class.SimpleKMPs
             bool any = false;
             foreach (var k in Entries)
             {
+                k.PrevPos = k.Pos; k.PrevBodyUp = k.BodyUp; k.PrevDirection = k.Direction; k.PrevBodyAngle = k.BodyAngle;
+                k.PrevCamFwdX = k.CameraFwdX; k.PrevCamFwdZ = k.CameraFwdZ; k.PrevCamY = k.CameraY;
+                k.HasPrev = k.CameraSmoothed;
                 if (!k.Enabled || k.Target == null) continue;
                 bool physics = kcl != null && k.Physics;
                 k.Advanced = k.UsedItem = false;
@@ -864,23 +987,61 @@ namespace KMPExpander.Class.SimpleKMPs
             return any;
         }
 
-        private static void Turn(KartEntry k, Vector3 toward, float maxTurn)
+        // Turning, measured in game (150cc, the player's kart on the start straight of Wuhu Loop, the stick held for 30 to
+        // 70 frames): the kart turns about 0.7 degrees per frame at first and 1.1 after half a second, whether the stick
+        // is held fully or halfway (a quarter of the stick gave 0.35 to 0.5), at 4 or at 7 units per frame. Held fully
+        // for 30 frames, the turn becomes a sliding turn (VehicleMove status 0x4000): up to 1.25 degrees per frame
+        // without the loss of speed below. A drift turns up to 1.6 per frame, also without it.
+        internal const float TurnStart = 0.65f, SlidingTurnRate = 1.25f;
+        internal const int TurnRampFrames = 30;
+        // The kart steers in proportion to how far off its aim it points (SteerGain of the angle per frame, up to the
+        // limit above), and its turning rate changes by at most YawAccel degrees per frame each frame (the game reached
+        // 0.7 within 3 frames of the stick being pushed), so that it turns smoothly instead of in jerks toward each new
+        // route point.
+        internal const float SteerGain = 0.2f, YawAccel = 0.25f, GroundNormalRate = 0.25f;
+        // While it turns, the kart loses 0.0075 x its speed per degree turned that frame, on top of its acceleration:
+        // with A held at 7 units per frame, the full stick took it from 6.98 to 5.78 in 30 frames and half the stick
+        // from 6.70 to 5.56 in 40 (measured with the acceleration of a straight line, 0.008 x (top - speed), taken out).
+        internal static float TurnDrag = 0.0075f;
+
+        // Turns the kart toward a point, at most maxTurn degrees per frame (ramped up as in the game when ramp is
+        // set). Returns the degrees turned.
+        private static float Turn(KartEntry k, Vector3 toward, float maxTurn, bool ramp = false)
         {
             float desired = (float)(Math.Atan2(toward.X - k.Pos.X, toward.Z - k.Pos.Z) * 180 / Math.PI);
             float diff = desired - k.Direction;
             while (diff > 180) diff -= 360;
             while (diff < -180) diff += 360;
-            diff = Math.Max(-maxTurn, Math.Min(maxTurn, diff));
+            float limit = maxTurn;
+            if (ramp)
+            {
+                int side = Math.Abs(diff) < 0.05f ? 0 : Math.Sign(diff);
+                if (side == 0 || side != k.SteerSide) k.SteerFrames = 0;
+                else k.SteerFrames++;
+                k.SteerSide = side;
+                limit = maxTurn * Math.Min(1, TurnStart + (1 - TurnStart) * k.SteerFrames / TurnRampFrames);
+                // Steering that stays at its limit for the ramp's length becomes a sliding turn.
+                bool saturated = Math.Abs(diff) * SteerGain >= limit;
+                if (!saturated) k.SlidingTurn = false;
+                else if (k.SteerFrames >= TurnRampFrames) k.SlidingTurn = true;
+                if (k.SlidingTurn && !k.Drifting) limit = Math.Max(limit, SlidingTurnRate * maxTurn / 1.1f);
+            }
+            float want = Math.Max(-limit, Math.Min(limit, diff * SteerGain));
+            k.YawRate += Math.Max(-YawAccel, Math.Min(YawAccel, want - k.YawRate));
+            // Never past the aim.
+            if (Math.Sign(k.YawRate) == Math.Sign(diff) && Math.Abs(k.YawRate) > Math.Abs(diff)) k.YawRate = diff;
+            diff = k.YawRate;
             k.Direction += diff;
             if (k.Direction > 180) k.Direction -= 360;
             if (k.Direction < -180) k.Direction += 360;
+            return Math.Abs(diff);
         }
 
         // Without physics the kart moves at its speed and takes the height of the route, or of the ground under it.
         private void StepOnRoute(KartEntry k, OBJWrapper obj)
         {
             Vector3 aim = AimPoint(k);
-            Turn(k, aim, k.MaxTurn);
+            Turn(k, aim, k.Drifting ? Math.Max(k.MaxTurn, k.MaxDriftTurn) : k.MaxTurn);
             float speed = k.Speed;
             if (k.BoostFrames > 0) speed = BoostTop(k);
             float x = k.Pos.X + k.ForwardX * speed, z = k.Pos.Z + k.ForwardZ * speed;
@@ -973,9 +1134,54 @@ namespace KMPExpander.Class.SimpleKMPs
         private const float WaterGravity = 0.35f;    // share of the gravity under water
         private const float WaterMaxFallSpeed = 6;
         private const float WaterSpeed = 0.9f;       // share of the top speed under water
-        private const float GlideSink = 2;           // units per frame down while gliding without a route
-        private const float GlideRise = 1.5f;        // units per frame up toward a higher glider point
-        private const float CannonSpeed = 2.5f;      // share of the top speed in a cannon
+        // Gliding and cannons, measured in game (the AI driving the player's kart; Mario Circuit's glider ramp and Waluigi
+        // Pinball's cannon). A glider pad throws the kart up by 2 units per frame more than the ramp's slope, gives it a
+        // boost of 1.07 x its top speed for 20 frames (the trick at the ramp), and the glider opens 23 frames later,
+        // lifting the kart to at least 0.9 units per frame. Then it sinks toward 1.2 per frame (about 1.3 % of the
+        // difference per frame; the glider points steer it between -2.4 and +0.9, never up with Prevent Raising), and its
+        // speed falls by 0.0045 per frame, down to 92 % of its top speed (8.4 to 7.3 over 230 frames). In a cannon the
+        // kart flies straight at the cannon route's second point, 1 unit per frame faster each frame up to 25, and from
+        // 510 units before that point slows by 4.7 % per frame back to its top speed; it then glides on along the route.
+        private const float GlideSink = 1.2f, GlideRise = 0.9f, GlideRate = 0.03f, GlideSlowdown = 0.0045f, GlideMinSpeed = 0.92f;
+        private const float GliderPadLift = 2, WingOpenVelY = 0.9f;
+        private const int GliderPadBoost = 20, WingOpenDelay = 23;
+        // Bouncy objects. Their collision is not in the KCL but set per object in RaceCommon.szs/Data/ObjFlow.bin
+        // (+0x14 the shape, then its sizes): the mushrooms CmnKinoko1, 2, 3, RrJump and the tambourine MpTambourine are
+        // cylinders of radius 200 and height 60 (times the object's scale), centred on their position; they are taken
+        // upright here, whatever their rotation. Measured in game (Mario Circuit, the mushroom in the gap after the
+        // castle): a kart reaching the top of the cylinder is thrown up at 6.6 units per frame (6.34 after that frame's
+        // gravity), with 21 % more speed forward.
+        private const float BounceVelY = 6.6f, BounceSpeedUp = 1.21f;
+        private struct Bouncer { public Vector3 Pos; public float RX, RZ, HalfY; }
+        private List<Bouncer> bouncers = new List<Bouncer>();
+
+        private void FindBouncers(SimpleKMP kmp)
+        {
+            bouncers.Clear();
+            foreach (var o in kmp.Objects.Entries)
+                if (o.ObjectID == 0x020 || o.ObjectID == 0x131 || o.ObjectID == 0x137 || o.ObjectID == 0x1A5 || o.ObjectID == 0x191)
+                    bouncers.Add(new Bouncer { Pos = o.Pos, RX = 200 * o.ScaleX, RZ = 200 * o.ScaleZ, HalfY = 30 * o.ScaleY });
+        }
+
+        // A kart whose bottom reaches the top of a bouncy object while not going up is thrown up.
+        private bool Bounce(KartEntry k, float x, ref float y, float z)
+        {
+            if (k.VelY > 0.5f || k.Mode == Modes.Cannon) return false;
+            foreach (var b in bouncers)
+            {
+                float dx = (x - b.Pos.X) / b.RX, dz = (z - b.Pos.Z) / b.RZ, top = b.Pos.Y + b.HalfY;
+                if (y > top || y < b.Pos.Y - b.HalfY || dx * dx + dz * dz > 1) continue;
+                y = top;
+                k.Mode = Modes.Airborne;
+                k.VelY = Fall(BounceVelY, FallTerminal, FallRate);
+                k.CurSpeed *= BounceSpeedUp;
+                k.Bounced = true;
+                return true;
+            }
+            return false;
+        }
+
+        private const float CannonSpeed = 25, CannonAcceleration = 1, CannonBrakeDistance = 510, CannonBrake = 0.953f;
         // Boosts (VehicleMove::execDashOne and updateDashParam, values of the parameter block at 0x665508 read in game): a
         // Mushroom lasts 90 frames and a boost pad 60, and both raise the top speed to 1.2 x max(top speed, 7.6); a
         // mini-turbo raises it to 1.07 x the top speed, for 29 frames at level 1 and 88 at level 2 (kart stats: 26 to 32
@@ -1046,13 +1252,16 @@ namespace KMPExpander.Class.SimpleKMPs
             Vector3 aim = AimPoint(k);
             GliderRoutes.GliderGroup.GliderEntry glidePoint = GlidePoint(k);
             bool flying = k.Mode == Modes.Gliding || k.Mode == Modes.Cannon;
-            float turn = k.MaxTurn;
+            float turn = k.Drifting ? Math.Max(k.MaxTurn, k.MaxDriftTurn) : k.MaxTurn;
             if (k.Mode == Modes.Airborne) turn *= AirTurn;
             else if (k.Mode == Modes.Driving && KCL.Types[k.FloorValue & 0x1F].Kind == KCL.Kinds.Slippery) turn *= 0.6f;
             // Backing up: wheels straight while reversing (phase 0), then toward the spot on the route behind (phase 1).
             Vector3 steerTo = flying && glidePoint != null ? glidePoint.Pos : aim;
             if (k.BackPhase == 1) steerTo = BackTarget(k, aim);
-            if (k.BackPhase != 0) Turn(k, steerTo, turn);
+            float turned = k.BackPhase != 0 ? Turn(k, steerTo, turn, k.Mode == Modes.Driving) : 0;
+            // A cannon shoots the kart straight at its point.
+            if (k.Mode == Modes.Cannon && glidePoint != null)
+                k.Direction = (float)(Math.Atan2(glidePoint.Pos.X - x, glidePoint.Pos.Z - z) * 180 / Math.PI);
 
             // Speed: the kart's top speed, changed by the floor, boosts, water and cannons; in the air it keeps its speed.
             float top = k.Speed;
@@ -1060,12 +1269,18 @@ namespace KMPExpander.Class.SimpleKMPs
             bool boosting = k.BoostFrames > 0;
             if (boosting) top = BoostTop(k);
             if (k.Underwater) top *= WaterSpeed;
-            if (k.Mode == Modes.Cannon) top = k.Speed * CannonSpeed;
             if (k.BackPhase == 0) top = -k.Speed * ReverseSpeed;
             float rate = top > k.CurSpeed ? Acceleration : Deceleration;
             if (k.Mode == Modes.Airborne) rate = 0;
-            if (boosting && top > k.CurSpeed && k.Mode != Modes.Airborne) k.CurSpeed = Math.Min(top, k.CurSpeed + BoostAcceleration);
+            if (k.Mode == Modes.Cannon)
+            {
+                k.CurSpeed = Math.Min(CannonSpeed, k.CurSpeed + CannonAcceleration);
+                if (glidePoint != null && (glidePoint.Pos - k.Pos).Length < CannonBrakeDistance) k.CurSpeed = Math.Max(k.Speed, k.CurSpeed * CannonBrake);
+            }
+            else if (boosting && top > k.CurSpeed && k.Mode != Modes.Airborne) k.CurSpeed = Math.Min(top, k.CurSpeed + BoostAcceleration);
+            else if (k.Mode == Modes.Gliding) { if (k.CurSpeed > k.Speed * GlideMinSpeed) k.CurSpeed = Math.Max(k.Speed * GlideMinSpeed, k.CurSpeed - GlideSlowdown); }
             else k.CurSpeed += (top - k.CurSpeed) * rate;
+            if (k.Mode == Modes.Driving && !k.Drifting && !k.SlidingTurn) k.CurSpeed -= TurnDrag * turned * k.CurSpeed;
             // On the floor the kart covers its speed along the slope, so it moves less across the map on a steep one.
             float slope = k.Mode == Modes.Driving ? k.GroundSlope : 0;
             float step = k.CurSpeed / (float)Math.Sqrt(1 + slope * slope);
@@ -1083,10 +1298,17 @@ namespace KMPExpander.Class.SimpleKMPs
                     k.VelY = Math.Max(-k.CurSpeed, Math.Min(k.CurSpeed, (glidePoint.Pos.Y - y) * k.CurSpeed / Math.Max(1, hd)));
                     break;
                 case Modes.Gliding:
+                    if (k.WingDelay > 0)
+                    {
+                        // Thrown by the glider pad, before the glider opens.
+                        k.VelY = Fall(k.VelY, FallTerminal, FallRate);
+                        if (--k.WingDelay == 0) k.VelY = Math.Max(k.VelY, WingOpenVelY);
+                        break;
+                    }
                     float want = -GlideSink;
                     if (glidePoint != null)
                         want = Math.Max(-2 * GlideSink, Math.Min(k.GlideGroup.PreventRaising ? 0 : GlideRise, (glidePoint.Pos.Y - y) / 20));
-                    k.VelY += (want - k.VelY) * 0.1f;
+                    k.VelY += (want - k.VelY) * GlideRate;
                     break;
                 case Modes.Airborne:
                     if (k.RespawnDrop) k.VelY = Fall(k.VelY, RespawnDropTerminal, FallRate);
@@ -1095,6 +1317,7 @@ namespace KMPExpander.Class.SimpleKMPs
                     break;
             }
             if (k.Mode != Modes.Driving) y += k.VelY;
+            Bounce(k, x, ref y, z);
 
             // Walls push the kart sideways, and slow it a little.
             float pushX, pushZ;
@@ -1125,7 +1348,13 @@ namespace KMPExpander.Class.SimpleKMPs
                 {
                     k.VelY = Math.Max(k.GroundVelY, -k.CurSpeed);
                     k.Mode = Modes.Airborne;
-                    if (k.GliderArmed) StartGlide(k, kmp, false);
+                    if (k.GliderArmed)
+                    {
+                        k.VelY += GliderPadLift;
+                        StartBoost(k, GliderPadBoost, false);
+                        StartGlide(k, kmp, false);
+                        if (k.Mode == Modes.Gliding) k.WingDelay = WingOpenDelay;
+                    }
                 }
             }
             else if (floor != null && y <= floor.Value)
@@ -1136,6 +1365,8 @@ namespace KMPExpander.Class.SimpleKMPs
                 k.Mode = Modes.Driving;
                 k.FloorValue = value;
                 k.GlideGroup = null;
+                k.WingDelay = 0;
+                k.Bounced = false;
             }
             k.Pos = new Vector3(x, y, z);
             UpdateBodyUp(k);
@@ -1200,7 +1431,9 @@ namespace KMPExpander.Class.SimpleKMPs
             if (k.Mode == Modes.Driving)
             {
                 k.AirFrames = 0;
-                k.NormalRate = Math.Min(1, k.NormalRate + 0.02f);
+                // At most a quarter of the way per frame, so that the body does not flicker between the normals of
+                // neighbouring floor triangles (a choice for the drawing, not measured).
+                k.NormalRate = Math.Min(GroundNormalRate, k.NormalRate + 0.02f);
                 target = k.GroundNormal;
             }
             else
@@ -1487,7 +1720,10 @@ namespace KMPExpander.Class.SimpleKMPs
                 if (dx * dx + dz * dz < best) { best = dx * dx + dz * dz; k.GlideGroup = g; }
             }
             k.Mode = activator && k.GlideGroup != null && k.GlideGroup.CannonSection ? Modes.Cannon : Modes.Gliding;
-            if (k.Mode == Modes.Gliding) k.VelY = Math.Max(k.VelY, 1);
+            k.WingDelay = 0;
+            if (k.Mode == Modes.Gliding) k.VelY = Math.Max(k.VelY, WingOpenVelY);
+            // A cannon shoots the kart from the route's first point at its second one.
+            if (k.Mode == Modes.Cannon && k.GlideGroup.Entries.Count > 1) k.GlideIndex = 1;
         }
 
         private static GliderRoutes.GliderGroup.GliderEntry GlidePoint(KartEntry k)
@@ -1507,6 +1743,8 @@ namespace KMPExpander.Class.SimpleKMPs
             float sx = p.Pos.X - prev.X, sz = p.Pos.Z - prev.Z;
             if (dx * dx + dz * dz > 250 * 250 && dx * sx + dz * sz > 0) return;
             k.GlideIndex++;
+            // Past the cannon's point, the kart glides on.
+            if (k.Mode == Modes.Cannon) k.Mode = Modes.Gliding;
             if (k.GlideIndex < k.GlideGroup.Entries.Count) return;
             var groups = (Application.OpenForms[0] as Form1).getKayEmPee().GliderRoutes.Entries;
             List<GliderRoutes.GliderGroup> nexts = new List<GliderRoutes.GliderGroup>();
@@ -1594,6 +1832,7 @@ namespace KMPExpander.Class.SimpleKMPs
                 k.CurSpeed = 0;
                 k.VelY = 0;
                 k.GroundNormal = k.BodyUp = new Vector3(0, 1, 0);
+                k.YawRate = 0;
                 k.CameraSmoothed = false;                // the camera jumps with the kart
                 if (checkpoints != null && k.CheckpointState.Previous >= 0) k.Checkpoint = checkpoints.Points[k.CheckpointState.Previous].Entry;
                 RoutePoint start = NearestRoutePoint(at);
@@ -1693,7 +1932,8 @@ namespace KMPExpander.Class.SimpleKMPs
         private void RenderCheckpointAreas()
         {
             Form1 form = Application.OpenForms[0] as Form1;
-            if (checkpoints == null || form.Collision == null) return;
+            // Only with the checkpoints shown.
+            if (checkpoints == null || form.Collision == null || !form.getKayEmPee().CheckPoints.GetVisibility()) return;
             foreach (var k in Entries)
             {
                 if (!k.Enabled || !k.Physics || !form.SelectedDots.Contains(k)) continue;
@@ -1734,6 +1974,8 @@ namespace KMPExpander.Class.SimpleKMPs
         public void Render(bool picking)
         {
             if (!Visible) return;
+            Gl.glBindTexture(Gl.GL_TEXTURE_2D, 0);
+            Gl.glAlphaFunc(Gl.GL_ALWAYS, 0f);
             if (!picking) RenderCheckpointAreas();
             foreach (var k in Entries)
             {
@@ -1741,6 +1983,50 @@ namespace KMPExpander.Class.SimpleKMPs
                 if (picking) k.RenderPicking();
                 else k.Render();
             }
+        }
+
+        // The course intro shows the eight racers on the start grid: every kart is put there, enabled and standing, until
+        // RestoreAfterIntro gives them back their state.
+        private struct SavedKart { public Vector3 Pos, BodyUp; public float Direction, Lane, BodyAngle; public bool Enabled, Drifting; }
+        private SavedKart[] savedKarts;
+
+        public void PlaceForIntro(SimpleKMP kmp, OBJWrapper obj)
+        {
+            savedKarts = new SavedKart[Entries.Count];
+            for (int i = 0; i < Entries.Count; i++)
+            {
+                var k = Entries[i];
+                savedKarts[i] = new SavedKart { Pos = k.Pos, BodyUp = k.BodyUp, Direction = k.Direction, Lane = k.Lane, BodyAngle = k.BodyAngle, Enabled = k.Enabled, Drifting = k.Drifting };
+            }
+            PlaceOnGrid(kmp, obj);
+            foreach (var k in Entries)
+            {
+                k.Enabled = true;
+                k.BodyUp = new Vector3(0, 1, 0);
+                k.BodyAngle = 0;
+                k.Drifting = false;
+            }
+        }
+
+        public void RestoreAfterIntro()
+        {
+            if (savedKarts == null) return;
+            for (int i = 0; i < Entries.Count; i++)
+            {
+                var k = Entries[i]; var v = savedKarts[i];
+                k.Pos = v.Pos; k.BodyUp = v.BodyUp; k.Direction = v.Direction; k.Lane = v.Lane; k.BodyAngle = v.BodyAngle; k.Enabled = v.Enabled; k.Drifting = v.Drifting;
+            }
+            savedKarts = null;
+        }
+
+        // The enabled karts alone, as the game shows them.
+        public void RenderBodies()
+        {
+            // The course model leaves its last texture bound and an alpha test on.
+            Gl.glBindTexture(Gl.GL_TEXTURE_2D, 0);
+            Gl.glAlphaFunc(Gl.GL_ALWAYS, 0f);
+            foreach (var k in Entries)
+                if (k.Enabled) k.Render(true);
         }
 
         // Its eight entries can be neither added to nor removed.

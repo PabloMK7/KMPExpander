@@ -28,12 +28,22 @@ namespace KMPExpander
         public CDAB div = null;
         private string div_path = "";
         public OBJWrapper OBJModel = null;
+
+        // Opens a model as the OBJ window's Load does, so that the window shows it.
+        public void LoadOBJ(string fileName)
+        {
+            obj_manager.LoadOBJ(fileName);
+            Render();
+        }
         public KCL Collision = null;
         private ToolStripMenuItem closeKCLMenuItem;
         public CullingPreview Culling = null;
         private ToolStripButton toolStripButtonDrive;
         private ToolStripButton toolStripButtonRaceStart;
-        private ToolStripMenuItem statsMenuItem, occludeMenuItem;
+        private ToolStripComboBox kartSpeedComboBox;
+        private float kart_drive_rate = 1;            // share of real time the karts are simulated at
+        private float kart_drive_fraction = 1;        // how far drawing is between the last two simulated frames
+        private ToolStripMenuItem statsMenuItem, occludeMenuItem, nativeScreenMenuItem, followKartMenuItem;
         private ToolStripMenuItem allRoutePointsMenuItem;
         private Label statsLabel;
         private System.Windows.Forms.Timer kart_drive_timer;
@@ -96,8 +106,22 @@ namespace KMPExpander
             toolStripButtonRaceStart.ToolTipText = "Put the simulated karts back on the start grid and reset their state";
             toolStripButtonRaceStart.Click += (s, e) => RestartKarts();
             toolStrip1.Items.Insert(toolStrip1.Items.IndexOf(toolStripButtonDrive), toolStripButtonRaceStart);
-            ToolStripDropDownButton viewButton = new ToolStripDropDownButton("View");
-            viewButton.Alignment = ToolStripItemAlignment.Right;
+            // The simulation speed: the karts still move in steps of one game frame (1/60 s), fewer of them per second.
+            kartSpeedComboBox = new ToolStripComboBox() { DropDownStyle = ComboBoxStyle.DropDownList, Alignment = ToolStripItemAlignment.Right, AutoSize = false, Width = 60 };
+            kartSpeedComboBox.ToolTipText = "Simulation speed of the karts, as a share of real time, they still move one game frame (1/60 s) at a time";
+            kartSpeedComboBox.Items.AddRange(new object[] { "100%", "75%", "50%", "25%", "10%", "5%" });
+            kartSpeedComboBox.SelectedIndex = 0;
+            kartSpeedComboBox.SelectedIndexChanged += (s, e) =>
+            {
+                kart_drive_rate = int.Parse(((string)kartSpeedComboBox.SelectedItem).TrimEnd('%')) / 100f;
+                kart_drive_clock.Restart();
+                kart_drive_frames = 0;
+                simpleOpenGlControl1.Focus();
+            };
+            toolStrip1.Items.Insert(toolStrip1.Items.IndexOf(toolStripButtonDrive), kartSpeedComboBox);
+            // The view options go into the menu bar's View menu, after 3D Mode.
+            ToolStripMenuItem viewButton = toolStripMenuItem6;
+            viewButton.DropDownItems.Add(new ToolStripSeparator());
             statsMenuItem = new ToolStripMenuItem("Triangle statistics") { CheckOnClick = true };
             statsMenuItem.CheckedChanged += (s, e) => Render();
             allRoutePointsMenuItem = new ToolStripMenuItem("Smoothed enemy points of every path") { CheckOnClick = true };
@@ -108,6 +132,14 @@ namespace KMPExpander
             occludeMenuItem.ToolTipText = "3D view: the model, the object models and the collision hide the KMP behind them, and those points cannot be picked";
             occludeMenuItem.CheckedChanged += (s, e) => Render();
             viewButton.DropDownItems.Add(occludeMenuItem);
+            nativeScreenMenuItem = new ToolStripMenuItem("3DS screen at 400 x 240 pixels") { CheckOnClick = true };
+            nativeScreenMenuItem.ToolTipText = "3D view, replay and intro cameras: show the 3DS top screen at its own size, 400 x 240 pixels, instead of as large as the view allows (5:3 either way)";
+            nativeScreenMenuItem.CheckedChanged += (s, e) => Render();
+            viewButton.DropDownItems.Add(nativeScreenMenuItem);
+            followKartMenuItem = new ToolStripMenuItem("Follow the camera kart in the map") { CheckOnClick = true };
+            followKartMenuItem.ToolTipText = "2D views: keep the camera kart (the selected enabled kart, else the first enabled one) in the middle; zooming keeps following, panning stops it";
+            followKartMenuItem.CheckedChanged += (s, e) => Render();
+            viewButton.DropDownItems.Add(followKartMenuItem);
             objectModelsMenuItem = new ToolStripMenuItem("Object models") { CheckOnClick = true, Checked = true };
             objectModelsMenuItem.ToolTipText = "Draw the objects with their models from the object models folder";
             objectModelsMenuItem.CheckedChanged += (s, e) => Render();
@@ -125,7 +157,6 @@ namespace KMPExpander
             viewButton.DropDownItems.Add(objectModelsMenuItem);
             viewButton.DropDownItems.Add(objectModelsFolderMenuItem);
             InitializeGhosts(viewButton);
-            toolStrip1.Items.Insert(toolStrip1.Items.IndexOf(viewPlaneComboBox), viewButton);
             statsLabel = new Label();
             statsLabel.AutoSize = true;
             statsLabel.BackColor = Color.FromArgb(40, 40, 40);
@@ -583,7 +614,7 @@ namespace KMPExpander
 
         private void aboutToolStripMenuItem_Click(object sender, EventArgs e)
         {
-            MessageBox.Show("KMP Expander v2.0 Made by Ermelber & PabloMK7.\nLicensed under the MIT License.");
+            MessageBox.Show("KMP Expander v2.1 Made by Ermelber & PabloMK7.\nLicensed under the MIT License.");
         }
 
         private void saveKMP()
@@ -1217,6 +1248,7 @@ namespace KMPExpander
             {
                 int speed = positive ? 100 : -100;
 
+                StopFollowingKart();
                 if ((ModifierKeys & Keys.Shift) > 0)
                     hScrollBar1.Value = clamp((int)(hScrollBar1.Value - getViewportLevel() * speed), hScrollBar1.Minimum, hScrollBar1.Maximum);
                 else if ((ModifierKeys & Keys.Control) > 0)
@@ -1262,12 +1294,14 @@ namespace KMPExpander
 
         private void vScrollBar1_Scroll(object sender, ScrollEventArgs e)
         {
+            StopFollowingKart();
             ViewportOffset = new Vector2(hScrollBar1.Value, vScrollBar1.Value);
             Render();
         }
 
         private void hScrollBar1_Scroll(object sender, ScrollEventArgs e)
         {
+            StopFollowingKart();
             ViewportOffset = new Vector2(hScrollBar1.Value, vScrollBar1.Value);
             Render();
         }
@@ -1489,6 +1523,8 @@ namespace KMPExpander
                 float m = getViewportLevel();
                 int deltaX = e.X - move_viewport_start_location.X;
                 int deltaY = e.Y - move_viewport_start_location.Y;
+                if (deltaX == 0 && deltaY == 0) return;
+                StopFollowingKart();
 
                 hScrollBar1.Value = clamp((int)(move_viewport_start_scroll.X - m * deltaX), hScrollBar1.Minimum, hScrollBar1.Maximum);
                 vScrollBar1.Value = clamp((int)(move_viewport_start_scroll.Y - m * deltaY), vScrollBar1.Minimum, vScrollBar1.Maximum);
@@ -1585,7 +1621,35 @@ namespace KMPExpander
         internal void Render()
         {
             if (!opengl_initialized || !allowRender) return;
+            // While the karts drive, they are drawn between their last two frames (smooth at any simulation speed).
+            bool interpolate = Kayempee != null && kart_drive_timer.Enabled;
+            if (interpolate) Kayempee.KartSimulator.BeginInterpolation(kart_drive_fraction);
+            // The replay camera's view of this frame, for the 3D camera, the culling and the map.
+            replayView = CurrentReplayView();
+            FollowKartInMap();
+            try { RenderView(); }
+            finally { if (interpolate) Kayempee.KartSimulator.EndInterpolation(); }
+        }
 
+        // With "Follow the camera kart in the map", a 2D view is centred on the camera kart, where it is drawn.
+        private void FollowKartInMap()
+        {
+            if (mode_3d || followKartMenuItem == null || !followKartMenuItem.Checked || Kayempee == null) return;
+            KartSimulator.KartEntry kart = Kayempee.KartSimulator.CameraKart;
+            if (kart == null) return;
+            ViewportOffset = new Vector2(vph.getViewCoord(kart.Pos, 0), vph.getViewCoord(kart.Pos, 1));
+            hScrollBar1.Value = clamp((int)ViewportOffset.X, hScrollBar1.Minimum, hScrollBar1.Maximum);
+            vScrollBar1.Value = clamp((int)ViewportOffset.Z, vScrollBar1.Minimum, vScrollBar1.Maximum);
+        }
+
+        // Panning the map by hand stops following the kart.
+        private void StopFollowingKart()
+        {
+            if (followKartMenuItem != null) followKartMenuItem.Checked = false;
+        }
+
+        private void RenderView()
+        {
             if (mode_3d) Render3D();
             else
             {
@@ -1600,6 +1664,7 @@ namespace KMPExpander
                 RenderGhostAreas();
                 if (Kayempee != null) Kayempee.Render();
                 RenderGhostLines();
+                RenderReplay2D();
                 RenderGizmo(false);
             }
             simpleOpenGlControl1.Refresh();
@@ -1666,13 +1731,16 @@ namespace KMPExpander
             List<int> routes = Kayempee != null ? Kayempee.currentCullingRoutes : null;
             KartSimulator.KartEntry kart = null;
             bool checkpointSelected = SelectedDots.Any(d => d is CheckPoints.CheckpointGroup.CheckpointEntry);
-            if (Kayempee != null && Kayempee.KartSimulator.Visible && !checkpointSelected)
+            if (Kayempee != null && (Kayempee.KartSimulator.Visible || replayView != null) && !checkpointSelected)
             {
                 kart = Kayempee.KartSimulator.Entries.FirstOrDefault(k => k.Enabled && SelectedDots.Contains(k));
                 if (kart == null && kartCameraButton != null && kartCameraButton.Checked) kart = Kayempee.KartSimulator.CameraKart;
+                if (kart == null && replayView != null) kart = Kayempee.KartSimulator.CameraKart;
             }
+            // With the replay camera on, the view culled is the replay camera's; the clip IDs stay the kart's.
+            DemoView view = replayView != null && kart == Kayempee.KartSimulator.CameraKart ? replayView : null;
             Culling = (div != null || OBJModel != null || kart != null) ? CullingPreview.Compute(div, OBJModel, Kayempee, kart, routes,
-                kart == null || Kayempee.KartSimulator.ClipIDCulling, kart == null || Kayempee.KartSimulator.CameraCulling) : null;
+                kart == null || Kayempee.KartSimulator.ClipIDCulling, kart == null || Kayempee.KartSimulator.CameraCulling, view) : null;
             UpdateStats();
         }
 
@@ -1734,6 +1802,7 @@ namespace KMPExpander
         {
             bool driving = kart_drive_timer.Enabled;
             if (!PrepareDriving(true)) return;
+            replayDirector = null;
             PauseDriving(!driving);
         }
 
@@ -1791,16 +1860,20 @@ namespace KMPExpander
                 return;
             }
             // At most 6 frames per tick, so that a slow frame does not make the karts jump.
-            long due = kart_drive_clock.ElapsedMilliseconds * 60 / 1000;
+            double exact = kart_drive_clock.Elapsed.TotalSeconds * 60 * kart_drive_rate;
+            long due = (long)exact;
             int steps = (int)Math.Min(6, due - kart_drive_frames);
             kart_drive_frames = Math.Max(kart_drive_frames + steps, due - 6);
             for (int i = 0; i < steps; i++)
             {
-                if (Kayempee.KartSimulator.Step(Kayempee, OBJModel)) continue;
+                bool driving = Kayempee.KartSimulator.Step(Kayempee, OBJModel);
+                StepReplayCamera();
+                if (driving) continue;
                 StopDriving();
                 toolStripStatusLabel1.Text = "Every kart reached the end of a route";
                 break;
             }
+            kart_drive_fraction = (float)Math.Max(0, Math.Min(1, exact - kart_drive_frames));
             // Repainting the grid view every frame made driving lag, so the kart rows are repainted a few times per
             // second, and not while a cell is being edited.
             if (dataGridView1.DataSource == Kayempee.KartSimulator.GetEntries() && !dataGridView1.IsCurrentCellInEditMode &&
@@ -1814,6 +1887,7 @@ namespace KMPExpander
 
         public void BaseRender(bool picking=false)
         {
+            Gl.glDisable(Gl.GL_SCISSOR_TEST);
             Gl.glMatrixMode(Gl.GL_PROJECTION);
             Gl.glLoadIdentity();
             Gl.glViewport(0, 0, simpleOpenGlControl1.Width, simpleOpenGlControl1.Height);

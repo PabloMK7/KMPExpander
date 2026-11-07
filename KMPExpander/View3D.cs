@@ -22,7 +22,15 @@ namespace KMPExpander
     {
         private const float near3D = 10f, far3D = 200000f;
         private float fov3D = 45f;                        // vertical, degrees; the camera kart's while in its camera
-        private ToolStripButton kartCameraButton;
+        private ToolStripButton kartCameraButton, replayCameraButton;
+        // The view of the replay and course intro cameras: the camera's up vector (it can roll) and near clip, and a
+        // viewport of the size of the 3DS top screen.
+        private Vector3 view3DUp = new Vector3(0, 1, 0);
+        private float view3DNear = near3D;
+        public const int ScreenWidth3DS = 400, ScreenHeight3DS = 240;
+        internal bool IntroPlaying;
+        private ReplayCameraDirector replayDirector;
+        private DemoView replayView;                      // the replay camera's view in the frame being drawn
         private Vector3 cam3DPos = new Vector3(0, 5000, -5000);
         private float cam3DYaw = 0, cam3DPitch = -45;     // degrees; yaw 0 looks toward +Z
         private bool cam3DPlaced = false;
@@ -67,12 +75,28 @@ namespace KMPExpander
             kartCameraButton = new ToolStripButton("Kart Camera") { CheckOnClick = true, Alignment = ToolStripItemAlignment.Right, ToolTipText = "Look through the race camera of the camera kart (the selected enabled kart, else the first enabled one) in the 3D view; Escape leaves it" };
             kartCameraButton.CheckedChanged += (s, e) =>
             {
+                if (kartCameraButton.Checked && replayCameraButton.Checked) replayCameraButton.Checked = false;
                 if (kartCameraButton.Checked && !mode_3d) viewPlaneComboBox.SelectedIndex = 3;
                 if (!kartCameraButton.Checked) fov3D = 45f;
                 Render();
             };
+            replayCameraButton = new ToolStripButton("Replay Camera") { CheckOnClick = true, Alignment = ToolStripItemAlignment.Right, ToolTipText = "Look through the replay cameras of the camera kart (the selected enabled kart, else the first enabled one) as the game picks it: the camera of the camera area the kart is in. The 3D view looks through it on a 5:3 screen like the 3DS's; the map shows it as a cone, with the route it rides. While the karts drive the cameras move; while they stand, the camera of the kart's area is shown from its start. Escape leaves it" };
+            replayCameraButton.CheckedChanged += (s, e) =>
+            {
+                if (replayCameraButton.Checked && kartCameraButton.Checked) kartCameraButton.Checked = false;
+                replayDirector = null;
+                if (!replayCameraButton.Checked)
+                {
+                    fov3D = 45f;
+                    view3DUp = new Vector3(0, 1, 0);
+                    view3DNear = near3D;
+                    toolStripStatusLabel1.Text = "";
+                }
+                Render();
+            };
             // Next to the other kart buttons, Restart and Drive Karts.
             toolStrip1.Items.Insert(toolStrip1.Items.IndexOf(toolStripButtonRaceStart), kartCameraButton);
+            toolStrip1.Items.Insert(toolStrip1.Items.IndexOf(kartCameraButton), replayCameraButton);
             cam3DTimer = new System.Windows.Forms.Timer();
             cam3DTimer.Interval = 16;
             cam3DTimer.Tick += cam3DTimer_Tick;
@@ -87,7 +111,7 @@ namespace KMPExpander
             mode_3d = on;
             vph.Is3D = on;
             toggle3DViewToolStripMenuItem.Checked = on;
-            if (!on) kartCameraButton.Checked = false;
+            if (!on) kartCameraButton.Checked = replayCameraButton.Checked = false;
             keys3D.Clear();
             cam3DTimer.Stop();
             drag3D = Drag3D.None;
@@ -142,14 +166,51 @@ namespace KMPExpander
             Base3DRender(picking, cam3DPos, cam3DPos + Camera3DForward(), fov3D);
         }
 
-        // The camera goes into the projection matrix, as the drawing code resets the modelview matrix all the time.
         public void Base3DRender(bool picking, Vector3 eye, Vector3 target, float fovy)
         {
+            Base3DRender(picking, eye, target, fovy, view3DUp, view3DNear);
+        }
+
+        // Whether the 3D view shows the 3DS top screen: with the replay camera, and while the course intro plays.
+        private bool Screen3DS { get { return mode_3d && (IntroPlaying || (replayCameraButton != null && replayCameraButton.Checked)); } }
+
+        // Where the 3D view is drawn, in control coordinates (top left origin): the whole control, or the 3DS top screen
+        // (5:3) in its middle, as large as the control allows, or at 400 x 240 pixels with "3DS screen at 400 x 240
+        // pixels" (scaled down when the control is smaller).
+        private Rectangle View3DRect
+        {
+            get
+            {
+                int cw = Math.Max(1, simpleOpenGlControl1.Width), ch = Math.Max(1, simpleOpenGlControl1.Height);
+                if (!Screen3DS) return new Rectangle(0, 0, cw, ch);
+                float scale = Math.Min(cw / (float)ScreenWidth3DS, ch / (float)ScreenHeight3DS);
+                if (nativeScreenMenuItem.Checked) scale = Math.Min(1f, scale);
+                int w = Math.Max(1, (int)(ScreenWidth3DS * scale)), h = Math.Max(1, (int)(ScreenHeight3DS * scale));
+                return new Rectangle((cw - w) / 2, (ch - h) / 2, w, h);
+            }
+        }
+
+        // The camera goes into the projection matrix, as the drawing code resets the modelview matrix all the time.
+        // On the 3DS screen, the margin around the screen is black (white in the picking pass, where it picks nothing).
+        public void Base3DRender(bool picking, Vector3 eye, Vector3 target, float fovy, Vector3 up, float near)
+        {
+            Rectangle vr = View3DRect;
+            int ch = simpleOpenGlControl1.Height;
+            Gl.glDisable(Gl.GL_SCISSOR_TEST);
+            if (Screen3DS)
+            {
+                Gl.glViewport(0, 0, simpleOpenGlControl1.Width, ch);
+                if (picking) Gl.glClearColor(1f, 1f, 1f, 1f);
+                else Gl.glClearColor(0f, 0f, 0f, 1f);
+                Gl.glClear(Gl.GL_COLOR_BUFFER_BIT | Gl.GL_DEPTH_BUFFER_BIT);
+                Gl.glEnable(Gl.GL_SCISSOR_TEST);
+                Gl.glScissor(vr.X, ch - vr.Bottom, vr.Width, vr.Height);
+            }
             Gl.glMatrixMode(Gl.GL_PROJECTION);
             Gl.glLoadIdentity();
-            Gl.glViewport(0, 0, simpleOpenGlControl1.Width, simpleOpenGlControl1.Height);
-            Glu.gluPerspective(fovy, (double)simpleOpenGlControl1.Width / Math.Max(1, simpleOpenGlControl1.Height), near3D, far3D);
-            Glu.gluLookAt(eye.X, eye.Y, eye.Z, target.X, target.Y, target.Z, 0, 1, 0);
+            Gl.glViewport(vr.X, ch - vr.Bottom, vr.Width, vr.Height);
+            Glu.gluPerspective(fovy, (double)vr.Width / vr.Height, near, far3D);
+            Glu.gluLookAt(eye.X, eye.Y, eye.Z, target.X, target.Y, target.Z, up.X, up.Y, up.Z);
             // What is drawn comes as (X, Z, Y), the layout of the XZ map (see ViewPlaneHandler.Is3D).
             Gl.glMultMatrixf(new float[] { 1, 0, 0, 0, 0, 0, 1, 0, 0, 1, 0, 0, 0, 0, 0, 1 });
             Gl.glMatrixMode(Gl.GL_MODELVIEW);
@@ -176,7 +237,7 @@ namespace KMPExpander
             vph.Picking = picking;
             vph.CameraPos = eye;
             vph.CameraDir = (target - eye).Normalize();
-            vph.PixelScale = 2 * (float)Math.Tan(fovy * Math.PI / 360) / Math.Max(1, simpleOpenGlControl1.Height);
+            vph.PixelScale = 2 * (float)Math.Tan(fovy * Math.PI / 360) / vr.Height;
             vph.PointRadius = Settings.PointRadius3D;
             vph.BasePointSize = Settings.PointSize;
             Gl.glEnable(Gl.GL_NORMALIZE);
@@ -194,7 +255,7 @@ namespace KMPExpander
         {
             if (!mode_3d) return getViewportLevel();
             float depth = Math.Max(near3D, (pos - cam3DPos).Dot(Camera3DForward()));
-            return depth * 2 * (float)Math.Tan(fov3D * Math.PI / 360) / Math.Max(1, simpleOpenGlControl1.Height);
+            return depth * 2 * (float)Math.Tan(fov3D * Math.PI / 360) / View3DRect.Height;
         }
 
         // The axes of the view, in world axes: screen right, screen up and toward the viewer. The 2D views draw their
@@ -229,9 +290,10 @@ namespace KMPExpander
                 dir = toViewer * -1;
                 return;
             }
-            float w = Math.Max(1, simpleOpenGlControl1.Width), h = Math.Max(1, simpleOpenGlControl1.Height);
+            Rectangle vr = View3DRect;
+            float w = vr.Width, h = vr.Height;
             float tan = (float)Math.Tan(fov3D * Math.PI / 360);
-            float x = (2 * mouse.X / w - 1) * tan * w / h, y = (1 - 2 * mouse.Y / h) * tan;
+            float x = (2 * (mouse.X - vr.X) / w - 1) * tan * w / h, y = (1 - 2 * (mouse.Y - vr.Y) / h) * tan;
             Vector3 f = Camera3DForward(), r = Camera3DRight(), u = r.Cross(f);
             origin = cam3DPos;
             dir = (f + r * x + u * y).Normalize();
@@ -256,11 +318,95 @@ namespace KMPExpander
             if (!kartCameraButton.Checked || Kayempee == null) return;
             KartSimulator.KartEntry kart = Kayempee.KartSimulator.CameraKart;
             if (kart == null) return;
-            Vector3 d = kart.GetCameraDirection().Normalize();
-            cam3DPos = kart.GetCameraPosition();
+            LookFrom(kart.GetCameraPosition(), kart.GetCameraDirection(), (float)(2 * Math.Atan(kart.ViewHalfHeight) * 180 / Math.PI));
+        }
+
+        private void LookFrom(Vector3 eye, Vector3 direction, float fovy)
+        {
+            Vector3 d = direction.Normalize();
+            cam3DPos = eye;
             cam3DYaw = (float)(Math.Atan2(d.X, d.Z) * 180 / Math.PI);
             cam3DPitch = (float)(Math.Asin(Math.Max(-1, Math.Min(1, d.Y))) * 180 / Math.PI);
-            fov3D = (float)(2 * Math.Atan(kart.ViewHalfHeight) * 180 / Math.PI);
+            fov3D = fovy;
+        }
+
+        // The karts a demo camera follows: -1 the camera kart, else that kart of the simulation.
+        internal Func<int, KartView> DemoKarts()
+        {
+            KartSimulator sim = Kayempee.KartSimulator;
+            KartSimulator.KartEntry watched = sim.CameraKart ?? sim.Entries[0];
+            return i => KartView.Of(i < 0 || i >= sim.Entries.Count ? watched : sim.Entries[i]);
+        }
+
+        // One frame of the replay cameras, with the karts driving.
+        private void StepReplayCamera()
+        {
+            if (replayCameraButton == null || !replayCameraButton.Checked || Kayempee == null) return;
+            if (replayDirector == null) replayDirector = new ReplayCameraDirector(Kayempee);
+            replayDirector.Step(DemoKarts());
+        }
+
+        // The view of the replay camera now: the demo camera's, or the camera kart's race camera when the director shows
+        // it (null when the replay camera is off or no kart is enabled). While the karts stand, the director is built
+        // again for every frame drawn, so that it follows edits and moved karts; while they drive, the view is drawn
+        // between their last two frames.
+        private DemoView CurrentReplayView()
+        {
+            if (replayCameraButton == null || !replayCameraButton.Checked || Kayempee == null) return null;
+            KartSimulator.KartEntry kart = Kayempee.KartSimulator.CameraKart;
+            if (kart == null)
+            {
+                toolStripStatusLabel1.Text = "Replay camera: no enabled kart";
+                return null;
+            }
+            Func<int, KartView> karts = DemoKarts();
+            if (replayDirector == null || !kart_drive_timer.Enabled)
+            {
+                replayDirector = new ReplayCameraDirector(Kayempee);
+                replayDirector.Step(karts);
+            }
+            KartView view = karts(-1);
+            toolStripStatusLabel1.Text = replayDirector.Describe(view);
+            if (replayDirector.ShowsDemo(view) && replayDirector.Current != null)
+                return kart_drive_timer.Enabled ? DemoView.Lerp(replayDirector.PrevView, replayDirector.View, kart_drive_fraction) : replayDirector.View;
+            DemoView race = new DemoView();
+            race.Position = kart.GetCameraPosition();
+            race.LookAt = race.Position + kart.GetCameraDirection();
+            race.Fov = (float)(2 * Math.Atan(kart.ViewHalfHeight) * 180 / Math.PI);
+            return race;
+        }
+
+        // With the replay camera on in the 3D view, the free camera is put where the replay camera is, and the camera's
+        // roll and near clip (3, as in races) go to the view.
+        private void FollowReplayCamera()
+        {
+            DemoView v = replayView;
+            if (v == null) return;
+            view3DNear = 3;
+            LookFrom(v.Position, v.LookAt - v.Position, v.Fov);
+            view3DUp = v.Up;
+        }
+
+        // With the replay camera on in a map view: its cone, its route and the camera, as for the course intro.
+        private void RenderReplay2D()
+        {
+            DemoView v = replayView;
+            if (v != null) DemoCameraDrawing.Draw(vph, Settings, Kayempee, v, DemoKarts());
+        }
+
+        internal void SetStatusText(string text)
+        {
+            toolStripStatusLabel1.Text = text;
+        }
+
+        // One frame of the course intro in the 3D view: the course as the camera sees it, on the 3DS screen, with the
+        // simulated karts from the third shot on.
+        internal void RenderIntro3D(DemoView v, bool showKarts)
+        {
+            Base3DRender(false, v.Position, v.LookAt, v.Fov, v.Up, IntroCameraDirector.Near);
+            RenderGeometry3D(false);
+            if (showKarts && Kayempee != null) Kayempee.KartSimulator.RenderBodies();
+            simpleOpenGlControl1.Refresh();
         }
 
         // The model, the object models and the collision. Polygon offset pushes them back a little, so that what the KMP
@@ -281,10 +427,17 @@ namespace KMPExpander
         private void Render3D()
         {
             FollowKartCamera();
+            FollowReplayCamera();
             Base3DRender();
             checkCullingRoute();
             UpdateCulling();
             RenderGeometry3D(false);
+            // The replay camera shows what the game would: the course and the karts, without the KMP.
+            if (replayCameraButton.Checked)
+            {
+                if (Kayempee != null) Kayempee.KartSimulator.RenderBodies();
+                return;
+            }
             // Without "Hide points behind the model" the KMP is drawn over the model, as in the map; its spheres and
             // volumes always hide each other.
             if (!occludeMenuItem.Checked) Gl.glClear(Gl.GL_DEPTH_BUFFER_BIT);
@@ -786,6 +939,7 @@ namespace KMPExpander
                     break;
                 case Keys.Escape:
                     if (kartCameraButton.Checked) kartCameraButton.Checked = false;
+                    if (replayCameraButton.Checked) replayCameraButton.Checked = false;
                     e.Handled = true;
                     break;
                 case Keys.D1: case Keys.D2: case Keys.D3:

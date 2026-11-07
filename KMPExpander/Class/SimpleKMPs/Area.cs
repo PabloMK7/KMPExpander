@@ -31,7 +31,7 @@ namespace KMPExpander.Class.SimpleKMPs
         {
             [XmlAttribute, Browsable(false)]
             public Byte ShapeMode { get; set; }
-            [XmlIgnore, Description("The shape of the area. 0 means a box and 1 means a cylinder.")]
+            [XmlIgnore, Description("0: a box, 1000 x ScaleX wide, 1000 x ScaleZ deep, from its position up to 1000 x ScaleY above it. 1: a cylinder (an ellipse when ScaleX and ScaleZ differ) of radius 500 x ScaleX and 500 x ScaleZ, up to 500 x ScaleY above its position, with no bottom (everything below its top is inside). The game skips areas of any other shape, which can crash it.")]
             public string Shape
             {
                 get
@@ -43,17 +43,17 @@ namespace KMPExpander.Class.SimpleKMPs
                         case 1:
                             return "1 - Cylinder";
                         default:
-                            return ShapeMode.ToString() + " - Unknown";
+                            return ShapeMode.ToString() + " - Invalid";
                     }
                 }
                 set
                 {
-                    ShapeMode = Byte.Parse(value);
+                    ShapeMode = Byte.Parse(value.Split(' ')[0]);
                 }
             }
             [XmlAttribute, Browsable(false)]
             public Byte TypeID { get; set; }
-            [XmlIgnore, Description("What the area does. 0 tells camera to use inside it (see CAMEIndex). 1 shows particle effects. 3 makes moving road collision push karts along the route in RouteID. 11 plays a sound effect.")]
+            [XmlIgnore, Description("What the area does. 0: while the watched kart is inside, replays (and the view 5 seconds after the finish) show the camera in CAMEIndex. 1: switches on one of the course slot's environment effects (falling leaves, snow, rain...) for the player inside, chosen by Settings1. 3: karts on moving road collision (KCL type 0x0C) inside it are pushed along the route in RouteID. 11: plays an ambient sound, or a sound placed along the route in RouteID.")]
             public string Type
             {
                 get
@@ -63,23 +63,23 @@ namespace KMPExpander.Class.SimpleKMPs
                         case 0:
                             return "0 - Camera";
                         case 1:
-                            return "1 - Particle Effect";
+                            return "1 - Environment Effect";
                         case 3:
                             return "3 - Moving Road";
                         case 11:
-                            return "11 - Sound Effect";
+                            return "11 - Sound";
                         default:
-                            return TypeID.ToString() + " - Unknown";
+                            return TypeID.ToString() + " - Unused";
                     }
                 }
                 set
                 {
-                    TypeID = Byte.Parse(value);
+                    TypeID = Byte.Parse(value.Split(' ')[0]);
                 }
             }
-            [XmlAttribute("CameraId"), Description("For camera areas (type 0), the camera used while the player is inside the area.")]
+            [XmlAttribute("CameraId"), Description("Camera areas (type 0) only: the camera shown while the watched kart is inside. The area is ignored when the index is -1, or when the camera is of type 0 or has a Video Next other than 0. Without any camera area the course has no replay cameras and no intro.")]
             public SByte CAMEIndex { get; set; }
-            [XmlAttribute, Description("When areas overlap, the one with the highest priority is used.")]
+            [XmlAttribute, Description("Camera areas (type 0) only: where camera areas overlap, the one with the highest priority is used; the area the kart is already in is kept while it stays inside. Other area types ignore it and use the first area in the list.")]
             public Byte Priority { get; set; }
             //public Vector3 Position { get; set; }
             [XmlIgnore, Browsable(false)]
@@ -96,7 +96,7 @@ namespace KMPExpander.Class.SimpleKMPs
                     Pos = new Vector3(value, Pos.Y, Pos.Z);
                 }
             }
-            [XmlAttribute, Description("Height of the bottom of the area. A box reaches 1000 times ScaleY units up from here, a cylinder 500 times ScaleY.")]
+            [XmlAttribute, Description("Height of the bottom of the area: a box up to 1000 x ScaleY units, a cylinder up to 500 x ScaleY (and a cylinder also covers everything below).")]
             public Single PositionY
             {
                 get
@@ -127,22 +127,22 @@ namespace KMPExpander.Class.SimpleKMPs
             public Single RotationY { get; set; }
             [XmlAttribute, Description("Rotation of the area.")]
             public Single RotationZ { get; set; }
-            [XmlAttribute, Description("Size of the area.")]
+            [XmlAttribute, Description("Width: a box is 1000 x ScaleX units wide, a cylinder has a radius of 500 x ScaleX.")]
             public Single ScaleX { get; set; }
-            [XmlAttribute, Description("Height of the area. A box is 1000 times this many units tall, a cylinder 500 times. Areas only reach upward from their position.")]
+            [XmlAttribute, Description("Height: a box is 1000 x ScaleY units tall, a cylinder reaches 500 x ScaleY above its position.")]
             public Single ScaleY { get; set; }
-            [XmlAttribute, Description("Size of the area.")]
+            [XmlAttribute, Description("Depth: a box is 1000 x ScaleZ units deep, a cylinder has a radius of 500 x ScaleZ.")]
             public Single ScaleZ { get; set; }
             //public Vector3 Scale { get; set; }
-            [XmlAttribute, TypeConverter(typeof(HexTypeConverter)), Description("Its meaning depends on the area type. Copy it from an original course that uses the same kind of area.")]
+            [XmlAttribute, TypeConverter(typeof(HexTypeConverter)), Description("Environment effect areas (type 1): the effect slot switched on, 0 to 3. What each slot shows depends on the course slot the course replaces. Sound areas (type 11): with RouteID -1 or 0, the ambient sound played inside (0 to 3 stop the ambient sound), with a route, the sound placed along it. Not read by camera and moving road areas.")]
             public UInt16 Settings1 { get; set; }
-            [XmlAttribute, TypeConverter(typeof(HexTypeConverter)), Description("Its meaning depends on the area type. Copy it from an original course that uses the same kind of area.")]
+            [XmlAttribute, TypeConverter(typeof(HexTypeConverter)), Description("Environment effect areas (type 1): a delay, in seconds after the countdown starts, during which the area switches nothing on. Sound areas (type 11) with a route: 0 places the sound at the nearest point of the route, 1 the same ignoring heights, 2 on a flat surface at the height of the first route point (such as the sea). Not read by camera and moving road areas.")]
             public UInt16 Settings2 { get; set; }
-            [XmlAttribute, Description("The route linked to the area. How it is used depends on the area type.")]
+            [XmlAttribute, Description("Moving road areas (type 3): the route the karts are pushed along, from each point toward the next, as strongly as the Speed of the route points / 100. Sound areas (type 11): -1 or 0 for an ambient sound, 1 or more for a sound placed along that route. Not read by camera and environment effect areas.")]
             public sbyte RouteID { get; set; }
-            [XmlAttribute, Description("Not used in Mario Kart 7. Always -1.")]
+            [XmlAttribute, Description("Not read by the game. -1 in every original course.")]
             public sbyte EnemyID { get; set; }
-            [XmlAttribute, TypeConverter(typeof(HexTypeConverter)), Description("Unknown, probably padding. Always 0.")]
+            [XmlAttribute, TypeConverter(typeof(HexTypeConverter)), Description("Not read by the game, probably padding. 0 in every original course.")]
             public UInt16 Unknown { get; set; }
 
             public AreaEntry(AREA.AREAEntry entry)
@@ -188,6 +188,29 @@ namespace KMPExpander.Class.SimpleKMPs
                 return entry;
             }
 
+            // Whether p is inside the area, as MapdataAreaCalcBox / MapdataAreaCalcCylinder test it: in the area's own
+            // axes, a box from 0 to 1000 x ScaleY up and 500 x Scale X and Z either side; a cylinder below 500 x ScaleY
+            // and within the ellipse of radii 500 x ScaleX and 500 x ScaleZ. Other shapes contain nothing.
+            public bool Contains(Vector3 p)
+            {
+                if (ShapeMode > 1) return false;
+                double rx = RotationX * Math.PI / 180, ry = RotationY * Math.PI / 180, rz = RotationZ * Math.PI / 180;
+                double cx = Math.Cos(rx), sx = Math.Sin(rx), cy = Math.Cos(ry), sy = Math.Sin(ry), cz = Math.Cos(rz), sz = Math.Sin(rz);
+                double[,] r = {
+                    { cy * cz, sx * sy * cz - cx * sz, cx * sy * cz + sx * sz },
+                    { cy * sz, sx * sy * sz + cx * cz, cx * sy * sz - sx * cz },
+                    { -sy, sx * cy, cx * cy } };
+                double dx = p.X - PositionX, dy = p.Y - PositionY, dz = p.Z - PositionZ;
+                double lx = r[0, 0] * dx + r[1, 0] * dy + r[2, 0] * dz;
+                double ly = r[0, 1] * dx + r[1, 1] * dy + r[2, 1] * dz;
+                double lz = r[0, 2] * dx + r[1, 2] * dy + r[2, 2] * dz;
+                if (ShapeMode == 0)
+                    return ly >= 0 && ly <= 1000.0 * ScaleY && Math.Abs(lx) <= 500.0 * ScaleX && Math.Abs(lz) <= 500.0 * ScaleZ;
+                if (ly > 500.0 * ScaleY) return false;
+                double ratio = ScaleX / (double)ScaleZ, radius = 500.0 * ScaleX;
+                return lx * lx + (lz * ratio) * (lz * ratio) <= radius * radius;
+            }
+
             public void RenderPicking(int entry_id)
             {
                 float sizeX = 500f * ScaleX;
@@ -229,11 +252,11 @@ namespace KMPExpander.Class.SimpleKMPs
                 }
                 Gl.glEnd();
             }
-            // The area as a volume in the 3D view: a box (type 0) or an elliptic cylinder, as wide as in the map and
-            // 1000 * ScaleY high above its position (the height is an assumption, after the 500 * scale of the map).
+            // The area as a volume in the 3D view: a box (shape 0) 1000 * ScaleY high above its position, or an elliptic
+            // cylinder up to 500 * ScaleY above it. A cylinder has no bottom, so its sides go on downward, fading out.
             private void RenderVolume(List<object> SelectedDots, VisualSettings Settings, int type)
             {
-                float sizeX = 500f * ScaleX, sizeZ = 500f * ScaleZ, height = 1000f * ScaleY;
+                float sizeX = 500f * ScaleX, sizeZ = 500f * ScaleZ, height = (type == 0 ? 1000f : 500f) * ScaleY;
                 Color c = SelectedDots.Contains(this) ? Settings.HighlightPointColor : Settings.AreaColor;
                 Color edge = SelectedDots.Contains(this) ? Settings.HighlightPointborderColor : Settings.AreaColor;
                 int sides = type == 0 ? 4 : 24;
@@ -258,16 +281,29 @@ namespace KMPExpander.Class.SimpleKMPs
                     Gl.glVertex3f(x[i], height, z[i]);
                 }
                 Gl.glEnd();
-                foreach (float h in new float[] { 0, height })
+                foreach (float h in type == 0 ? new float[] { 0, height } : new float[] { height })
                 {
                     Gl.glBegin(Gl.GL_POLYGON);
                     for (int i = 0; i < sides; i++) Gl.glVertex3f(x[i], h, z[i]);
                     Gl.glEnd();
                 }
+                if (type != 0)
+                {
+                    float depth = Math.Max(1000f, 2 * Math.Max(Math.Abs(sizeX), Math.Abs(sizeZ)));
+                    Gl.glBegin(Gl.GL_QUAD_STRIP);
+                    for (int i = 0; i <= sides; i++)
+                    {
+                        Gl.glColor4f(c.R / 255f, c.G / 255f, c.B / 255f, 0.15f);
+                        Gl.glVertex3f(x[i], 0, z[i]);
+                        Gl.glColor4f(c.R / 255f, c.G / 255f, c.B / 255f, 0f);
+                        Gl.glVertex3f(x[i], -depth, z[i]);
+                    }
+                    Gl.glEnd();
+                }
                 Gl.glDepthMask(Gl.GL_TRUE);
                 Gl.glColor4f(edge.R / 255f, edge.G / 255f, edge.B / 255f, 1f);
                 Gl.glLineWidth(Settings.LineWidth);
-                foreach (float h in new float[] { 0, height })
+                foreach (float h in type == 0 ? new float[] { 0, height } : new float[] { height })
                 {
                     Gl.glBegin(Gl.GL_LINE_LOOP);
                     for (int i = 0; i < sides; i++) Gl.glVertex3f(x[i], h, z[i]);
@@ -276,8 +312,10 @@ namespace KMPExpander.Class.SimpleKMPs
                 Gl.glBegin(Gl.GL_LINES);
                 for (int i = 0; i < sides; i += type == 0 ? 1 : sides / 4)
                 {
-                    Gl.glVertex3f(x[i], 0, z[i]);
+                    Gl.glColor4f(edge.R / 255f, edge.G / 255f, edge.B / 255f, 1f);
                     Gl.glVertex3f(x[i], height, z[i]);
+                    if (type != 0) Gl.glColor4f(edge.R / 255f, edge.G / 255f, edge.B / 255f, 0f);
+                    Gl.glVertex3f(x[i], type == 0 ? 0 : -Math.Max(1000f, 2 * Math.Max(Math.Abs(sizeX), Math.Abs(sizeZ))), z[i]);
                 }
                 Gl.glEnd();
                 Gl.glPopMatrix();

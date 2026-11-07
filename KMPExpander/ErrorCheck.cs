@@ -404,30 +404,71 @@ namespace KMPExpander
         {
             var s = kmp.Area;
             int i = 0;
+            int ambientSounds = 0, routeSounds = 0;
             foreach (var p in s.Entries)
             {
-                if (p.PositionY > 0) notes.Add(String.Format("Area {0}: Position Y is above 0, remember that areas only extend upwards so it is recommended to place them below 0.", i));
+                if (p.ShapeMode > 1) errors.Add(String.Format("Area {0}: Shape {1} is neither a box (0) nor a cylinder (1). The game skips the area and can crash when it looks it up.", i, p.ShapeMode));
                 switch(p.TypeID)
                 {
                     case 0:
+                        if (p.CAMEIndex < 0) break;
                         if (!isInList(kmp.Camera.Entries, p.CAMEIndex)) errors.Add(String.Format("Area {0}: Camera with ID {1} doesn't exist.", i, p.CAMEIndex));
+                        else if (kmp.Camera.Entries[p.CAMEIndex].TypeID == 0) warnings.Add(String.Format("Area {0}: Camera {1} is of type 0 (goal camera), which replays never use, the area is ignored.", i, p.CAMEIndex));
+                        else if (kmp.Camera.Entries[p.CAMEIndex].VideoNext != 0) warnings.Add(String.Format("Area {0}: Camera {1} has a Video Next other than 0, so the game leaves it out of the replays, the area is ignored.", i, p.CAMEIndex));
+                        break;
+                    case 1:
+                        if (p.Settings1 > 3) warnings.Add(String.Format("Area {0}: environment effect areas switch on effect slots 0 to 3; Settings1 is {1}.", i, p.Settings1));
                         break;
                     case 3:
                         if (!isInList(kmp.Routes.Entries, p.RouteID)) errors.Add(String.Format("Area {0}: Route with ID {1} doesn't exist.", i, p.RouteID));
                         break;
                     case 11:
-                        if (p.RouteID != -1 && !isInList(kmp.Routes.Entries, p.RouteID)) errors.Add(String.Format("Area {0}: Route with ID {1} doesn't exist.", i, p.RouteID));
+                        if (p.RouteID > 0 && !isInList(kmp.Routes.Entries, p.RouteID)) errors.Add(String.Format("Area {0}: Route with ID {1} doesn't exist.", i, p.RouteID));
+                        if (p.RouteID > 0) routeSounds++;
+                        else ambientSounds++;
+                        if (p.RouteID == 0) notes.Add(String.Format("Area {0}: sound areas take route 0 as \"no route\". This area plays an ambient sound, not a sound along route 0.", i));
                         break;
                     default:
+                        notes.Add(String.Format("Area {0}: type {1} is not read by the game, the area does nothing.", i, p.TypeID));
                         break;
                 }
                 i++;
             }
+            if (ambientSounds > 10) errors.Add(String.Format("There are {0} ambient sound areas (type 11 with route -1 or 0), the game has room for 10.", ambientSounds));
+            if (routeSounds > 10) errors.Add(String.Format("There are {0} sound areas with a route, the game has room for 10.", routeSounds));
         }
         public void CheckCameras()
         {
-            notes.Add("Camera error checking is not implemented yet.");
-            return;
+            var cams = kmp.Camera.Entries;
+            bool battle = kmp.CheckPoints.Entries.Count == 0;
+            ReplayCameraDirector replay = new ReplayCameraDirector(kmp);
+            if (!replay.HasAreas) warnings.Add("No camera area (type 0) points to a camera, the course has no replay cameras and no course intro.");
+            else if (replay.CameraAreaCount == 0) warnings.Add("No camera area points to a usable camera (cameras of type 0 or with a Video Next other than 0 are left out), the course has no replay cameras.");
+            IntroCameraDirector intro = new IntroCameraDirector(kmp);
+            if (intro.Error != null)
+            {
+                if (intro.Error.Contains("loop")) errors.Add("Course intro: " + intro.Error);
+                else if (!battle && replay.HasAreas) warnings.Add("Course intro: " + intro.Error);
+            }
+            else
+            {
+                if (intro.Chain.Count != 3) warnings.Add(String.Format("Course intro: the chain has {0} cameras ({1}). The game plays 3 shots of 232, 204 and 240 frames; a fourth camera plays until the intro ends, and more are never reached.", intro.Chain.Count, String.Join(" -> ", intro.Chain.Select(c => c.Index))));
+                foreach (var c in intro.Chain)
+                    if (c.Entry.TypeID == 0 || c.Entry.TypeID > 8) warnings.Add(String.Format("Course intro: camera {0} is of type {1}, which does not move in the intro.", c.Index, c.Entry.TypeID));
+                for (int j = 0; j < cams.Count; j++)
+                    if (cams[j].DurationRaw > 0 && cams[j].VideoNext == 0 && !intro.Chain.Any(c => c.Index == j))
+                        notes.Add(String.Format("Camera {0}: it has a duration but is not in the intro chain, keep the duration of the cameras outside the chain at 0.", j));
+            }
+            for (int j = 0; j < cams.Count; j++)
+            {
+                var c = cams[j];
+                if (c.TypeID > 8) warnings.Add(String.Format("Camera {0}: type {1} does nothing (types go from 0 to 8).", j, c.TypeID));
+                if ((c.TypeID == 2 || c.TypeID == 5 || c.TypeID >= 6 && c.TypeID <= 8) && c.RouteID < 0) warnings.Add(String.Format("Camera {0}: type {1} moves along a route, but it has none.", j, c.TypeID));
+                if (c.RouteID >= 0 && !isInList(kmp.Routes.Entries, c.RouteID)) errors.Add(String.Format("Camera {0}: Route with ID {1} doesn't exist.", j, c.RouteID));
+                if ((c.TypeID == 0 || c.TypeID == 3) && c.ViewpointBeginZ == 0) warnings.Add(String.Format("Camera {0}: a follow camera with a distance (Viewpoint Begin Z) of 0 sits on the point it looks at.", j));
+                if (c.Next >= cams.Count) warnings.Add(String.Format("Camera {0}: Next is {1}, past the last camera, the intro chain stops there.", j, c.Next));
+            }
+            if (cams.Count(c => c.TypeID == 0) > 1) notes.Add("Several cameras are of type 0, the game only builds the first one as the goal camera (which it never shows).");
         }
         public void CheckRendering()
         {

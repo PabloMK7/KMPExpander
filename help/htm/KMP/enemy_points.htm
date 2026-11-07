@@ -11,7 +11,7 @@
 <p>Parameters are displayed in the <strong>entry list</strong>:</p>
 <ul>
 <li><strong>PositionXYZ:</strong>&nbsp;Position of the Enemy Point.</li>
-<li><strong>Scale:</strong> Scale of the enemy point. This is represented as a sphere in the <strong>editor</strong>, CPU racers may go to any point within this sphere, so make sure that the whole sphere is inside the road.</li>
+<li><strong>Scale:</strong> How wide the road is for the CPUs, in steps of 50 units to each side. CPUs drive in their own lanes, up to 85 percent of that width away from the point. Keep the whole width on the road.</li>
 <li><strong>MushSettings:</strong> Controls mushroom related settings:
 <ul>
 <li><strong>0 - Can Use Mushroom:</strong> CPU racers are allowed to use mushroom items.</li>
@@ -21,28 +21,30 @@
 </li>
 <li><strong>DriftSettings:&nbsp;</strong>Controls drift related settings:<br />
 <ul>
-<li><strong>0 - Allow Drift Start:</strong> CPU racers are allowed to automatically start drifting and release the drift when sparks show up to get a miniturbo.</li>
-<li><strong>1 - Allow Drift In Progress</strong><strong>:</strong> CPU racers are not able to automatically start drifting, however they can continue a previous drift and release it when sparks show up to get a miniturbo.</li>
-<li><strong>2 - Disallow Drift:</strong> CPU racers are forced to finish drifting and cannot start a new drift.</li>
+<li><strong>0 - Allow Drift:</strong> CPU racers are allowed to automatically start drifting and release the drift when sparks show up to get a miniturbo.</li>
+<li><strong>1 - Drift End:</strong> CPU racers are not able to automatically start drifting and a drift ends when the CPU reaches it, keeping the mini-turbo if a random check passes.</li>
+<li><strong>2 - Drift End, miniturbo lost:</strong> Same as 1, but miniturbos are not allowed.</li>
+<li><strong>Other - Corner decides</strong>The angle between the points automatically decides, based on rules in the code.</li>
 </ul>
 </li>
 <li><strong>Flags:</strong> The following flags can either be enabled or disabled:<br />
 <ul>
-<li><strong>KeepMiniturbo:</strong> CPU racers will charge a super miniturbo (orange sparks) and keep it charged as long as possible. Without this flag enabled, CPU racers will release the super miniturbo as soon as it is charged. This flag is useful for long turns.</li>
-<li><strong>EncourageMiniturbo:</strong> CPU racers will try to get a miniturbo as fast as possible (the same way a human player would do by pressing the same direction as the drift in the analog stick). This flag is useful for sharp turns.</li>
-<li><strong>IncreasePathPrecision:</strong>&nbsp;Enabling this flag will cause the route generator algorithm to act more precisely by reducing the amount of smoothing between points.</li>
-<li><strong>StickToRoute:&nbsp;</strong>CPU racers will try to go as close to the center of the route as possible, they will even be able to turn midair. This flag is used in narrow places where it is very important to follow the route as close as possible.</li>
-<li><strong>PreventRouteSwitch:</strong> CPU racers won't be able to randomly switch to points in other routes with this flag enabled.</li>
-<li><strong>BouncyMushSection:</strong> This flag is enabled on sections where the enemy points are above bouncy terrain such as the bouncy mushrooms in mushroom gorge or the bouncy flower in DK Jungle. It is currently unknown how this flag actually affects the enemy AI.</li>
-<li><strong>ForceDefaultSpeed:</strong> Forces the CPU to move at the same speed no matter the mode (50cc, 100cc, 150cc), if they are doing a miniturbo, etc. This is used in sections where it is important to go at a predefined speed, such as some jumps where the CPU racers may go too fast or slow to perform the jump properly.</li>
-<li><strong>TricksForbidden:</strong> CPU racers won't be able to make tricks using ramps, boost ramps or glider pads. This is used in places where getting more speed from a trick is not convenient (as there is a sharp turn next to the ramp, for example).</li>
+<li><strong>Cornering:</strong> Flag 0x01, races only. A drifting CPU heading to this point \"cuts the corner\" depends on its level. At 150cc it moves 70 percent of the road width to the inside of the turn, at 50% it widens instead.</li>
+<li><strong>HoldDrift:</strong> Flag 0x10, races only. Drifts toward this point are long and gentle and are not cut short.</li>
+<li><strong>Precise:</strong> Flag 0x04. The CPU only moves on to the next point when it is within 140 units of this one, instead of 280 in a race or 100 in a battle. It also works like Cornering.</li>
+<li><strong>BulletBillCannotEnd:</strong> Flag 0x40, races only. A Bullet Bill cannot end at this point.</li>
+<li><strong>HeightReroute:</strong> Flag 0x02. A CPU whose next point is far above or below may be sent to a route at its own height.</li>
+<li><strong>BulletBillFollowsHeight:</strong> Flag 0x20, races only. A Bullet Bill flies at the height of the route instead of falling.</li>
+<li><strong>BaseSpeed:</strong> Flag 0x80. CPUs drive at a fixed share of their top speed here, without catching up or slowing down for the player. In battle they also drive through the exact centre of the point and do a trick at every ramp.</li>
+<li><strong>TricksForbidden:</strong> Flag 0x08, races only. CPUs heading to this point do not hop for tricks on ramps.</li>
 </ul>
 </li>
 <li><strong>PathFindOpts:</strong> Prevents karts to take this route under certain conditions:
 <ul>
-<li><strong>-4/-3 - Take under unknown flag:</strong> Used in the first enemy point of a route. Depending on an unknown flag in karts, they will take this route instead of others.</li>
-<li><strong>-2 - Bullet bill cannot find:</strong> When using a bullet bill, it will search for the closest enemy point to follow. During this search, it will ignore points with this value.</li>
-<li><strong>-1 - CPU Racer cannot find:</strong>&nbsp;When a CPU racer respawns, it will search for the closest enemy point to follow. During this search, it will ignore points with this value.</li>
+<li><strong>-4 - Dolphin Mii path:</strong> Used in the first enemy point of a route. Prefered by Dolphin Miis.</li>
+<li><strong>-3 - Boost Jumper and Aviator Mii path:</strong> Used in the first enemy point of a route. Prefered by Boost Jumper and Aviator Miis.</li>
+<li><strong>-2 - No Bullet Bill:</strong> When using a bullet bill, it will search for the closest enemy point to follow. During this search, it will ignore points with this value.</li>
+<li><strong>-1 - No Finised CPUs:</strong>CPU racers that have finished the race will ignore points with this value.</li>
 <li><strong>0 - No restrictions:</strong> This point will be able to be found or followed without any restrictions.</li>
 </ul>
 </li>
@@ -55,14 +57,4 @@
 <li><strong>Make sure all the enemy points are avobe Y=0 (failsafe death barrier), otherwise the game may crash.</strong></li>
 <li>If CPU racers drive in circles around a point, don't drive straight or the game crashes in certain places, make sure the Y coordinates are right.</li>
 <li>Don't make points with small <strong>Size </strong>if it's not neccesary, otherwise all the CPU racers will drive together hitting each other.</li>
-<li>Make sure to set the <strong>Flags </strong>and <strong>DriftSettings</strong> properly:&nbsp;
-<ul>
-<li><strong>DriftSettings</strong>&nbsp;value 2 for straight sections and 0 for turns unless the turn is long and you don't want the CPU to keep drifting the whole time. Value 1 to stop drifting and get the miniturbo.</li>
-<li><strong>KeepMiniturbo</strong> in long turns and <strong>EncourageMiniturbo</strong>&nbsp;in sharp turns (you may leave some turns without any of those flags if you want the CPU racers to decide by themselves).</li>
-<li><strong>IncreasePathPrecision</strong>&nbsp;in places where the CPU racers fall or hit a wall because the route is smoothed too much.</li>
-<li><strong>TricksForbidden</strong> in places where tricking off a ramp causes problems.</li>
-<li><strong>ForceDefaultSpeed</strong>&nbsp;and/or <strong>StickToRoute&nbsp;</strong>in places where a perfect jump needs to be performed or it is important to follow the route as close as possible.</li>
-<li><strong>MaxSearchYOffset:</strong> If there are two routes that cross each other but with different heights, make sure you limit the Y offset so the karts won't mistakenly take the wrong route.</li>
-</ul>
-</li>
 </ul>

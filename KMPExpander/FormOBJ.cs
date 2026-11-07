@@ -23,27 +23,30 @@ namespace KMPExpander
 
         private void loadWavefrontToolStripMenuItem_Click(object sender, EventArgs e)
         {
-            if (openFileDialogOBJ.ShowDialog() == DialogResult.OK)
-            {
-                try
-                {
-                    form1.OBJModel = new OBJWrapper(openFileDialogOBJ.FileName);
-                    comboBox1.DataSource = form1.OBJModel.Materials;
-                    checkBox1.Enabled = true;
-                    checkBox2.Enabled = true;
-                    backFaceCullingCheckBox.Enabled = true;
-                    frontFaceCullingCheckBox.Enabled = true;
-                    checkBox1.Checked = form1.OBJModel.Visible;
-                    checkBox2.Checked = form1.OBJModel.Wireframe;
-                    backFaceCullingCheckBox.Checked = form1.OBJModel.CullBackFace;
-                    frontFaceCullingCheckBox.Checked = form1.OBJModel.CullFrontFace;
-                }
-                catch (Exception ex)
-                {
-                    MessageBox.Show(ex.ToString());
-                }
-            }
+            if (openFileDialogOBJ.ShowDialog() == DialogResult.OK) LoadOBJ(openFileDialogOBJ.FileName);
             form1.Render();
+        }
+
+        // Loads a model and shows it in this window (materials, visibility, wireframe and culling).
+        public void LoadOBJ(string fileName)
+        {
+            try
+            {
+                form1.OBJModel = new OBJWrapper(fileName);
+                comboBox1.DataSource = form1.OBJModel.Materials;
+                checkBox1.Enabled = true;
+                checkBox2.Enabled = true;
+                backFaceCullingCheckBox.Enabled = true;
+                frontFaceCullingCheckBox.Enabled = true;
+                checkBox1.Checked = form1.OBJModel.Visible;
+                checkBox2.Checked = form1.OBJModel.Wireframe;
+                backFaceCullingCheckBox.Checked = form1.OBJModel.CullBackFace;
+                frontFaceCullingCheckBox.Checked = form1.OBJModel.CullFrontFace;
+            }
+            catch (Exception ex)
+            {
+                MessageBox.Show(ex.ToString());
+            }
         }
         private void closeWavefrontToolStripMenuItem_Click(object sender, EventArgs e)
         {

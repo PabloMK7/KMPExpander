@@ -145,6 +145,9 @@
             this.saveFileDialogDiv = new System.Windows.Forms.SaveFileDialog();
             this.saveFileDialogCmdl = new System.Windows.Forms.SaveFileDialog();
             this.colorDialog1 = new System.Windows.Forms.ColorDialog();
+            this.toolStripSeparator13 = new System.Windows.Forms.ToolStripSeparator();
+            this.showAllGroupsToolStripMenuItem = new System.Windows.Forms.ToolStripMenuItem();
+            this.hideAllGroupsToolStripMenuItem = new System.Windows.Forms.ToolStripMenuItem();
             this.statusStrip1.SuspendLayout();
             this.menuStrip1.SuspendLayout();
             this.contextMenuStripSection.SuspendLayout();
@@ -706,6 +709,9 @@
             this.contextMenuStripSection.Items.AddRange(new System.Windows.Forms.ToolStripItem[] {
             this.addToolStripMenuItem,
             this.toolStripSeparator3,
+            this.showAllGroupsToolStripMenuItem,
+            this.hideAllGroupsToolStripMenuItem,
+            this.toolStripSeparator13,
             this.importCSVToolStripMenuItem1,
             this.exportCSVToolStripMenuItem1});
             this.contextMenuStripSection.Name = "contextMenuStripGroups";
@@ -1146,6 +1152,25 @@
             this.colorDialog1.AnyColor = true;
             this.colorDialog1.FullOpen = true;
             // 
+            // toolStripSeparator13
+            // 
+            this.toolStripSeparator13.Name = "toolStripSeparator13";
+            this.toolStripSeparator13.Size = new System.Drawing.Size(207, 6);
+            // 
+            // showAllGroupsToolStripMenuItem
+            // 
+            this.showAllGroupsToolStripMenuItem.Name = "showAllGroupsToolStripMenuItem";
+            this.showAllGroupsToolStripMenuItem.Size = new System.Drawing.Size(210, 24);
+            this.showAllGroupsToolStripMenuItem.Text = "Show all groups";
+            this.showAllGroupsToolStripMenuItem.Click += new System.EventHandler(this.showAllGroupsToolStripMenuItem_Click);
+            // 
+            // hideAllGroupsToolStripMenuItem
+            // 
+            this.hideAllGroupsToolStripMenuItem.Name = "hideAllGroupsToolStripMenuItem";
+            this.hideAllGroupsToolStripMenuItem.Size = new System.Drawing.Size(210, 24);
+            this.hideAllGroupsToolStripMenuItem.Text = "Hide all groups";
+            this.hideAllGroupsToolStripMenuItem.Click += new System.EventHandler(this.hideAllGroupsToolStripMenuItem_Click);
+            // 
             // Form1
             // 
             this.AutoScaleDimensions = new System.Drawing.SizeF(6F, 13F);
@@ -1305,6 +1330,9 @@
         private System.Windows.Forms.ToolStripMenuItem setMapVisibleStripMenuItem;
         private System.Windows.Forms.ToolStripMenuItem setMapTransparentStripMenuItem;
         private System.Windows.Forms.ToolStripSeparator toolStripSeparator12;
+        private System.Windows.Forms.ToolStripMenuItem showAllGroupsToolStripMenuItem;
+        private System.Windows.Forms.ToolStripMenuItem hideAllGroupsToolStripMenuItem;
+        private System.Windows.Forms.ToolStripSeparator toolStripSeparator13;
     }
 }
 

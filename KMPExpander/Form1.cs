@@ -688,36 +688,73 @@ namespace KMPExpander
         {
             if (e.Action == TreeViewAction.ByMouse)
             {
-                if (e.Node.Tag is ISectionBase)
-                    ((ISectionBase)e.Node.Tag).SetVisibility(((ISectionBase)e.Node.Tag).GetVisibility() ? false : true);
-                else if (e.Node.Tag is CDAB)
-                    ((CDAB)e.Node.Tag).SetVisibility(((CDAB)e.Node.Tag).GetVisibility() ? false : true);
-                else if (e.Node.Tag is CDAB.STRM)
-                    ((CDAB.STRM)e.Node.Tag).SetVisibility(((CDAB.STRM)e.Node.Tag).GetVisibility() ? false : true);
-                else if (e.Node.Tag is CDAB.STRM.STRMEntry)
-                    ((CDAB.STRM.STRMEntry)e.Node.Tag).SetVisibility(((CDAB.STRM.STRMEntry)e.Node.Tag).GetVisibility() ? false : true);
-                else if (e.Node.Tag is KCL)
-                    ((KCL)e.Node.Tag).SetVisibility(e.Node.Checked);
-                else if (e.Node.Tag is KCL.TypeNode && Collision != null)
+                if (e.Node.Tag is ISectionBase sectionBase)
                 {
-                    // A collision type shows or hides all its variants.
-                    foreach (TreeNode child in e.Node.Nodes)
+                    if (e.Node.Parent == null)
                     {
-                        KCL.VariantNode v = (KCL.VariantNode)child.Tag;
-                        Collision.SetHidden(v.Parent.Type, v.Variant, !e.Node.Checked);
-                        child.Checked = e.Node.Checked;
+                        setSectionVisibility(e.Node, !sectionBase.GetVisibility());
+                    }
+                    else
+                    {
+                        sectionBase.SetVisibility(!sectionBase.GetVisibility());
+                        Render();
                     }
                 }
-                else if (e.Node.Tag is KCL.VariantNode && Collision != null)
+                else
                 {
-                    KCL.VariantNode v = (KCL.VariantNode)e.Node.Tag;
-                    Collision.SetHidden(v.Parent.Type, v.Variant, !e.Node.Checked);
-                    bool any = false;
-                    foreach (TreeNode sibling in e.Node.Parent.Nodes) any |= sibling.Checked;
-                    e.Node.Parent.Checked = any;
+                    if (e.Node.Tag is CDAB)
+                        ((CDAB)e.Node.Tag).SetVisibility(((CDAB)e.Node.Tag).GetVisibility() ? false : true);
+                    else if (e.Node.Tag is CDAB.STRM)
+                        ((CDAB.STRM)e.Node.Tag).SetVisibility(((CDAB.STRM)e.Node.Tag).GetVisibility() ? false : true);
+                    else if (e.Node.Tag is CDAB.STRM.STRMEntry)
+                        ((CDAB.STRM.STRMEntry)e.Node.Tag).SetVisibility(((CDAB.STRM.STRMEntry)e.Node.Tag).GetVisibility() ? false : true);
+                    else if (e.Node.Tag is KCL)
+                        ((KCL)e.Node.Tag).SetVisibility(e.Node.Checked);
+                    else if (e.Node.Tag is KCL.TypeNode && Collision != null)
+                    {
+                        // A collision type shows or hides all its variants.
+                        foreach (TreeNode child in e.Node.Nodes)
+                        {
+                            KCL.VariantNode v = (KCL.VariantNode)child.Tag;
+                            Collision.SetHidden(v.Parent.Type, v.Variant, !e.Node.Checked);
+                            child.Checked = e.Node.Checked;
+                        }
+                    }
+                    else if (e.Node.Tag is KCL.VariantNode && Collision != null)
+                    {
+                        KCL.VariantNode v = (KCL.VariantNode)e.Node.Tag;
+                        Collision.SetHidden(v.Parent.Type, v.Variant, !e.Node.Checked);
+                        bool any = false;
+                        foreach (TreeNode sibling in e.Node.Parent.Nodes) any |= sibling.Checked;
+                        e.Node.Parent.Checked = any;
+                    }
+                    Render();
                 }
-                Render();
             }
+        }
+
+        void setSectionVisibility(TreeNode node, bool visibility)
+        {
+            ISectionBase sectionBase = node.Tag as ISectionBase;
+
+            node.Checked = visibility;
+            sectionBase.SetVisibility(visibility);
+
+            if (node.Tag != Kayempee.KartSimulator)
+            {
+                if (sectionBase.GetVisibility())
+                    Settings.VisibleSections |= 1u << node.Index;
+                else
+                    Settings.VisibleSections &= ~(1u << node.Index);
+
+                try
+                {
+                    Settings.ToXML();
+                }
+                catch { }
+            }
+
+            Render();
         }
 
         private void treeView1_BeforeCheck(object sender, TreeViewCancelEventArgs e)
@@ -801,6 +838,42 @@ namespace KMPExpander
                     }
         }
 
+        private void showAllGroupsToolStripMenuItem_Click(object sender, EventArgs e)
+        {
+            setGroupsVisibility(true);
+        }
+
+        private void hideAllGroupsToolStripMenuItem_Click(object sender, EventArgs e)
+        {
+            setGroupsVisibility(false);
+        }
+
+        void setGroupsVisibility(bool visibility)
+        {
+            foreach (TreeNode node in treeView1.Nodes)
+            {
+                if (node.Tag == lastSelectedSection)
+                {
+                    if (visibility)
+                    {
+                        setSectionVisibility(node, true);
+                        node.Expand();
+                    }
+
+                    foreach (TreeNode subnode in node.Nodes)
+                    {
+                        if (subnode.Tag is ISectionBase sectionBase)
+                        {
+                            sectionBase.SetVisibility(visibility);
+                            subnode.Checked = visibility;
+                        }
+                    }
+                    Render();
+                    return;
+                }
+            }
+        }
+
         private void deleteToolStripMenuItem_Click(object sender, EventArgs e)
         {
             
@@ -821,15 +894,20 @@ namespace KMPExpander
                             treeView1.SelectedNode.Tag.GetType().Equals(typeof(Objects)) ||
                             treeView1.SelectedNode.Tag.GetType().Equals(typeof(Area)) ||
                             treeView1.SelectedNode.Tag.GetType().Equals(typeof(Camera)) ||
+                            treeView1.SelectedNode.Tag.GetType().Equals(typeof(StageInformation)) ||
                             treeView1.SelectedNode.Tag.GetType().Equals(typeof(KartSimulator)))
                         {
-                            contextMenuStripSection.Items[0].Visible = false;
-                            contextMenuStripSection.Items[1].Visible = false;
+                            for (int i = 0; i < 5; i++)
+                            {
+                                contextMenuStripSection.Items[i].Visible = false;
+                            }
                         }
                         else
                         {
-                            contextMenuStripSection.Items[0].Visible = true;
-                            contextMenuStripSection.Items[1].Visible = true;
+                            for (int i = 0; i < 5; i++)
+                            {
+                                contextMenuStripSection.Items[i].Visible = true;
+                            }
                             lastSelectedSection = (ISectionBase)treeView1.SelectedNode.Tag;
                         }
                         contextMenuStripSection.Show(treeView1, e.Location);
@@ -1819,9 +1897,6 @@ namespace KMPExpander
                 toolStripStatusLabel1.Text = "No enemy points to drive along, or no kart enabled";
                 return false;
             }
-            Kayempee.KartSimulator.Visible = true;
-            foreach (TreeNode node in treeView1.Nodes)
-                if (node.Tag == Kayempee.KartSimulator) node.Checked = true;
             karts_started = true;
             return true;
         }
@@ -1834,6 +1909,15 @@ namespace KMPExpander
                 kart_drive_clock.Restart();
                 kart_drive_frames = 0;
                 kart_drive_timer.Start();
+
+                foreach (TreeNode node in treeView1.Nodes)
+                {
+                    if (node.Tag == Kayempee.KartSimulator)
+                    {
+                        setSectionVisibility(node, true);
+                        break;
+                    }
+                }
             }
             toolStripButtonDrive.Text = pause ? "Drive Karts" : "Pause Karts";
             Render();
@@ -1961,6 +2045,22 @@ namespace KMPExpander
             if (Kayempee != null) Kayempee.PopulateTreeView(treeView1);
             if (div != null) div.PopulateTreeView(treeView1);
             if (Collision != null) Collision.PopulateTreeView(treeView1);
+
+            foreach (TreeNode node in treeView1.Nodes)
+            {
+                if (node.Tag is ISectionBase sectionBase)
+                {
+                    if (node.Tag == Kayempee.KartSimulator)
+                    {
+                        node.Checked = false;
+                    }
+                    else
+                    {
+                        node.Checked = (Settings.VisibleSections >> node.Index & 1u) == 1u;
+                    }
+                    sectionBase.SetVisibility(node.Checked);
+                }
+            }
         }
 
         #endregion

@@ -398,6 +398,14 @@ namespace KMPExpander.Class
             set { object_models_folder = value ?? ""; }
         }
 
+        private uint visibleSections = uint.MaxValue;
+        [Browsable(false)]
+        public uint VisibleSections
+        {
+            get { return visibleSections; }
+            set { visibleSections = value; }
+        }
+
         public VisualSettings() { }
 
         public void ToXML()
